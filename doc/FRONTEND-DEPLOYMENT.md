@@ -61,6 +61,13 @@ pnpm -v
 
 > **注意**：如果生产环境需要修改 API 地址，请编辑 `.env.production` 中的 `VITE_API_URL`。
 
+### AI PPT 凭据边界
+
+- 所有 `VITE_*` 值都会进入浏览器可读取的构建产物，不能用于保存 Docmee/AIPPT API Key。
+- AI PPT 页面只使用登录 JWT 请求 Go 后端 `/edu/v1/user/get/ppt/token`，不得额外发送 `Api-Key` 请求头。
+- 供应商 Key 由 Go 后端的 `AIPPT_USER_TOKEN_API_KEY` 环境变量注入；前端部署平台不需要也不应配置该变量。
+- 若历史版本曾把供应商 Key 打入静态文件，应先在供应商控制台轮换，再重新构建并发布前端。
+
 ---
 
 ## 3. 本地开发

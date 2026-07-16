@@ -48,14 +48,24 @@
           </el-form-item>
         </el-form>
 
-        <el-button
-          type="primary"
-          :icon="Plus"
-          class="create-course-btn"
-          @click="openCreateDialog"
-        >
-          创建课程
-        </el-button>
+        <div class="course-action-buttons">
+          <el-button
+            v-if="canBulkImportCourses"
+            :icon="FolderOpened"
+            class="bulk-import-btn"
+            @click="openBulkCourseUpload"
+          >
+            一键上传课程
+          </el-button>
+          <el-button
+            type="primary"
+            :icon="Plus"
+            class="create-course-btn"
+            @click="openCreateDialog"
+          >
+            创建课程
+          </el-button>
+        </div>
       </div>
     </el-card>
 
@@ -75,6 +85,8 @@
               :course="course"
               :is-selected="selectedCourseIds.includes(course.courseId)"
               :can-delete="canDeleteCourse(course)"
+              :can-rebuild="isAdminUser && !isCourseRebuildAdmissionDisabled"
+              :is-rebuilding="rebuildStartingCourseId === course.courseId"
               @toggle-select="toggleCourseSelection"
               @edit="editCourse"
               @delete="confirmDelete"
@@ -82,6 +94,7 @@
               @view-attrs="viewAttrs"
               @allocation="showAllocationDialog"
               @study-status="showStudyStatusDialog"
+              @rebuild="confirmCourseRebuild"
             />
           </el-col>
         </el-row>
@@ -349,6 +362,12 @@
         </div>
       </template>
     </el-dialog>
+
+    <BulkCourseUploadDialog
+      v-if="canBulkImportCourses"
+      ref="bulkCourseUploadRef"
+      @completed="handleBulkCourseUploadCompleted"
+    />
 
     <!-- 课程分配弹窗 -->
     <el-dialog v-model="allocationDialogVisible" title="课程分配" width="60%">
@@ -724,11 +743,12 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, reactive, computed } from "vue";
+import { useRouter } from "vue-router";
 import { useAppStoreHook } from "@/store/modules/app";
 import { useUserStoreHook } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
-import { isAdmin } from "@/utils/auth";
-import { ElMessage, ElMessageBox, ElForm } from "element-plus";
+import { hasManageAccess, isAdmin } from "@/utils/auth";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getCourseList,
   getCourseHoursList,
@@ -744,14 +764,22 @@ import {
   deleteChapter,
   deleteHour,
   createCourseChapter,
-  getCourseStats
+  getCourseStats,
+  startCourseRebuild
+} from "@/api/course";
+import type {
+  CourseCreateParams,
+  CourseRebuildErrorResponse,
+  CourseUpdateParams
 } from "@/api/course";
 import CourseForm from "./components/CourseForm.vue";
 import CourseCard from "./components/CourseCard.vue";
 import CourseStats from "./components/CourseStats.vue";
-import { Plus, Loading, Search } from "@element-plus/icons-vue";
+import BulkCourseUploadDialog from "./components/BulkCourseUploadDialog.vue";
+import { FolderOpened, Plus, Loading, Search } from "@element-plus/icons-vue";
 
 const appStore = useAppStoreHook();
+const router = useRouter();
 const isMobile = computed(() => appStore.getDevice === "mobile");
 const paginationLayout = computed(() =>
   isMobile.value
@@ -760,6 +788,7 @@ const paginationLayout = computed(() =>
 );
 const userStore = useUserStoreHook();
 const isAdminUser = computed(() => isAdmin());
+const canBulkImportCourses = computed(() => hasManageAccess());
 const currentUserId = computed(() => userStore.userId);
 const currentUserNames = computed(() =>
   [userStore.nickname, userStore.username]
@@ -778,7 +807,13 @@ const courseStats = reactive({
 // 统计筛选日期
 const statsDateFilter = ref<{ startDate?: string; endDate?: string }>({});
 
-const courseFormRef = ref<InstanceType<typeof ElForm>>();
+const courseFormRef = ref<{
+  validate: () => Promise<boolean>;
+  scrollToFirstError?: () => void;
+}>();
+const bulkCourseUploadRef = ref<{
+  openFolderPicker: () => void;
+}>();
 
 // 数据定义
 const courseList = ref([]);
@@ -792,6 +827,125 @@ const searchForm = ref({
 
 // 选择的课程ID列表
 const selectedCourseIds = ref<number[]>([]);
+const rebuildStartingCourseId = ref<number | null>(null);
+const isCourseRebuildAdmissionDisabled = ref(false);
+
+const getRebuildError = (error: unknown): CourseRebuildErrorResponse | null => {
+  const responseData = (error as any)?.response?.data;
+  return responseData && typeof responseData.code === "string"
+    ? (responseData as CourseRebuildErrorResponse)
+    : null;
+};
+
+const createRebuildRequestId = () => {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, character => {
+    const random = (Math.random() * 16) | 0;
+    const value = character === "x" ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
+};
+
+const submitCourseRebuild = async (courseId: number, requestId: string) => {
+  try {
+    return await startCourseRebuild({ sourceCourseId: courseId, requestId });
+  } catch (error) {
+    if (getRebuildError(error)) throw error;
+
+    try {
+      await ElMessageBox.confirm(
+        "当前无法确认服务器是否已经受理该请求。重试会复用本次请求 ID，不会创建第二个重建操作。",
+        "重试课程重建",
+        {
+          confirmButtonText: "重试同一请求",
+          cancelButtonText: "暂不重试",
+          type: "warning",
+          closeOnClickModal: false
+        }
+      );
+    } catch {
+      return null;
+    }
+
+    return startCourseRebuild({ sourceCourseId: courseId, requestId });
+  }
+};
+
+const confirmCourseRebuild = async (course: any) => {
+  if (!isAdminUser.value) {
+    ElMessage.warning("只有管理员可以重建课程");
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `重建「${course.title}」后，源课程（ID：${course.courseId}）及其学习、作业、考试、讨论和 AI 历史数据将被删除。新课程会获得新的 ID。`,
+      "确认重建课程",
+      {
+        confirmButtonText: "确认重建",
+        cancelButtonText: "取消",
+        type: "error",
+        closeOnClickModal: false,
+        closeOnPressEscape: false
+      }
+    );
+  } catch {
+    return;
+  }
+
+  rebuildStartingCourseId.value = course.courseId;
+  const requestId = createRebuildRequestId();
+  try {
+    const operation = await submitCourseRebuild(course.courseId, requestId);
+
+    if (!operation) return;
+
+    if (!operation.operationId) {
+      throw new Error("课程重建接口未返回 operationId");
+    }
+
+    sessionStorage.setItem(
+      `course-rebuild-started-at:${operation.operationId}`,
+      String(Date.now())
+    );
+    ElMessage.success("课程重建已受理，正在打开进度页");
+    await router.push({
+      name: "CourseRebuildProgress",
+      params: { operationId: operation.operationId }
+    });
+  } catch (error) {
+    const apiError = getRebuildError(error);
+    if (
+      apiError?.code === "course_rebuild_in_progress" &&
+      apiError.operationId
+    ) {
+      ElMessage.warning("该课程已有进行中的重建任务，已打开原进度页");
+      await router.push({
+        name: "CourseRebuildProgress",
+        params: { operationId: apiError.operationId }
+      });
+      return;
+    }
+
+    if (apiError?.code === "course_rebuild_admission_disabled") {
+      isCourseRebuildAdmissionDisabled.value = true;
+      ElMessage.error("当前环境未开放课程重建，请联系运维");
+      return;
+    }
+
+    if (apiError?.code === "course_rebuild_idempotency_conflict") {
+      ElMessage.error("本次重建请求发生幂等冲突，请重新确认后再发起");
+      return;
+    }
+
+    ElMessage.error(apiError?.message || "课程重建发起失败，请稍后重试");
+  } finally {
+    rebuildStartingCourseId.value = null;
+  }
+};
 
 const canDeleteCourse = (course: any) => {
   if (!course) return false;
@@ -868,31 +1022,6 @@ const courseForm = ref({
   attrList: []
 });
 
-// 表单验证规则
-const courseFormRules = {
-  title: [{ required: true, message: "请输入课程标题", trigger: "blur" }],
-  shortDesc: [{ required: true, message: "请输入课程简介", trigger: "blur" }],
-  thumb: [
-    {
-      required: true,
-      type: "number",
-      min: 1,
-      message: "请上传课程封面",
-      trigger: "change"
-    }
-  ],
-  categoryIds: [
-    {
-      required: true,
-      type: "array",
-      min: 1,
-      message: "请选择课程分类",
-      trigger: "change"
-    }
-  ],
-  endingTime: [{ required: true, message: "请选择结束时间", trigger: "change" }]
-};
-
 // 格式化时长显示
 const formatDuration = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
@@ -900,79 +1029,131 @@ const formatDuration = (seconds: number) => {
   return `${minutes}分${remainingSeconds}秒`;
 };
 
-// 处理封面图片选择
-const handleThumbChange = file => {
-  // 通常这里应该上传文件到服务器，这里仅做演示，使用本地URL预览
-  courseForm.value.thumb_url = URL.createObjectURL(file.raw); // 使用thumb_url字段与API参数一致
-  // 假设上传成功后服务器返回资源ID
-  courseForm.value.thumb = 1001; // 实际项目中应该使用服务器返回的资源ID
+const toPositiveNumber = (value: unknown) => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : 0;
+};
+
+const cleanHourPayload = (hour: any) => {
+  const payload: CourseCreateParams["hourList"][number] = {
+    resourceId: toPositiveNumber(hour?.resourceId),
+    duration: Number(hour?.duration || 0)
+  };
+
+  if (hour?.title) payload.title = String(hour.title).trim();
+  if (hour?.rType) payload.rType = hour.rType;
+  if (toPositiveNumber(hour?.hourId))
+    payload.hourId = toPositiveNumber(hour.hourId);
+  if (hour?.fileUrl) payload.fileUrl = hour.fileUrl;
+
+  return payload;
+};
+
+const cleanAttrPayload = (attr: any) => {
+  const payload: CourseCreateParams["attrList"][number] = {
+    resourceId: toPositiveNumber(attr?.resourceId)
+  };
+
+  if (attr?.title) payload.title = String(attr.title).trim();
+  if (attr?.rType) payload.rType = attr.rType;
+  if (toPositiveNumber(attr?.attrId))
+    payload.attrId = toPositiveNumber(attr.attrId);
+  if (attr?.fileUrl) payload.fileUrl = attr.fileUrl;
+
+  return payload;
+};
+
+const buildCreateCoursePayload = (): CourseCreateParams => {
+  const formData = courseForm.value;
+  const basePayload = {
+    title: formData.title.trim(),
+    thumb_url: formData.thumb_url,
+    shortDesc: formData.shortDesc.trim(),
+    isRequired: Number(formData.isRequired),
+    categoryIds: [...formData.categoryIds].map(Number),
+    isChapter: Number(formData.isChapter),
+    endingTime: formData.endingTime,
+    attrList: (formData.attrList || [])
+      .map(cleanAttrPayload)
+      .filter(attr => attr.resourceId > 0)
+  };
+
+  if (Number(formData.isChapter) === 1) {
+    return {
+      ...basePayload,
+      chapterList: (formData.chapterList || []).map(chapter => ({
+        ...(toPositiveNumber(chapter?.chapterId)
+          ? { chapterId: toPositiveNumber(chapter.chapterId) }
+          : {}),
+        name: String(chapter?.name || "").trim(),
+        hourList: (chapter?.hourList || []).map(cleanHourPayload)
+      }))
+    };
+  }
+
+  return {
+    ...basePayload,
+    hourList: (formData.hourList || []).map(cleanHourPayload)
+  };
+};
+
+const buildUpdateCoursePayload = (): CourseUpdateParams => {
+  const formData = courseForm.value;
+  return {
+    courseId: Number(formData.courseId),
+    title: formData.title.trim(),
+    thumbUrl: formData.thumb_url,
+    shortDesc: formData.shortDesc.trim(),
+    isRequired: Number(formData.isRequired),
+    categoryIds: [...formData.categoryIds].map(Number),
+    endingTime: formData.endingTime
+  };
 };
 
 // 提交课程表单
 const submitCourseForm = async () => {
   if (!courseFormRef.value) return;
 
+  let valid = false;
   try {
-    // 使用表单组件的验证方法
-    const valid = await courseFormRef.value.validate();
+    valid = await courseFormRef.value.validate();
+  } catch (error) {
+    console.warn("课程表单校验未通过:", error);
+    courseFormRef.value.scrollToFirstError?.();
+    ElMessage.warning("请先完善课程必填信息");
+    return;
+  }
 
-    if (valid) {
-      courseFormLoading.value = true;
+  if (!valid) {
+    courseFormRef.value.scrollToFirstError?.();
+    ElMessage.warning("请先完善课程必填信息");
+    return;
+  }
 
-      // 准备提交数据
-      const formData = { ...courseForm.value };
-      let submitData;
+  try {
+    courseFormLoading.value = true;
 
-      if (isEdit.value) {
-        // 编辑模式，移除不需要的字段
-        const {
-          thumb_url,
-          hourList,
-          chapterList,
-          attrList,
-          isChapter,
-          thumb,
-          ...updateData
-        } = formData;
-        submitData = {
-          ...updateData,
-          thumbUrl: thumb_url, // 字段名转换
-          categoryIds: [...formData.categoryIds] // 确保是普通数组而非 Proxy
-        };
+    if (isEdit.value) {
+      const res = await updateCourse(buildUpdateCoursePayload());
 
-        // 调用更新接口
-        const res = await updateCourse(submitData);
-
-        if (res && res.code === 200) {
-          ElMessage.success("课程更新成功");
-          courseFormDialogVisible.value = false;
-          fetchCourseList(); // 刷新列表
-        } else {
-          ElMessage.error("课程更新失败");
-        }
+      if (res && res.code === 200) {
+        ElMessage.success("课程更新成功");
+        courseFormDialogVisible.value = false;
+        fetchCourseList(); // 刷新列表
       } else {
-        // 创建模式
-        if (formData.isChapter === 1) {
-          // 有章节模式，移除顶层hourList
-          const { hourList, ...chapterData } = formData;
-          submitData = chapterData;
-        } else {
-          // 无章节模式，保留顶层hourList，移除chapterList
-          const { chapterList, ...hourData } = formData;
-          submitData = hourData;
-        }
-
-        // 调用创建接口
-        const res = await createCourse(submitData);
-
-        if (res && res.code === 200) {
-          ElMessage.success("课程创建成功");
-          courseFormDialogVisible.value = false;
-          fetchCourseList(); // 刷新列表
-        } else {
-          ElMessage.error("课程创建失败");
-        }
+        ElMessage.error(res?.msg || "课程更新失败");
       }
+      return;
+    }
+
+    const res = await createCourse(buildCreateCoursePayload());
+
+    if (res && res.code === 200) {
+      ElMessage.success("课程创建成功");
+      courseFormDialogVisible.value = false;
+      fetchCourseList(); // 刷新列表
+    } else {
+      ElMessage.error(res?.msg || "课程创建失败");
     }
   } catch (error) {
     console.error(isEdit.value ? "更新课程失败:" : "创建课程失败:", error);
@@ -1086,6 +1267,15 @@ const openCreateDialog = () => {
     attrList: []
   };
   courseFormDialogVisible.value = true;
+};
+
+const openBulkCourseUpload = () => {
+  bulkCourseUploadRef.value?.openFolderPicker();
+};
+
+const handleBulkCourseUploadCompleted = () => {
+  fetchCourseList();
+  fetchCourseStats();
 };
 
 // 查看课程详情
@@ -2198,6 +2388,13 @@ onMounted(async () => {
   font-size: 15px;
 }
 
+.course-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 @media screen and (max-width: 768px) {
   .main {
     padding: 12px;
@@ -2214,8 +2411,12 @@ onMounted(async () => {
     margin-bottom: 0;
   }
 
-  .create-course-btn {
+  .course-action-buttons {
     width: 100%;
+  }
+
+  .course-action-buttons .el-button {
+    flex: 1;
     margin-left: 0;
   }
 

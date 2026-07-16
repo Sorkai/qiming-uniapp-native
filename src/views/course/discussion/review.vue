@@ -4,7 +4,7 @@
  *教师可以管理所授课程的讨论内容，包括审核、置顶、删除等操作
  */
 import { computed, ref, reactive, onMounted, onActivated, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
 import {
@@ -19,23 +19,23 @@ import {
   MoreFilled
 } from "@element-plus/icons-vue";
 import {
-  getAdminDiscussions,
   getAdminDiscussionDetail,
-  getTeacherCourseStats,
+  getPendingList,
+  getPendingStatistics,
+  getUserAvatars,
+  mapPendingItemToReviewQueueItem,
   reviewPost,
   reviewReply,
   pinPost,
   unpinPost,
   forceDeletePost,
   forceDeleteReply,
+  type PendingItem,
   type ReviewQueueItem
 } from "@/api/discussion-admin";
-import { getCourseList } from "@/api/course";
-import { getReplies, updateReply, updateDiscussion } from "@/api/discussion";
-import type { DiscussionPost } from "@/api/discussion";
+import { updateReply, updateDiscussion } from "@/api/discussion";
 import HeartIcon from "@/assets/commentareasrelatedsvgs/heart-svgrepo-com.svg?component";
 import CommentIcon from "@/assets/commentareasrelatedsvgs/comment-lines-svgrepo-com.svg?component";
-import TrendIcon from "@/assets/commentareasrelatedsvgs/trend-up-svgrepo-com.svg?component";
 import InfoIcon from "@/assets/commentareasrelatedsvgs/information-circle-svgrepo-com.svg?component";
 import { formatAvatar } from "@/utils/avatar";
 
@@ -60,23 +60,22 @@ const selectedCount = computed(() => selectedIds.value.length);
 const stats = ref({
   totalPosts: 0,
   totalReplies: 0,
-  pendingReview: 0,
-  pendingReports: 0,
+  pendingPosts: 0,
+  pendingReplies: 0,
+  pendingTotal: 0,
   todayPosts: 0,
-  weekPosts: 0,
   courses: [] as Array<{
     courseId: string;
     courseName: string;
-    postCount: number;
-    pendingCount: number;
+    pendingPosts: number;
+    pendingReplies: number;
+    pendingTotal: number;
   }>
 });
 
 // 搜索表单
 const searchForm = reactive({
   courseId: "",
-  status: "" as "" | "pending" | "approved" | "rejected",
-  keyword: "",
   type: "all" as "all" | "post" | "reply" // 类型筛选：全部/帖子/回复
 });
 
@@ -86,14 +85,6 @@ const pagination = reactive({
   pageSize: 20,
   total: 0
 });
-
-// 状态选项
-const statusOptions = [
-  { label: "全部", value: "" },
-  { label: "待审核", value: "pending" },
-  { label: "已通过", value: "approved" },
-  { label: "已拒绝", value: "rejected" }
-];
 
 // 类型选项（帖子/回复）
 const typeOptions = [
@@ -106,8 +97,6 @@ const activeFilterCount = computed(() => {
 
   if (searchForm.courseId) count += 1;
   if (searchForm.type !== "all") count += 1;
-  if (searchForm.status) count += 1;
-  if (searchForm.keyword.trim()) count += 1;
 
   return count;
 });
@@ -175,140 +164,32 @@ const riskLevelText = (level: string): string => {
   return map[level] || level;
 };
 
-const isToday = (dateStr: string) => {
-  if (!dateStr) return false;
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return false;
-  const now = new Date();
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  );
-};
-
-// 加载数据- 使用 getAdminDiscussions 获取已发布的讨论列表，同时获取回复
+// 加载待审核列表
 const fetchData = async () => {
-  if (loading.value && discussions.value.length === 0) return; // 修改：如果是在刷新（已有数据），允许继续
+  if (loading.value && discussions.value.length === 0) return;
   loading.value = true;
-  // discussions.value = []; // 注释掉：防止闪烁
   try {
-    const params: any = {
-      page: pagination.page,
-      pageSize: pagination.pageSize,
-      sortBy: "latest"
-    };
-
-    if (searchForm.status) params.status = searchForm.status;
-    if (searchForm.keyword) params.keyword = searchForm.keyword;
-
-    // 先确保课程列表已加载
-    if (stats.value.courses.length === 0) {
-      await fetchStats();
-    }
-
-    const allItems: ReviewQueueItem[] = [];
-
-    // 确定要获取的课程列表
-    const coursesToFetch = searchForm.courseId
-      ? stats.value.courses.filter(c => c.courseId === searchForm.courseId)
-      : stats.value.courses;
-
-    // 遍历课程获取帖子和回复
-    for (const course of coursesToFetch) {
-      try {
-        // 获取帖子列表
-        const postRes = await getAdminDiscussions(course.courseId, {
-          ...params,
-          page: 1,
-          pageSize: 100 // 获取较多帖子
-        });
-
-        // 如果需要显示帖子（type为 all或 post）
-        if (searchForm.type === "all" || searchForm.type === "post") {
-          const postItems = postRes.data.list.map(item => ({
-            ...item,
-            riskLevel: "low" as const,
-            matchedWords: [],
-            priority: "medium" as const,
-            itemType: "post" as const,
-            courseName: course.courseName
-          })) as ReviewQueueItem[];
-          allItems.push(...postItems);
-        }
-
-        // 如果需要显示回复（type 为 all 或 reply）
-        if (searchForm.type === "all" || searchForm.type === "reply") {
-          //遍历帖子获取回复
-          for (const post of postRes.data.list) {
-            try {
-              const replyRes = await getReplies(post.id, {
-                page: 1,
-                pageSize: 50
-              });
-
-              if (replyRes.data.list && replyRes.data.list.length > 0) {
-                const replyItems = replyRes.data.list.map(reply => ({
-                  id: reply.id,
-                  title: `[回复] ${post.title || "(无标题帖子)"}`,
-                  content: reply.content,
-                  contentHtml: reply.contentHtml || reply.content,
-                  author: reply.author,
-                  tags: [],
-                  status: "approved" as const,
-                  isPinned: false,
-                  likeCount: reply.likeCount,
-                  replyCount: 0,
-                  viewCount: 0,
-                  isLiked: reply.isLiked,
-                  createdAt: reply.createdAt,
-                  riskLevel: "low" as const,
-                  matchedWords: [],
-                  priority: "medium" as const,
-                  itemType: "reply" as const,
-                  courseName: course.courseName,
-                  postId: Number(post.id)
-                })) as ReviewQueueItem[];
-                allItems.push(...replyItems);
-              }
-            } catch (replyErr) {
-              console.error(`获取帖子 ${post.id} 的回复失败:`, replyErr);
-            }
-          }
-        }
-      } catch (err) {
-        console.error(`获取课程 ${course.courseId} 讨论失败:`, err);
-      }
-    }
-
-    // 按创建时间排序（最新的在前）
-    allItems.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const responseData = await getPendingList({
+      courseId: searchForm.courseId || undefined,
+      type: searchForm.type,
+      pageNum: pagination.page,
+      pageSize: pagination.pageSize
+    });
+    const userIds = Array.from(
+      new Set((responseData.list || []).map((item: PendingItem) => item.authorId))
     );
-
-    // 统计卡片回填：当统计接口不可用或不准确时，保证和当前列表数据一致
-    const postCount = allItems.filter(item => item.itemType !== "reply").length;
-    const replyCount = allItems.filter(
-      item => item.itemType === "reply"
-    ).length;
-    const pendingCount = allItems.filter(
-      item => item.status === "pending"
-    ).length;
-    const todayCount = allItems.filter(item => isToday(item.createdAt)).length;
-
-    stats.value.totalPosts = postCount;
-    stats.value.totalReplies = replyCount;
-    stats.value.pendingReview = pendingCount;
-    stats.value.todayPosts = todayCount;
-
-    // 分页处理
-    const startIndex = (pagination.page - 1) * pagination.pageSize;
-    const endIndex = startIndex + pagination.pageSize;
-    discussions.value = allItems.slice(startIndex, endIndex);
-    pagination.total = allItems.length;
+    let avatarMap = new Map<number, string>();
+    if (userIds.length > 0) {
+      avatarMap = await getUserAvatars(userIds);
+    }
+    discussions.value = (responseData.list || []).map((item: PendingItem) =>
+      mapPendingItemToReviewQueueItem(item, avatarMap.get(item.authorId))
+    );
+    pagination.total = responseData.total || 0;
   } catch (error) {
     console.error("加载讨论列表失败", error);
+    discussions.value = [];
+    pagination.total = 0;
   } finally {
     loading.value = false;
   }
@@ -317,52 +198,38 @@ const fetchData = async () => {
 // 加载统计数据
 const fetchStats = async () => {
   try {
-    const res = await getTeacherCourseStats();
-    const statsData = (res as any)?.data || res;
+    const statsData = await getPendingStatistics({
+      courseId: searchForm.courseId || undefined
+    });
 
     if (statsData) {
       stats.value.totalPosts = Number(statsData.totalPosts || 0);
       stats.value.totalReplies = Number(statsData.totalReplies || 0);
-      stats.value.pendingReview = Number(statsData.pendingReview || 0);
-      stats.value.pendingReports = Number(statsData.pendingReports || 0);
+      stats.value.pendingPosts = Number(statsData.pendingPosts || 0);
+      stats.value.pendingReplies = Number(statsData.pendingReplies || 0);
+      stats.value.pendingTotal = Number(statsData.pendingTotal || 0);
       stats.value.todayPosts = Number(statsData.todayPosts || 0);
-      stats.value.weekPosts = Number(statsData.weekPosts || 0);
-
-      if (Array.isArray(statsData.courses) && statsData.courses.length > 0) {
-        stats.value.courses = statsData.courses;
-        return;
-      }
+      stats.value.courses = Array.isArray(statsData.courses)
+        ? statsData.courses.map(course => ({
+            courseId: String(course.courseId),
+            courseName: course.courseName,
+            pendingPosts: Number(course.pendingPosts || 0),
+            pendingReplies: Number(course.pendingReplies || 0),
+            pendingTotal: Number(course.pendingTotal || 0)
+          }))
+        : [];
     }
   } catch (error) {
-    console.error("getTeacherCourseStats 失败，尝试备用方案", error);
-  }
-
-  // 备用方案：使用 getCourseList 获取课程列表
-  try {
-    console.log("使用 getCourseList 作为备用方案获取课程列表");
-    const courseRes = await getCourseList({ pageNum: 1, pageSize: 100 });
-    const courseData = (courseRes as any)?.data || courseRes;
-    if (courseData?.courseList && courseData.courseList.length > 0) {
-      stats.value.courses = courseData.courseList.map((course: any) => ({
-        courseId: String(course.courseId),
-        courseName: course.title,
-        postCount: 0,
-        pendingCount: 0
-      }));
-      console.log("备用方案获取课程列表成功:", stats.value.courses);
-    } else {
-      console.warn("备用方案也没有获取到课程列表");
-    }
-  } catch (backupError) {
-    console.error("备用方案获取课程列表也失败", backupError);
+    console.error("加载待审核统计失败", error);
   }
 };
 
 //搜索
-const handleSearch = () => {
+const handleSearch = async () => {
   pagination.page = 1;
   selectedIds.value = [];
-  fetchData();
+  await fetchStats();
+  await fetchData();
 };
 
 // 选择变化
@@ -385,8 +252,6 @@ const toggleMobileSelection = (id: string, checked: boolean) => {
 // 重置搜索
 const resetSearch = () => {
   searchForm.courseId = "";
-  searchForm.status = "";
-  searchForm.keyword = "";
   searchForm.type = "all";
   handleSearch();
 };
@@ -446,15 +311,12 @@ const handleApprove = async (row: ReviewQueueItem) => {
     // 本地立即移除或更新状态，增强即时感
     const idx = discussions.value.findIndex(d => d.id === row.id);
     if (idx > -1) {
-      if (searchForm.status === "pending") {
-        discussions.value.splice(idx, 1);
-      } else {
-        discussions.value[idx].status = "approved";
-      }
+      discussions.value.splice(idx, 1);
+      pagination.total = Math.max(0, pagination.total - 1);
     }
 
     // 延迟刷新以确保后端数据同步
-    setTimeout(() => fetchData(), 1000);
+    setTimeout(() => initData(true), 1000);
   } catch (error) {
     ElMessage.error("操作失败");
   }
@@ -480,15 +342,12 @@ const handleReject = async (row: ReviewQueueItem) => {
     // 本地立即移除或更新状态
     const idx = discussions.value.findIndex(d => d.id === row.id);
     if (idx > -1) {
-      if (searchForm.status === "pending") {
-        discussions.value.splice(idx, 1);
-      } else {
-        discussions.value[idx].status = "rejected";
-      }
+      discussions.value.splice(idx, 1);
+      pagination.total = Math.max(0, pagination.total - 1);
     }
 
     // 延迟刷新以确保后端数据同步
-    setTimeout(() => fetchData(), 1000);
+    setTimeout(() => initData(true), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("操作失败");
@@ -549,7 +408,7 @@ const handleBatchApprove = async () => {
 
     selectedIds.value = [];
     // 延迟同步数据，解决后端同步延迟问题
-    setTimeout(() => fetchData(), 1000);
+    setTimeout(() => initData(true), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("批量操作过程中产生错误");
@@ -613,7 +472,7 @@ const handleBatchReject = async () => {
 
     selectedIds.value = [];
     // 延迟同步数据，解决后端同步延迟问题
-    setTimeout(() => fetchData(), 1000);
+    setTimeout(() => initData(true), 1000);
   } catch (error: any) {
     if (error !== "cancel") {
       ElMessage.error("批量操作失败");
@@ -753,46 +612,19 @@ const dataLoaded = ref(false);
 
 // 初始化加载数据
 const initData = async (force = false) => {
-  // 防止重复加载
-  if (loading.value || (dataLoaded.value && !force)) {
-    console.log(
-      "[review.vue] initData 跳过, loading:",
-      loading.value,
-      "dataLoaded:",
-      dataLoaded.value,
-      "force:",
-      force
-    );
-    return;
-  }
+  if (loading.value || (dataLoaded.value && !force)) return;
 
-  console.log("[review.vue] initData 开始执行, force:", force);
   await fetchStats();
-  console.log(
-    "[review.vue] fetchStats 完成,课程数量:",
-    stats.value.courses.length
-  );
   await fetchData();
-  console.log(
-    "[review.vue] fetchData 完成, 讨论数量:",
-    discussions.value.length
-  );
   dataLoaded.value = true;
-  console.log("[review.vue] initData 执行完成");
 };
 
 const route = useRoute();
 
-// 生成唯一的组件实例 ID，用于调试
-const instanceId = Math.random().toString(36).substring(7);
-console.log("[review.vue] 组件实例创建, instanceId:", instanceId);
-
 // 使用 onMounted 确保组件已挂载后再加载数据
 onMounted(() => {
-  console.log("[review.vue] onMounted 触发, instanceId:", instanceId);
   // 使用 setTimeout 延迟加载，确保路由完全稳定
   setTimeout(() => {
-    console.log("[review.vue] setTimeout 回调, dataLoaded:", dataLoaded.value);
     if (!dataLoaded.value) {
       initData();
     }
@@ -801,7 +633,6 @@ onMounted(() => {
 
 // 当组件从 keep-alive 缓存中被激活时重新加载数据
 onActivated(() => {
-  console.log("[review.vue] onActivated 触发, instanceId:", instanceId);
   dataLoaded.value = false; // 重置标志以允许重新加载
   initData();
 });
@@ -834,7 +665,7 @@ onActivated(() => {
         <el-card shadow="hover" class="stat-card">
           <div class="stat-content">
             <div class="stat-number text-warning">
-              {{ stats.pendingReview }}
+              {{ stats.pendingTotal }}
             </div>
             <div class="stat-label">当前待处理审查</div>
           </div>
@@ -883,13 +714,13 @@ onActivated(() => {
               <div class="flex justify-between items-center">
                 <span>{{ course.courseName }}</span>
                 <el-tag
-                  v-if="course.pendingCount > 0"
+                  v-if="course.pendingTotal > 0"
                   size="small"
                   type="warning"
                   effect="light"
                   round
                 >
-                  {{ course.pendingCount }}
+                  {{ course.pendingTotal }}
                 </el-tag>
               </div>
             </el-option>
@@ -909,35 +740,6 @@ onActivated(() => {
               :value="opt.value"
             />
           </el-select>
-        </el-form-item>
-        <el-form-item label="审核状态">
-          <el-select
-            v-model="searchForm.status"
-            placeholder="状态筛选"
-            clearable
-            style="width: 140px"
-            @change="handleSearch"
-          >
-            <el-option
-              v-for="opt in statusOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="模糊搜索">
-          <el-input
-            v-model="searchForm.keyword"
-            placeholder="内容/标题关键字"
-            clearable
-            style="width: 220px"
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">

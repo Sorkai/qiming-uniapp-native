@@ -1,0 +1,15 @@
+packages:
+  - "."
+
+allowBuilds:
+  "@parcel/watcher": true
+  "@tailwindcss/oxide": true
+  "@vue-office/docx": true
+  "@vue-office/excel": true
+  "@vue-office/pptx": true
+  core-js: true
+  cos-js-sdk-v5: true
+  es5-ext: true
+  esbuild: true
+  typeit: true
+  vue-demi: true

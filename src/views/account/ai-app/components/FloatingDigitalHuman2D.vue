@@ -50,15 +50,14 @@ const stateLabels: Record<DigitalHumanState, string> = {
 const bubbleSize = 88;
 const windowPadding = 18;
 const storageKey = computed(
-  () =>
-    props.storageKey ||
-    `ai-app-floating-digital-human-2d-${props.anchor}`
+  () => props.storageKey || `ai-app-floating-digital-human-2d-${props.anchor}`
 );
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const isReady = ref(false);
 const isPaused = ref(false);
 const localSpeaking = ref(false);
+const speechAmplitude = ref(0);
 const position = ref({ x: 0, y: 0 });
 const hasUserPosition = ref(false);
 const dragState = ref<{
@@ -70,7 +69,6 @@ const dragState = ref<{
 } | null>(null);
 
 let speakingTimer: ReturnType<typeof setTimeout> | null = null;
-let preloadVideos: HTMLVideoElement[] = [];
 
 const currentState = computed<DigitalHumanState>(() =>
   localSpeaking.value ? "saying" : props.state
@@ -86,13 +84,19 @@ const ariaLabel = computed(
 const bubbleStyle = computed(() => ({
   width: `${bubbleSize}px`,
   height: `${bubbleSize}px`,
-  transform: `translate3d(${position.value.x}px, ${position.value.y}px, 0)`,
+  transform: `translate3d(${position.value.x}px, ${position.value.y}px, 0) scale(${1 + speechAmplitude.value * 0.035})`,
   opacity: isReady.value ? 1 : 0
 }));
 
 const clampPosition = (nextX: number, nextY: number) => {
-  const maxX = Math.max(windowPadding, window.innerWidth - bubbleSize - windowPadding);
-  const maxY = Math.max(windowPadding, window.innerHeight - bubbleSize - windowPadding);
+  const maxX = Math.max(
+    windowPadding,
+    window.innerWidth - bubbleSize - windowPadding
+  );
+  const maxY = Math.max(
+    windowPadding,
+    window.innerHeight - bubbleSize - windowPadding
+  );
   return {
     x: Math.min(Math.max(windowPadding, nextX), maxX),
     y: Math.min(Math.max(windowPadding, nextY), maxY)
@@ -158,34 +162,6 @@ const restorePosition = () => {
   position.value = getDefaultPosition();
 };
 
-const preloadStateVideos = () => {
-  const run = () => {
-    preloadVideos = Object.values(stateAssets).map(src => {
-      const video = document.createElement("video");
-      video.src = src;
-      video.preload = "auto";
-      video.muted = true;
-      video.playsInline = true;
-      video.load();
-      return video;
-    });
-  };
-
-  const idle = (
-    window as Window & {
-      requestIdleCallback?: (
-        callback: IdleRequestCallback,
-        options?: IdleRequestOptions
-      ) => number;
-    }
-  ).requestIdleCallback;
-  if (typeof idle === "function") {
-    idle(run, { timeout: 1200 });
-  } else {
-    window.setTimeout(run, 300);
-  }
-};
-
 const playVideo = async () => {
   await nextTick();
   const video = videoRef.value;
@@ -245,12 +221,37 @@ const resumeRender = () => {
 function speak(text = "") {
   if (speakingTimer) clearTimeout(speakingTimer);
   localSpeaking.value = true;
-  isPaused.value = false;
   const duration = Math.min(Math.max(text.length * 80, 1600), 5200);
   speakingTimer = setTimeout(() => {
     localSpeaking.value = false;
   }, duration);
   void playVideo();
+}
+
+function setSpeechState(state: string) {
+  if (speakingTimer) clearTimeout(speakingTimer);
+  localSpeaking.value = state === "speaking";
+  if (!localSpeaking.value) speechAmplitude.value = 0;
+  void playVideo();
+}
+
+function setAmplitude(value: number) {
+  speechAmplitude.value = Math.min(1, Math.max(0, Number(value) || 0));
+  if (speechAmplitude.value > 0.03) localSpeaking.value = true;
+}
+
+function applyViseme(id: string, weight: number) {
+  setAmplitude(id === "sil" ? 0 : weight);
+}
+
+function triggerMotion() {
+  // 2D 资源使用 speaking 视频表达动作，定时 motion 由 3D 模型消费。
+}
+
+function resetSpeech() {
+  if (speakingTimer) clearTimeout(speakingTimer);
+  localSpeaking.value = false;
+  speechAmplitude.value = 0;
 }
 
 watch(currentVideo, () => {
@@ -274,19 +275,25 @@ watch(
 onMounted(() => {
   restorePosition();
   isReady.value = true;
-  preloadStateVideos();
   window.addEventListener("resize", handleResize);
   void playVideo();
 });
 
 onUnmounted(() => {
   if (speakingTimer) clearTimeout(speakingTimer);
-  preloadVideos.forEach(video => video.removeAttribute("src"));
-  preloadVideos = [];
   window.removeEventListener("resize", handleResize);
 });
 
-defineExpose({ speak, pauseRender, resumeRender });
+defineExpose({
+  speak,
+  setSpeechState,
+  setAmplitude,
+  applyViseme,
+  triggerMotion,
+  resetSpeech,
+  pauseRender,
+  resumeRender
+});
 </script>
 
 <template>
@@ -309,7 +316,7 @@ defineExpose({ speak, pauseRender, resumeRender });
       autoplay
       loop
       playsinline
-      preload="auto"
+      preload="metadata"
     />
     <span class="floating-human-2d__dot" />
   </div>
@@ -325,7 +332,11 @@ defineExpose({ speak, pauseRender, resumeRender });
   overflow: visible;
   cursor: grab;
   background:
-    radial-gradient(circle at 50% 24%, rgba(255, 255, 255, 0.95), transparent 45%),
+    radial-gradient(
+      circle at 50% 24%,
+      rgba(255, 255, 255, 0.95),
+      transparent 45%
+    ),
     linear-gradient(145deg, #f6f9ff, #fff4fb);
   border: 1px solid rgba(191, 203, 230, 0.9);
   border-radius: 999px;

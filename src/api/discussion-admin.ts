@@ -35,12 +35,6 @@ export async function getUserAvatars(
       for (const user of userList) {
         userAvatarCache.set(user.id, user.avatar || "");
       }
-      console.log(
-        "[API] getUserAvatars - 缓存更新完成，用户数量:",
-        userList.length,
-        "用户头像示例:",
-        userList.slice(0, 3).map((u: any) => ({ id: u.id, avatar: u.avatar }))
-      );
     } catch (error) {
       console.error("获取用户列表失败:", error);
     }
@@ -150,6 +144,13 @@ export interface ReportListResponse {
   list: ReportItem[];
 }
 
+/** 举报统计 */
+export interface ReportStatistics {
+  totalReports: number;
+  pendingReports: number;
+  resolvedToday: number;
+}
+
 /** 处理举报请求 */
 export interface HandleReportRequest {
   action: "accept" | "reject";
@@ -170,7 +171,7 @@ export interface ReviewQueueItem extends DiscussionPost {
 export interface PendingItem {
   id: number;
   type: "post" | "reply";
-  courseId: string;
+  courseId: string | number;
   courseName: string;
   postId?: number;
   postTitle?: string;
@@ -185,6 +186,60 @@ export interface PendingItem {
 export interface PendingListResponse {
   total: number;
   list: PendingItem[];
+}
+
+/** 待审核统计 */
+export interface PendingStatistics {
+  totalPosts: number;
+  totalReplies: number;
+  pendingPosts: number;
+  pendingReplies: number;
+  pendingTotal: number;
+  todayPosts: number;
+  courses: Array<{
+    courseId: number;
+    courseName: string;
+    pendingPosts: number;
+    pendingReplies: number;
+    pendingTotal: number;
+  }>;
+}
+
+export function mapPendingItemToReviewQueueItem(
+  item: PendingItem,
+  avatar?: string
+): ReviewQueueItem {
+  return {
+    id: String(item.id),
+    title: item.postTitle || (item.type === "reply" ? "[回复]" : ""),
+    content: item.content,
+    contentHtml: item.content,
+    author: {
+      id: String(item.authorId),
+      name: item.authorName,
+      avatar: avatar || item.authorAvatar || "",
+      isTeacher: false,
+      isAdmin: false
+    },
+    tags: [],
+    status: "pending",
+    isPinned:
+      (item as any).isPinned === true ||
+      (item as any).isPinned === 1 ||
+      String((item as any).isPinned) === "true" ||
+      String((item as any).isPinned) === "1",
+    likeCount: 0,
+    replyCount: 0,
+    viewCount: 0,
+    isLiked: false,
+    createdAt: item.createTime,
+    courseName: item.courseName,
+    riskLevel: "low",
+    matchedWords: [],
+    priority: "medium",
+    itemType: item.type,
+    postId: item.postId
+  };
 }
 
 /** 敏感词风险等级 (1-低, 2-中, 3-高) */
@@ -219,7 +274,7 @@ export interface UserReputation {
 /** 审计日志 */
 export interface AuditLog {
   id: number;
-  targetType: "post" | "reply";
+  targetType: "post" | "reply" | "report";
   targetId: number;
   action: string;
   operatorId: number;
@@ -394,16 +449,13 @@ export function reviewPost(
   postId: string | number,
   data: { action: "approve" | "reject"; reason?: string; note?: string }
 ) {
-  // 兼容旧的参数名note，转换为新的参数名 reason
   const requestData = {
     action: data.action,
-    reason: data.reason || data.note
+    reviewNote: data.note || data.reason
   };
-  return http.request<{ code: number; msg: string; data: object }>(
-    "post",
-    `/edu/backend/v1/discussions/${postId}/review`,
-    { data: requestData }
-  );
+  return http.request<object>("post", `/edu/backend/v1/discussions/${postId}/review`, {
+    data: requestData
+  });
 }
 
 /**
@@ -417,9 +469,9 @@ export function reviewReply(
 ) {
   const requestData = {
     action: data.action,
-    reason: data.reason || data.note
+    reviewNote: data.note || data.reason
   };
-  return http.request<{ code: number; msg: string; data: object }>(
+  return http.request<object>(
     "post",
     `/edu/backend/v1/discussions/replies/${replyId}/review`,
     { data: requestData }
@@ -431,10 +483,7 @@ export function reviewReply(
  * @param postId 帖子ID
  */
 export function pinPost(postId: string | number) {
-  return http.request<{ code: number; msg: string; data: object }>(
-    "post",
-    `/edu/backend/v1/discussions/${postId}/pin`
-  );
+  return http.request<object>("post", `/edu/backend/v1/discussions/${postId}/pin`);
 }
 
 /**
@@ -442,11 +491,9 @@ export function pinPost(postId: string | number) {
  * @param postId 帖子ID
  */
 export function unpinPost(postId: string | number) {
-  return http.request<{ code: number; msg: string; data: object }>(
-    "delete",
-    `/edu/backend/v1/discussions/${postId}/pin`,
-    { params: { _t: Date.now() } }
-  );
+  return http.request<object>("delete", `/edu/backend/v1/discussions/${postId}/pin`, {
+    params: { _t: Date.now() }
+  });
 }
 
 /**
@@ -455,11 +502,9 @@ export function unpinPost(postId: string | number) {
  * @param reason 删除原因
  */
 export function forceDeletePost(postId: string | number, reason?: string) {
-  return http.request<{ code: number; msg: string; data: object }>(
-    "delete",
-    `/edu/backend/v1/discussions/${postId}/force`,
-    { data: { reason } }
-  );
+  return http.request<object>("delete", `/edu/backend/v1/discussions/${postId}/force`, {
+    data: { reason }
+  });
 }
 
 /**
@@ -468,7 +513,7 @@ export function forceDeletePost(postId: string | number, reason?: string) {
  * @param reason 删除原因
  */
 export function forceDeleteReply(replyId: string | number, reason?: string) {
-  return http.request<{ code: number; msg: string; data: object }>(
+  return http.request<object>(
     "delete",
     `/edu/backend/v1/discussions/replies/${replyId}/force`,
     { data: { reason } }
@@ -511,12 +556,27 @@ export function getReportList(params: {
   status?: ReportStatus;
   pageNum: number;
   pageSize?: number;
-}) {
-  return http.request<ReportListResponse>(
-    "get",
-    "/edu/backend/v1/discussions/reports",
-    { params }
-  );
+}): Promise<ReportListResponse> {
+  return http
+    .request<MaybeWrappedResponse<ReportListResponse>>(
+      "get",
+      "/edu/backend/v1/discussions/reports",
+      { params }
+    )
+    .then(unwrapResponseData);
+}
+
+/**
+ * 获取举报统计
+ * GET /edu/backend/v1/discussions/reports/statistics
+ */
+export function getReportStatistics(): Promise<ReportStatistics> {
+  return http
+    .request<MaybeWrappedResponse<ReportStatistics>>(
+      "get",
+      "/edu/backend/v1/discussions/reports/statistics"
+    )
+    .then(unwrapResponseData);
 }
 
 /**
@@ -524,7 +584,7 @@ export function getReportList(params: {
  * POST /edu/backend/v1/discussions/reports/{reportId}/handle
  */
 export function handleReport(reportId: number, data: HandleReportRequest) {
-  return http.request<any>(
+  return http.request<object>(
     "post",
     `/edu/backend/v1/discussions/reports/${reportId}/handle`,
     { data }
@@ -674,7 +734,7 @@ export function updateUserReputation(
  * @param params 查询参数
  */
 export function getAuditLogs(params?: {
-  targetType?: "post" | "reply";
+  targetType?: "post" | "reply" | "report";
   action?: string;
   operatorId?: number;
   startTime?: string;
@@ -721,26 +781,30 @@ export async function getPendingList(params?: {
   type?: "all" | "post" | "reply";
   pageNum: number;
   pageSize?: number;
-}) {
-  const response = await http.request<CommonResponse<PendingListResponse>>(
-    "get",
-    "/edu/backend/v1/discussions/pending",
-    { params }
-  );
+}): Promise<PendingListResponse> {
+  return http
+    .request<MaybeWrappedResponse<PendingListResponse>>(
+      "get",
+      "/edu/backend/v1/discussions/pending",
+      { params }
+    )
+    .then(unwrapResponseData);
+}
 
-  //调试：打印后端返回的数据，检查 authorAvatar 字段
-  const responseData = (response as any)?.data || response;
-  console.log("[API] getPendingList -后端返回数据:", responseData);
-  console.log(
-    "[API] getPendingList - authorAvatar 字段检查:",
-    (responseData?.list || []).map((item: PendingItem) => ({
-      id: item.id,
-      authorName: item.authorName,
-      authorAvatar: item.authorAvatar
-    }))
-  );
-
-  return response;
+/**
+ * 获取待审核统计
+ * GET /edu/backend/v1/discussions/pending/statistics
+ */
+export function getPendingStatistics(params?: {
+  courseId?: string | number;
+}): Promise<PendingStatistics> {
+  return http
+    .request<MaybeWrappedResponse<PendingStatistics>>(
+      "get",
+      "/edu/backend/v1/discussions/pending/statistics",
+      { params }
+    )
+    .then(unwrapResponseData);
 }
 
 /**

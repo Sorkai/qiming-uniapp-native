@@ -4,6 +4,7 @@
     v-loading="loading"
     :model="formData"
     :rules="formRules"
+    :scroll-to-error="true"
     label-width="100px"
   >
     <el-form-item label="课程标题" prop="title">
@@ -692,7 +693,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, watch, onMounted } from "vue";
+import { ref, reactive, watch, onMounted, nextTick } from "vue";
 import { ElMessage } from "element-plus";
 import COS from "cos-js-sdk-v5";
 import { completeStsUpload, initStsUpload } from "@/api/user";
@@ -717,6 +718,7 @@ const props = defineProps({
 const emit = defineEmits(["update:modelValue", "submit"]);
 
 const formRef = ref();
+const lastInvalidFields = ref<Record<string, unknown> | null>(null);
 
 // 定义课时折叠状态管理的类型
 interface HoursActiveState {
@@ -1435,7 +1437,26 @@ const removeAttrResource = index => {
 
 // 表单验证方法
 const validate = async () => {
-  return await formRef.value.validate();
+  try {
+    lastInvalidFields.value = null;
+    return await formRef.value.validate();
+  } catch (error: any) {
+    lastInvalidFields.value = error?.fields || error || null;
+    throw error;
+  }
+};
+
+const scrollToFirstError = async () => {
+  await nextTick();
+  const firstInvalidProp = Object.keys(lastInvalidFields.value || {})[0];
+  if (firstInvalidProp && formRef.value?.scrollToField) {
+    formRef.value.scrollToField(firstInvalidProp);
+    return;
+  }
+
+  document
+    .querySelector(".el-form-item.is-error")
+    ?.scrollIntoView({ behavior: "smooth", block: "center" });
 };
 
 // 初始化
@@ -1447,6 +1468,7 @@ onMounted(() => {
 // 对外暴露方法
 defineExpose({
   validate,
+  scrollToFirstError,
   formRef
 });
 </script>

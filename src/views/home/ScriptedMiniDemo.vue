@@ -19,24 +19,26 @@
         </svg>
         <span>{{ demo.path }}</span>
       </div>
-      <span class="smd__live"><i />实时演示</span>
+      <span class="smd__live" title="界面预览" aria-label="界面预览">
+        <Icon icon="lucide:monitor-play" aria-hidden="true" />
+      </span>
     </div>
 
     <div class="smd__workspace">
       <aside class="smd__side">
         <div class="smd__brand">
-          <strong>Q</strong>
+          <img :src="logo" alt="" />
           <span>启明智教</span>
         </div>
         <p>工作区</p>
         <button
           v-for="(item, i) in navItems"
-          :key="item"
+          :key="item.label"
           type="button"
           :class="{ 'is-active': i === 0 }"
         >
-          <i>{{ item.slice(0, 1) }}</i>
-          <span>{{ item }}</span>
+          <Icon :icon="item.icon" aria-hidden="true" />
+          <span>{{ item.label }}</span>
         </button>
       </aside>
 
@@ -47,12 +49,15 @@
             <span>/</span>
             <strong>{{ demo.module }}</strong>
           </div>
-          <span class="smd__mesh"><i />教学服务已连接</span>
+          <span class="smd__mesh">
+            <Icon icon="lucide:cloud-check" aria-hidden="true" />
+            课程数据已同步
+          </span>
         </div>
 
         <section class="smd__head">
           <div>
-            <p>智能工作流演示</p>
+            <p>课程工作台</p>
             <h4>{{ demo.title || demo.module }}</h4>
           </div>
           <div class="smd__metrics">
@@ -93,68 +98,15 @@
           </svg>
         </section>
 
-        <section class="smd__pipeline">
-          <svg
-            class="smd__flow"
-            viewBox="0 0 640 80"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <linearGradient
-                :id="riverGradientId"
-                x1="0%"
-                y1="0%"
-                x2="100%"
-                y2="0%"
-              >
-                <stop
-                  offset="0%"
-                  :stop-color="demo.accent"
-                  stop-opacity="0.1"
-                />
-                <stop offset="45%" :stop-color="demo.accent" />
-                <stop offset="100%" stop-color="#10b981" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M24 44 C 138 10, 194 70, 304 38 S 486 10, 616 44"
-              class="smd__flowBase"
-            />
-            <path
-              d="M24 44 C 138 10, 194 70, 304 38 S 486 10, 616 44"
-              class="smd__flowLine"
-              :stroke="`url(#${riverGradientId})`"
-            />
-            <circle r="5" class="smd__packet">
-              <animateMotion
-                dur="4.8s"
-                repeatCount="indefinite"
-                path="M24 44 C 138 10, 194 70, 304 38 S 486 10, 616 44"
-              />
-            </circle>
-          </svg>
-
-          <div class="smd__nodes">
-            <article
-              v-for="(step, i) in demo.steps"
-              :key="step.label"
-              :style="{ animationDelay: `${i * 0.1}s` }"
-            >
-              <span>{{ String(i + 1).padStart(2, "0") }}</span>
-              <strong>{{ step.label }}</strong>
-              <small>{{ step.detail }}</small>
-            </article>
-          </div>
-        </section>
-
         <section class="smd__stack">
           <article
             v-for="item in demo.stack"
-            :key="item.key"
+            :key="item.label"
             :title="`${item.label} · ${item.desc}`"
           >
-            <strong>{{ item.key }}</strong>
+            <strong>
+              <Icon :icon="item.icon" aria-hidden="true" />
+            </strong>
             <span>{{ item.label }}</span>
           </article>
         </section>
@@ -176,6 +128,8 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { Icon } from "@iconify/vue";
+import logo from "@/assets/logo.png";
 
 interface DemoStep {
   label: string;
@@ -189,7 +143,7 @@ interface DemoMetric {
 }
 
 interface StackItem {
-  key: string;
+  icon: string;
   label: string;
   desc: string;
 }
@@ -214,15 +168,15 @@ const props = withDefaults(
 );
 
 const fallbackScene: ScriptedMiniScene = {
-  module: "智能工作流",
-  title: "AI 备课流水线",
+  module: "课程工作台",
+  title: "本节课备课安排",
   path: "intelledu.com/workspace",
   accent: "#4a90e2",
   steps: [
     { label: "指令解析", detail: "章节目标" },
     { label: "学情接入", detail: "薄弱点" },
     { label: "课堂编排", detail: "互动节奏" },
-    { label: "评价闭环", detail: "诊断任务" }
+    { label: "课后反馈", detail: "诊断任务" }
   ],
   metrics: [
     { label: "串联模块", value: "6", trend: "+2" },
@@ -230,10 +184,18 @@ const fallbackScene: ScriptedMiniScene = {
     { label: "命中率", value: "96%", trend: "+11%" }
   ],
   stack: [
-    { key: "智", label: "教学智能体", desc: "理解任务意图" },
-    { key: "编", label: "任务编排", desc: "串联教学流程" },
-    { key: "学", label: "学情状态", desc: "沉淀学生表现" },
-    { key: "评", label: "评价闭环", desc: "反馈下一步行动" }
+    { icon: "lucide:sparkles", label: "教学助手", desc: "理解任务意图" },
+    { icon: "lucide:workflow", label: "任务编排", desc: "串联教学流程" },
+    {
+      icon: "lucide:chart-no-axes-combined",
+      label: "学情状态",
+      desc: "记录学生表现"
+    },
+    {
+      icon: "lucide:clipboard-check",
+      label: "课后反馈",
+      desc: "反馈下一步行动"
+    }
   ],
   console: [
     "章节扫描完成",
@@ -243,10 +205,8 @@ const fallbackScene: ScriptedMiniScene = {
   ]
 };
 
-const barPalette = ["#10b981", "#4a90e2", "#8b5cf6"];
+const barPalette = ["#2d9d78", "#d99a32"];
 const barHeights = [84, 66, 76];
-const riverGradientId = `smd-flow-${Math.random().toString(36).slice(2, 9)}`;
-
 const demo = computed<ScriptedMiniScene>(() => {
   const scene = props.scene ?? {};
   return {
@@ -263,16 +223,26 @@ const styleVars = computed(() => ({
   "--smd-accent": demo.value.accent
 }));
 
-const navItems = computed(() => [
-  demo.value.module,
-  ...demo.value.steps.slice(0, 4).map(item => item.label)
-]);
+const navIcons = [
+  "lucide:layout-dashboard",
+  "lucide:target",
+  "lucide:scan-search",
+  "lucide:list-checks",
+  "lucide:send"
+];
+
+const navItems = computed(() =>
+  [
+    demo.value.module,
+    ...demo.value.steps.slice(0, 4).map(item => item.label)
+  ].map((label, index) => ({ label, icon: navIcons[index] }))
+);
 
 const bars = computed(() =>
   demo.value.metrics.map((metric, i) => ({
     ...metric,
     height: barHeights[i % barHeights.length],
-    color: i === 0 ? demo.value.accent : barPalette[i % barPalette.length]
+    color: i === 0 ? demo.value.accent : barPalette[(i - 1) % barPalette.length]
   }))
 );
 
@@ -292,20 +262,20 @@ const radarPoints = computed(() => {
 
 <style lang="scss" scoped>
 .smd {
-  --smd-border: rgb(0 0 0 / 8%);
-  --smd-muted: rgb(0 0 0 / 52%);
-  --smd-soft: rgb(246 248 251);
+  --smd-border: #e5e8ec;
+  --smd-muted: #5f6368;
+  --smd-soft: #f6f8fb;
 
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   min-height: 420px;
-  color: rgb(17 24 39);
+  color: #202124;
   background: #fff;
   border: 1px solid var(--smd-border);
-  border-radius: 14px;
-  box-shadow: 0 26px 70px -34px rgb(15 23 42 / 30%);
+  border-radius: 10px;
+  box-shadow: 0 18px 44px -34px rgb(15 23 42 / 28%);
   overflow: hidden;
 }
 
@@ -320,7 +290,7 @@ const radarPoints = computed(() => {
   align-items: center;
   height: 38px;
   padding: 0 14px;
-  background: linear-gradient(90deg, #fafafa, #f4f6f9);
+  background: #f7f7f5;
   border-bottom: 1px solid var(--smd-border);
 }
 
@@ -370,27 +340,42 @@ const radarPoints = computed(() => {
   }
 }
 
-.smd__live,
+.smd__live {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #2468aa;
+  background: rgb(74 144 226 / 10%);
+  border: 1px solid rgb(74 144 226 / 24%);
+  border-radius: 7px;
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
 .smd__mesh {
   display: inline-flex;
   flex: 0 0 auto;
   gap: 6px;
   align-items: center;
-  height: 24px;
-  padding: 0 10px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #047857;
-  background: rgb(16 185 129 / 10%);
-  border: 1px solid rgb(16 185 129 / 28%);
-  border-radius: 999px;
+  height: 26px;
+  padding: 0 9px;
+  font-size: 10px;
+  font-weight: 650;
+  color: #2468aa;
+  background: rgb(74 144 226 / 8%);
+  border: 1px solid rgb(74 144 226 / 18%);
+  border-radius: 7px;
 
-  i {
-    width: 8px;
-    height: 8px;
-    background: #34d399;
-    border-radius: 50%;
-    animation: smd-pulse 1.8s ease-in-out infinite;
+  svg {
+    width: 13px;
+    height: 13px;
   }
 }
 
@@ -399,10 +384,7 @@ const radarPoints = computed(() => {
   grid-template-columns: 176px minmax(0, 1fr);
   flex: 1 1 auto;
   min-height: 0;
-  background:
-    radial-gradient(circle at 1px 1px, rgb(0 0 0 / 8%) 1px, transparent 0) 0 0 /
-      22px 22px,
-    #fff;
+  background: #fff;
 }
 
 .smd__side {
@@ -431,11 +413,11 @@ const radarPoints = computed(() => {
     cursor: default;
     background: transparent;
     border: 0;
-    border-radius: 7px;
+    border-radius: 6px;
 
     &.is-active {
-      color: rgb(17 24 39);
-      background: rgb(0 0 0 / 6%);
+      color: #2468aa;
+      background: rgb(74 144 226 / 10%);
     }
 
     span {
@@ -445,18 +427,11 @@ const radarPoints = computed(() => {
       white-space: nowrap;
     }
 
-    i {
-      display: inline-grid;
+    > svg {
       flex: 0 0 auto;
-      width: 18px;
-      height: 18px;
-      place-items: center;
-      font-style: normal;
-      font-size: 10px;
-      color: color-mix(in srgb, var(--smd-accent) 76%, #111827);
-      background: color-mix(in srgb, var(--smd-accent) 12%, transparent);
-      border: 1px solid color-mix(in srgb, var(--smd-accent) 24%, transparent);
-      border-radius: 5px;
+      width: 17px;
+      height: 17px;
+      color: color-mix(in srgb, var(--smd-accent) 82%, #202124);
     }
   }
 }
@@ -467,14 +442,11 @@ const radarPoints = computed(() => {
   align-items: center;
   padding: 0 10px;
 
-  strong {
-    display: inline-grid;
-    width: 22px;
-    height: 22px;
-    place-items: center;
-    font-size: 13px;
-    color: #fff;
-    background: #2f3437;
+  img {
+    display: block;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
     border-radius: 5px;
   }
 
@@ -490,7 +462,7 @@ const radarPoints = computed(() => {
 
 .smd__main {
   display: grid;
-  grid-template-rows: auto auto minmax(132px, 1fr) auto auto auto;
+  grid-template-rows: auto auto minmax(132px, 1fr) auto auto;
   gap: 12px;
   min-width: 0;
   min-height: 0;
@@ -523,11 +495,6 @@ const radarPoints = computed(() => {
   }
 }
 
-.smd__mesh {
-  height: 26px;
-  text-transform: uppercase;
-}
-
 .smd__head {
   align-items: center;
 
@@ -541,9 +508,11 @@ const radarPoints = computed(() => {
   h4 {
     margin: 0;
     font-size: 22px;
-    font-weight: 800;
-    line-height: 1.18;
-    color: rgb(17 24 39);
+    font-weight: 700;
+    line-height: 1.28;
+    letter-spacing: 0;
+    color: #202124;
+    text-wrap: balance;
   }
 }
 
@@ -555,14 +524,13 @@ const radarPoints = computed(() => {
   overflow: hidden;
   background: rgb(255 255 255 / 82%);
   border: 1px solid var(--smd-border);
-  border-radius: 12px;
+  border-radius: 8px;
 
   article {
     min-width: 0;
     padding: 10px 12px;
-    opacity: 0;
-    transform: translateY(8px);
-    animation: smd-rise 0.45s ease-out forwards;
+    opacity: 1;
+    transform: none;
 
     + article {
       border-left: 1px solid var(--smd-border);
@@ -591,7 +559,7 @@ const radarPoints = computed(() => {
 
   em {
     font-style: normal;
-    color: #10b981;
+    color: #278365;
   }
 }
 
@@ -641,14 +609,9 @@ const radarPoints = computed(() => {
     width: 100%;
     height: var(--bar-h);
     min-height: 28px;
-    background: linear-gradient(
-      180deg,
-      var(--bar-c),
-      color-mix(in srgb, var(--bar-c) 56%, #fff)
-    );
-    border-radius: 6px 6px 0 0;
-    box-shadow: 0 14px 30px -18px var(--bar-c);
-    animation: smd-grow 0.7s ease-out both;
+    background: color-mix(in srgb, var(--bar-c) 28%, #fff);
+    border-radius: 3px 3px 0 0;
+    box-shadow: inset 0 3px 0 var(--bar-c);
     transform-origin: bottom;
   }
 }
@@ -670,113 +633,12 @@ const radarPoints = computed(() => {
 .smd__radarFill {
   fill: color-mix(in srgb, var(--smd-accent) 22%, transparent) !important;
   stroke: none !important;
-  animation: smd-fade 0.8s ease-out both;
 }
 
 .smd__radarLine {
   fill: none;
   stroke: var(--smd-accent);
   stroke-width: 2;
-  filter: drop-shadow(
-    0 5px 10px color-mix(in srgb, var(--smd-accent) 24%, transparent)
-  );
-  stroke-dasharray: 210;
-  stroke-dashoffset: 210;
-  animation: smd-draw 1.2s ease-out forwards;
-}
-
-.smd__pipeline {
-  position: relative;
-  min-height: 112px;
-  padding: 10px 12px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 78%);
-  border: 1px solid var(--smd-border);
-  border-radius: 12px;
-}
-
-.smd__flow {
-  position: absolute;
-  top: 0;
-  left: 10px;
-  width: calc(100% - 20px);
-  height: 74px;
-}
-
-.smd__flowBase,
-.smd__flowLine {
-  fill: none;
-  stroke-linecap: round;
-}
-
-.smd__flowBase {
-  stroke: rgb(0 0 0 / 8%);
-  stroke-width: 9;
-}
-
-.smd__flowLine {
-  stroke-width: 3;
-  stroke-dasharray: 18 16;
-  animation: smd-flow 1.8s linear infinite;
-}
-
-.smd__packet {
-  fill: #fff;
-  stroke: var(--smd-accent);
-  stroke-width: 2;
-}
-
-.smd__nodes {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  height: 100%;
-  padding-top: 42px;
-}
-
-.smd__nodes article {
-  min-width: 0;
-  padding: 10px;
-  background: #fff;
-  border: 1px solid color-mix(in srgb, var(--smd-accent) 24%, var(--smd-border));
-  border-radius: 10px;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: smd-rise 0.5s ease-out forwards;
-
-  span {
-    display: inline-grid;
-    width: 28px;
-    height: 22px;
-    margin-bottom: 7px;
-    place-items: center;
-    font-size: 10px;
-    font-weight: 800;
-    color: #fff;
-    background: var(--smd-accent);
-    border-radius: 7px;
-  }
-
-  strong,
-  small {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  strong {
-    font-size: 12px;
-    color: rgb(17 24 39);
-  }
-
-  small {
-    margin-top: 4px;
-    font-size: 10px;
-    color: var(--smd-muted);
-  }
 }
 
 .smd__stack {
@@ -793,7 +655,7 @@ const radarPoints = computed(() => {
     padding: 0 9px;
     background: var(--smd-soft);
     border: 1px solid var(--smd-border);
-    border-radius: 9px;
+    border-radius: 7px;
   }
 
   strong {
@@ -803,9 +665,15 @@ const radarPoints = computed(() => {
     height: 20px;
     place-items: center;
     font-size: 11px;
-    color: #fff;
-    background: var(--smd-accent);
-    border-radius: 6px;
+    color: color-mix(in srgb, var(--smd-accent) 88%, #202124);
+    background: color-mix(in srgb, var(--smd-accent) 11%, #fff);
+    border: 1px solid color-mix(in srgb, var(--smd-accent) 22%, #fff);
+    border-radius: 5px;
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
   }
 
   span {
@@ -824,25 +692,24 @@ const radarPoints = computed(() => {
   min-height: 0;
   padding: 10px 12px;
   overflow: hidden;
-  background: #f7fafc;
+  background: #f7f7f5;
   border: 1px solid var(--smd-border);
-  border-radius: 12px;
+  border-radius: 8px;
 
   div {
     display: flex;
     gap: 8px;
     align-items: center;
     min-width: 0;
-    opacity: 0;
-    transform: translateX(-8px);
-    animation: smd-log 0.45s ease-out forwards;
+    opacity: 1;
+    transform: none;
   }
 
   span {
     flex: 0 0 auto;
     width: 6px;
     height: 6px;
-    background: #10b981;
+    background: #4a90e2;
     border-radius: 50%;
   }
 
@@ -929,34 +796,6 @@ const radarPoints = computed(() => {
     min-height: 106px;
   }
 
-  .smd__nodes {
-    gap: 7px;
-    padding-top: 34px;
-  }
-
-  .smd__nodes article {
-    padding: 8px 6px;
-
-    span {
-      width: 24px;
-      height: 18px;
-      margin-bottom: 5px;
-      font-size: 9px;
-    }
-
-    strong {
-      font-size: 10px;
-    }
-
-    small {
-      display: none;
-    }
-  }
-
-  .smd__pipeline {
-    min-height: 90px;
-  }
-
   .smd__stack {
     article {
       justify-content: center;
@@ -1023,10 +862,6 @@ const radarPoints = computed(() => {
   .smd__radar {
     display: none;
   }
-
-  .smd__nodes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1065,18 +900,6 @@ const radarPoints = computed(() => {
     opacity: 0;
     transform: scale(0.9);
     transform-origin: center;
-  }
-}
-
-@keyframes smd-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes smd-flow {
-  to {
-    stroke-dashoffset: -34;
   }
 }
 

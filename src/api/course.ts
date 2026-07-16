@@ -135,6 +135,97 @@ export interface ApiResponse<T = any> {
   data: T;
 }
 
+export type CourseRebuildOperationStatus =
+  | "queued"
+  | "running"
+  | "converging"
+  | "restoring_source"
+  | "completed"
+  | "failed"
+  | "attention_required";
+
+export type CourseRebuildOperationPhase =
+  | "admission"
+  | "preflight"
+  | "evidence_revoke"
+  | "replace"
+  | "source_restore"
+  | "converge"
+  | "done";
+
+export type CourseRebuildJobType =
+  | "source_cache_invalidate"
+  | "source_storage_cleanup"
+  | "source_ai_cleanup"
+  | "new_course_hour_initialize"
+  | "source_evidence_restore";
+
+export interface CourseRebuildFact {
+  status: string;
+  pending: number;
+  failed: number;
+}
+
+export interface CourseRebuildOperation {
+  operationId: string;
+  status: CourseRebuildOperationStatus;
+  phase: CourseRebuildOperationPhase;
+  sourceCourseId: number;
+  newCourseId: number;
+  replacement: CourseRebuildFact;
+  cleanup: CourseRebuildFact;
+  initialization: CourseRebuildFact;
+  errorCode: string;
+  errorMessage: string;
+  retryable: boolean;
+}
+
+export interface CourseRebuildErrorResponse {
+  status: "error";
+  code: string;
+  message: string;
+  operationId?: string;
+}
+
+/**
+ * 发起管理员课程重建。接口返回 202 仅表示 operation 已受理，必须继续查询状态。
+ */
+export const startCourseRebuild = (data: {
+  sourceCourseId: number;
+  requestId: string;
+}) => {
+  return http.request<CourseRebuildOperation>(
+    "post",
+    "/edu/backend/v1/admin/course/rebuilds",
+    { data }
+  );
+};
+
+/** 获取课程重建 operation 的权威进度。 */
+export const getCourseRebuild = (operationId: string) => {
+  return http.request<CourseRebuildOperation>(
+    "get",
+    `/edu/backend/v1/admin/course/rebuilds/${encodeURIComponent(operationId)}`
+  );
+};
+
+/**
+ * 只重试管理员选中的失败作业。attention_required 作业必须显式确认后才能提交。
+ */
+export const retryCourseRebuildJobs = (
+  operationId: string,
+  data: {
+    jobTypes: CourseRebuildJobType[];
+    confirmAmbiguous?: boolean;
+  }
+) => {
+  return http.request<CourseRebuildOperation>(
+    "post",
+    `/edu/backend/v1/admin/course/rebuilds/${encodeURIComponent(operationId)}/jobs/retry`,
+    { data }
+  );
+};
+
 /**
  * 创建课程
  */

@@ -6,141 +6,70 @@
       v-model="activeTab"
       class="custom-tabs h-full flex flex-col relative z-10"
     >
-      <!-- 学习画像 -->
       <el-tab-pane label="学习画像" name="profile">
         <div
-          class="space-y-6 pt-2 overflow-y-auto custom-scrollbar h-full pr-2"
+          class="space-y-5 pt-2 overflow-y-auto custom-scrollbar h-full pr-2"
         >
-          <!-- 动态雷达图区域 -->
-          <div
-            class="w-full h-48 bg-gradient-to-br from-gray-50 to-white rounded-2xl border border-gray-100 p-2 relative group hover:shadow-md transition-shadow duration-500"
-          >
-            <div
-              ref="radarChartRef"
-              class="w-full h-full transform transition-transform duration-700 group-hover:scale-105"
-            />
-            <div
-              class="absolute top-2 right-2 flex items-center gap-1 transition-opacity duration-300"
-            >
-              <span class="relative flex h-2 w-2">
-                <span
-                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"
-                />
-                <span
-                  class="relative inline-flex rounded-full h-2 w-2 bg-success"
-                />
-              </span>
-              <span
-                class="text-xs text-gray-400 font-bold group-hover:text-success transition-colors"
-                >实时同步 中</span
-              >
+          <div class="profile-radar-panel">
+            <div class="profile-radar-panel__header">
+              <span>学习画像</span>
+              <el-tag size="small" effect="plain">同步中</el-tag>
             </div>
-            <!-- 指示光效 -->
-            <div
-              class="absolute -inset-1 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 blur-lg transition-opacity duration-700 pointer-events-none"
-            />
+            <div ref="radarChartRef" class="profile-radar-chart" />
           </div>
 
-          <!-- Agent 状态列表: 动画组 -->
           <div class="space-y-3 mt-4">
-            <div
-              class="text-xs font-bold text-gray-400 uppercase tracking-widest px-1 flex justify-between group cursor-pointer"
-            >
-              <span
-                class="group-hover:text-primary transition-colors duration-300"
-                >专属助手调度流
-              </span>
-              <el-icon
-                class="opacity-0 group-hover:opacity-100 group-hover:rotate-180 transition-all duration-500"
-                ><RefreshRight
-              /></el-icon>
+            <div class="inspector-section-title">
+              <span>调度流</span>
+              <el-icon><RefreshRight /></el-icon>
             </div>
 
-            <transition-group
-              appear
-              name="agent-list"
-              tag="div"
-              class="space-y-3"
-            >
+            <div class="space-y-3">
               <div
-                v-for="(agent, index) in agentItems"
+                v-for="agent in agentItems"
                 :key="agent.id"
-                :style="{ transitionDelay: `${index * 100}ms` }"
-                class="flex flex-col p-3 rounded-xl border border-gray-100 bg-white hover:border-primary/30 hover:bg-primary/5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group/agent"
+                class="agent-status-card"
               >
-                <div
-                  v-if="agent.status === 'running'"
-                  class="absolute top-0 left-0 w-1 h-full bg-primary animate-pulse"
-                />
-                <div
-                  v-else
-                  class="absolute top-0 left-0 w-1 h-full bg-success transition-all duration-500 transform origin-left"
-                />
-
                 <div
                   class="flex items-center justify-between mb-1 relative z-10"
                 >
-                  <span
-                    class="text-sm font-bold text-gray-800 group-hover/agent:text-primary transition-colors"
-                    >{{ agent.name }}</span
-                  >
+                  <span class="text-sm font-semibold text-gray-800">
+                    {{ agent.name }}
+                  </span>
 
-                  <transition name="fade" mode="out-in">
-                    <el-tag
-                      v-if="agent.status === 'running'"
-                      size="small"
-                      type="primary"
-                      effect="light"
-                      class="!scale-90 origin-right !rounded-full"
-                    >
-                      <div class="flex items-center gap-1">
-                        <el-icon class="is-loading"><Loading /></el-icon>
-                        处理中
-                      </div>
-                    </el-tag>
-                    <el-tag
-                      v-else
-                      size="small"
-                      type="success"
-                      effect="plain"
-                      class="!scale-90 origin-right !border-none flex items-center gap-1 bg-success/10 text-success"
-                    >
-                      <el-icon><Check /></el-icon>
-                      已完成
-                    </el-tag>
-                  </transition>
+                  <el-tag
+                    v-if="agent.status === 'running'"
+                    size="small"
+                    type="primary"
+                    effect="plain"
+                  >
+                    <el-icon class="is-loading mr-1"><Loading /></el-icon>
+                    处理中
+                  </el-tag>
+                  <el-tag v-else size="small" type="success" effect="plain">
+                    <el-icon class="mr-1"><Check /></el-icon>
+                    已完成
+                  </el-tag>
                 </div>
-                <span class="text-[13px] text-gray-400 relative z-10">{{
-                  agent.desc
-                }}</span>
+                <span class="text-sm text-gray-500 relative z-10 line-clamp-2">
+                  {{ agent.desc }}
+                </span>
               </div>
-            </transition-group>
+            </div>
           </div>
         </div>
       </el-tab-pane>
 
-      <!-- 生成的资源 -->
       <el-tab-pane label="拓展资源" name="resources">
         <div
           class="space-y-4 pt-2 overflow-y-auto custom-scrollbar h-full pr-2 pb-10"
         >
-          <transition-group
-            appear
-            name="stagger-list"
-            tag="div"
-            class="space-y-4"
-          >
+          <div class="space-y-4">
             <div
-              v-for="(res, index) in resources"
+              v-for="res in resources"
               :key="res.title"
-              :style="{ transitionDelay: `${index * 80}ms` }"
-              class="group/res p-3 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-400 cursor-pointer relative overflow-hidden"
+              class="resource-card"
             >
-              <!-- 悬浮光效背景 -->
-              <div
-                class="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-white/0 via-primary/5 to-white/0 opacity-0 group-hover/res:opacity-100 group-hover/res:animate-spin-slow pointer-events-none transition-opacity duration-500"
-              />
-
               <div class="flex items-start justify-between mb-2 relative z-10">
                 <el-tag
                   size="small"
@@ -149,31 +78,24 @@
                       ? 'success'
                       : 'info'
                   "
-                  round
-                  class="!px-2 transition-transform duration-300 group-hover/res:scale-105"
+                  effect="plain"
                   >{{ res.kind }}</el-tag
                 >
-                <el-button
-                  :icon="Download"
-                  circle
-                  size="small"
-                  text
-                  class="group-hover/res:bg-primary group-hover/res:text-white transition-all duration-300 transform group-hover/res:scale-110"
-                />
+                <el-button :icon="Download" circle size="small" text />
               </div>
               <h4
-                class="text-base font-bold text-gray-700 mb-1 group-hover/res:text-primary transition-colors relative z-10"
+                class="text-base font-semibold text-gray-700 mb-1 relative z-10"
               >
                 {{ res.title }}
               </h4>
               <p
                 v-if="res.desc"
-                class="text-xs text-gray-400 leading-snug relative z-10"
+                class="text-sm text-gray-500 leading-snug relative z-10 line-clamp-2"
               >
                 {{ res.desc }}
               </p>
             </div>
-          </transition-group>
+          </div>
         </div>
       </el-tab-pane>
     </el-tabs>
@@ -183,7 +105,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import {
-  InfoFilled,
   Download,
   Check,
   Loading,
@@ -205,6 +126,8 @@ const props = defineProps<{
 const activeTab = ref("profile");
 const radarChartRef = ref<HTMLElement>();
 let radarInstance: echarts.ECharts | null = null;
+let themeObserver: MutationObserver | null = null;
+const handleResize = () => radarInstance?.resize();
 
 const renderRadar = () => {
   if (!radarChartRef.value) return;
@@ -212,38 +135,61 @@ const renderRadar = () => {
     radarInstance = echarts.init(radarChartRef.value);
   }
 
+  const formatRadarLabel = (name: string) => {
+    if (!name) return "";
+    if (name.length <= 5) return name;
+    return name.replace(/(.{4,5})/g, "$1\n").trim();
+  };
+
   const indicator = props.profileDimensions.map(d => ({
     name: d.dimension || d.label,
     max: 100
   }));
   const values = props.profileDimensions.map(d => d.score || d.value || 0);
+  const isDark = document.documentElement.classList.contains("dark");
+  const radarLabelColor = isDark ? "#cbd6e8" : "#697386";
+  const radarLineColor = isDark
+    ? "rgba(148, 163, 184, 0.28)"
+    : "rgba(209, 213, 219, 0.65)";
+  const radarAreaColor = isDark
+    ? ["rgba(142, 175, 255, 0.08)", "rgba(15, 23, 42, 0.28)"]
+    : ["#fafafa", "#f5f7fa"];
 
   const option = {
-    tooltip: { trigger: "item" },
+    tooltip: {
+      trigger: "item",
+      backgroundColor: isDark ? "#121b2a" : "#fff",
+      borderColor: isDark ? "rgba(148, 163, 184, 0.26)" : "#e5e7eb",
+      textStyle: { color: isDark ? "#eef4ff" : "#303847" }
+    },
     radar: {
       indicator,
-      radius: "60%",
-      center: ["50%", "55%"],
+      radius: "48%",
+      center: ["50%", "52%"],
       splitNumber: 4,
-      axisName: { color: "#6b7280", fontSize: 10 },
-      splitLine: { lineStyle: { color: "rgba(209, 213, 219, 0.4)" } },
-      splitArea: { show: false },
-      axisLine: { lineStyle: { color: "rgba(209, 213, 219, 0.4)" } }
+      axisName: {
+        color: radarLabelColor,
+        fontSize: 11,
+        lineHeight: 15,
+        formatter: formatRadarLabel
+      },
+      splitLine: { lineStyle: { color: radarLineColor } },
+      splitArea: { show: true, areaStyle: { color: radarAreaColor } },
+      axisLine: { lineStyle: { color: radarLineColor } }
     },
     series: [
       {
-        name: "Learning Profile",
+        name: "学习画像",
         type: "radar",
         data: [
           {
             value: values,
-            name: "You",
-            areaStyle: { color: "rgba(94, 127, 248, 0.2)" },
-            lineStyle: { width: 2, color: "#5e7ff8" },
-            itemStyle: { color: "#5e7ff8" },
-            // Echarts 内置动画
-            animationDurationUpdate: 800,
-            animationEasingUpdate: "quinticInOut"
+            name: "画像",
+            areaStyle: { color: "rgba(95, 143, 232, 0.16)" },
+            lineStyle: { width: 2, color: isDark ? "#8eafff" : "#5f8fe8" },
+            itemStyle: { color: isDark ? "#8eafff" : "#5f8fe8" },
+            animationDurationUpdate: 500,
+            animationEasingUpdate: "cubicOut"
           }
         ]
       }
@@ -254,12 +200,18 @@ const renderRadar = () => {
 
 onMounted(() => {
   renderRadar();
-  window.addEventListener("resize", () => radarInstance?.resize());
+  themeObserver = new MutationObserver(renderRadar);
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class"]
+  });
+  window.addEventListener("resize", handleResize);
 });
 
 onUnmounted(() => {
   radarInstance?.dispose();
-  window.removeEventListener("resize", () => radarInstance?.resize());
+  themeObserver?.disconnect();
+  window.removeEventListener("resize", handleResize);
 });
 
 watch(() => props.profileDimensions, renderRadar, { deep: true });
@@ -267,6 +219,19 @@ watch(() => props.profileDimensions, renderRadar, { deep: true });
 
 <style scoped lang="scss">
 .custom-tabs {
+  min-height: 0;
+
+  :deep(.el-tabs__content) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  :deep(.el-tab-pane) {
+    height: 100%;
+    min-height: 0;
+  }
+
   :deep(.el-tabs__header) {
     margin: 0 0 16px 0;
   }
@@ -275,67 +240,87 @@ watch(() => props.profileDimensions, renderRadar, { deep: true });
     background-color: #f3f4f6;
   }
   :deep(.el-tabs__item) {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
     color: #9ca3af;
-    transition: all 0.3s;
+    transition: color 0.18s ease;
     &.is-active {
       color: var(--el-color-primary);
     }
   }
 }
 
-/* Agent 列表进入/离开动画 */
-.agent-list-enter-active,
-.agent-list-leave-active {
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.agent-list-enter-from,
-.agent-list-leave-to {
-  opacity: 0;
-  transform: translateX(30px) scale(0.95);
+.ai-inspector {
+  min-height: 0;
 }
 
-/* 资源列表交错动画 */
-.stagger-list-enter-active,
-.stagger-list-leave-active {
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.stagger-list-enter-from,
-.stagger-list-leave-to {
-  opacity: 0;
-  transform: translateY(20px) scale(0.9);
+.profile-radar-panel {
+  min-height: 360px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
 }
 
-/* 渐变切换动画 */
-.fade-enter-active,
-.fade-leave-active {
+.profile-radar-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303847;
+}
+
+.profile-radar-chart {
+  width: 100%;
+  height: 322px;
+}
+
+.inspector-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #303847;
+}
+
+.agent-status-card,
+.resource-card {
+  position: relative;
+  padding: 14px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 12px;
   transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: scale(0.8);
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+
+  &:hover {
+    background: #fafbfc;
+    border-color: #a9c4f6;
+  }
+
+  &::before {
+    position: absolute;
+    inset: 12px auto 12px 0;
+    width: 3px;
+    content: "";
+    background: #6f9ff0;
+    border-radius: 999px;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
 }
 
-/* 背景缓慢旋转动画 (仅在Hover时通过类触发) */
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-.animate-spin-slow {
-  animation: spin-slow 10s linear infinite;
-}
-
-/* 滚动条美化 */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
 }

@@ -1,40 +1,55 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { Refresh, FullScreen, Warning, Loading } from "@element-plus/icons-vue";
+import {
+  Refresh,
+  FullScreen,
+  Warning,
+  Loading,
+  CopyDocument,
+  Headset
+} from "@element-plus/icons-vue";
+
+const props = withDefaults(
+  defineProps<{
+    speechEnabled?: boolean;
+    voices?: Array<{ alias: string; label: string }>;
+    voiceAlias?: string;
+    speechStatus?: string;
+    speechDetail?: string;
+  }>(),
+  {
+    speechEnabled: false,
+    voices: () => [],
+    voiceAlias: "",
+    speechStatus: "语音未启用",
+    speechDetail: ""
+  }
+);
+const emit = defineEmits<{
+  (event: "update:voiceAlias", value: string): void;
+  (event: "copySpeechDiagnostics"): void;
+  (event: "testSpeechOutput"): void;
+}>();
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
-const humanUrl = computed(() => {
+const humanBaseUrl = computed(() => {
   // 获取当前基础路径，动态兼容部署环境
   const base = window.location.origin;
-  return `${base}/virtual-people/index.html?embed=ai-app`;
+  return `${base}/virtual-people/index.html`;
 });
+const humanUrl = computed(() => `${humanBaseUrl.value}?embed=ai-app`);
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
 const errored = ref(false);
 const reloadKey = ref(0);
 let probeTimer: ReturnType<typeof setTimeout> | null = null;
-let iframeReady = false;
-const pendingSpeakQueue: string[] = [];
-
-function flushPendingSpeak() {
-  const iframe = iframeRef.value;
-  if (!iframe || !iframe.contentWindow) return;
-  while (pendingSpeakQueue.length) {
-    const text = pendingSpeakQueue.shift()!;
-    try {
-      iframe.contentWindow.postMessage({ type: "speak", text }, "*");
-    } catch (err) {
-      console.warn("[VirtualHumanPanel] flush speak failed", err);
-    }
-  }
-}
 
 function postControlMessage(payload: Record<string, unknown>) {
   const iframe = iframeRef.value;
   if (!iframe || !iframe.contentWindow) return;
   try {
-    iframe.contentWindow.postMessage(payload, "*");
+    iframe.contentWindow.postMessage(payload, window.location.origin);
   } catch (err) {
     console.warn("[VirtualHumanPanel] control postMessage failed", err);
   }
@@ -43,13 +58,12 @@ function postControlMessage(payload: Record<string, unknown>) {
 function handleLoad() {
   loading.value = false;
   errored.value = false;
-  iframeReady = true;
   if (probeTimer) {
     clearTimeout(probeTimer);
     probeTimer = null;
   }
-  flushPendingSpeak();
   postControlMessage({ type: "resumeRender" });
+  postControlMessage({ type: "speechReset" });
 }
 
 function handleError() {
@@ -60,13 +74,17 @@ function handleError() {
 function refresh() {
   loading.value = true;
   errored.value = false;
-  iframeReady = false;
   reloadKey.value++;
   schedulePing();
 }
 
 function openFull() {
-  window.open(humanUrl.value, "_blank", "noopener");
+  window.open(humanBaseUrl.value, "_blank", "noopener");
+}
+
+function handleVoiceChange(event: Event) {
+  const value = (event.target as HTMLSelectElement | null)?.value;
+  if (value) emit("update:voiceAlias", value);
 }
 
 function schedulePing() {
@@ -88,19 +106,35 @@ onUnmounted(() => {
   if (probeTimer) clearTimeout(probeTimer);
 });
 
-// 对外暴露：让父组件可以触发数字人朗读 (自动带口型)
-// 如果 iframe 尚未加载完成，先把文本排队，加载完后再统一发送
+function setSpeechState(state: string) {
+  postControlMessage({ type: "speechState", state });
+}
+
 function speak(text: string) {
-  const iframe = iframeRef.value;
-  if (!iframe || !iframe.contentWindow || !iframeReady) {
-    pendingSpeakQueue.push(text);
-    return;
-  }
-  try {
-    iframe.contentWindow.postMessage({ type: "speak", text }, "*");
-  } catch (err) {
-    console.warn("[VirtualHumanPanel] speak() postMessage failed", err);
-  }
+  const normalized = text.trim();
+  if (!normalized) return;
+  postControlMessage({ type: "speak", text: normalized });
+}
+
+function setAmplitude(value: number) {
+  postControlMessage({ type: "speechAmplitude", value });
+}
+
+function applyViseme(id: string, weight: number) {
+  postControlMessage({ type: "speechViseme", id, weight });
+}
+
+function triggerMotion(key: string, durationMs: number, targetRef?: string) {
+  postControlMessage({
+    type: "speechMotion",
+    key,
+    durationMs,
+    targetRef
+  });
+}
+
+function resetSpeech() {
+  postControlMessage({ type: "speechReset" });
 }
 
 function pauseRender() {
@@ -111,7 +145,16 @@ function resumeRender() {
   postControlMessage({ type: "resumeRender" });
 }
 
-defineExpose({ speak, pauseRender, resumeRender });
+defineExpose({
+  speak,
+  setSpeechState,
+  setAmplitude,
+  applyViseme,
+  triggerMotion,
+  resetSpeech,
+  pauseRender,
+  resumeRender
+});
 </script>
 
 <template>
@@ -123,7 +166,6 @@ defineExpose({ speak, pauseRender, resumeRender });
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         <span class="text-[13px] font-semibold text-gray-700">启明数字人</span>
-        <span class="text-[11px] text-gray-400">VRM · FBX 实时驱动</span>
       </div>
       <div class="flex items-center gap-1.5">
         <el-tooltip content="刷新" placement="top">
@@ -145,6 +187,62 @@ defineExpose({ speak, pauseRender, resumeRender });
           />
         </el-tooltip>
       </div>
+    </div>
+
+    <div class="virtual-human-panel__voicebar" aria-label="实时语音设置">
+      <label class="virtual-human-panel__voice-label">
+        <span>后端音色</span>
+        <select
+          :value="props.voiceAlias"
+          class="virtual-human-panel__voice-select"
+          :disabled="!props.speechEnabled || props.voices.length <= 1"
+          @change="handleVoiceChange"
+        >
+          <option
+            v-for="option in props.voices"
+            :key="option.alias"
+            :value="option.alias"
+          >
+            {{ option.label }}
+          </option>
+          <option v-if="!props.voices.length" value="">暂无可用音色</option>
+        </select>
+      </label>
+      <span
+        class="virtual-human-panel__speech-status"
+        :class="{ 'is-disabled': !props.speechEnabled }"
+        :title="props.speechDetail || props.speechStatus"
+      >
+        {{ props.speechStatus }}
+      </span>
+      <el-tooltip
+        v-if="props.speechDetail"
+        content="测试扬声器"
+        placement="top"
+      >
+        <el-button
+          :icon="Headset"
+          circle
+          size="small"
+          text
+          aria-label="测试扬声器"
+          @click="emit('testSpeechOutput')"
+        />
+      </el-tooltip>
+      <el-tooltip
+        v-if="props.speechDetail"
+        content="复制语音诊断信息"
+        placement="top"
+      >
+        <el-button
+          :icon="CopyDocument"
+          circle
+          size="small"
+          text
+          aria-label="复制语音诊断信息"
+          @click="emit('copySpeechDiagnostics')"
+        />
+      </el-tooltip>
     </div>
 
     <!-- 主区 -->
@@ -203,11 +301,79 @@ defineExpose({ speak, pauseRender, resumeRender });
 <style scoped>
 .virtual-human-panel {
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .virtual-human-panel__viewer {
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
+}
+
+.virtual-human-panel__voicebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #eef3fb;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.virtual-human-panel__voice-label {
+  display: flex;
+  flex: 1 1 190px;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.virtual-human-panel__voice-label span {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.virtual-human-panel__voice-select {
+  flex: 1;
+  min-width: 0;
+  max-width: 190px;
+  height: 28px;
+  padding: 0 24px 0 9px;
+  font-size: 12px;
+  color: #334155;
+  outline: none;
+  background: #f8fbff;
+  border: 1px solid #dbe6f5;
+  border-radius: 8px;
+}
+
+.virtual-human-panel__voice-select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.virtual-human-panel__voice-select:disabled {
+  color: #64748b;
+  cursor: not-allowed;
+  background: #f1f5f9;
+}
+
+.virtual-human-panel__speech-status {
+  flex: 1 1 120px;
+  max-width: 160px;
+  overflow: hidden;
+  font-size: 12px;
+  color: #166534;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.virtual-human-panel__speech-status.is-disabled {
+  color: #64748b;
 }
 
 .animate-spin {

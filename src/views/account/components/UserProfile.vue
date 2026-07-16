@@ -21,7 +21,6 @@
           size="small"
           @click="openEditDialog"
         >
-          <el-icon><Edit /></el-icon>
           <span>修改资料</span>
         </el-button>
         <el-button
@@ -29,7 +28,6 @@
           size="small"
           @click="openPasswordDialog"
         >
-          <el-icon><Lock /></el-icon>
           <span>修改密码</span>
         </el-button>
       </div>
@@ -60,7 +58,6 @@
           <div class="info-item">
             <div class="label">邮箱</div>
             <div class="value email-value">
-              <el-icon v-if="extraInfo.email"><Message /></el-icon>
               {{ extraInfo.email || "未设置" }}
               <el-tag
                 v-if="!extraInfo.email"
@@ -87,14 +84,12 @@
           <div class="info-item">
             <div class="label">注册时间</div>
             <div class="value time-value">
-              <el-icon><Calendar /></el-icon>
               {{ formattedRegisterTime }}
             </div>
           </div>
           <div class="info-item">
             <div class="label">最后登录</div>
             <div class="value time-value">
-              <el-icon><Calendar /></el-icon>
               {{ formattedLastLoginTime }}
             </div>
           </div>
@@ -113,21 +108,18 @@
             <div class="info-item">
               <div class="label">入驻日期</div>
               <div class="value">
-                <el-icon><Calendar /></el-icon>
                 <span>{{ studyStats.joinDate }}</span>
               </div>
             </div>
             <div class="info-item">
               <div class="label">作业均分</div>
               <div class="value">
-                <el-icon><Check /></el-icon>
                 <span class="score-value">{{ studyStats.avgScore }}</span>
               </div>
             </div>
             <div class="info-item">
               <div class="label">累计学时</div>
               <div class="value">
-                <el-icon><Clock /></el-icon>
                 <template v-if="studyStats.totalHours !== null">
                   <span class="number-solid">{{ studyStats.totalHours }}</span>
                   小时
@@ -169,7 +161,6 @@
       <div class="extra-section recent-courses">
         <div class="section-header">
           <div class="section-title">
-            <el-icon><DeskIcon /></el-icon>
             <span>最近学习的课程</span>
           </div>
           <el-button link type="primary" @click="emit('to-course')"
@@ -225,7 +216,6 @@
       <div class="extra-section learning-dynamics">
         <div class="section-header">
           <div class="section-title">
-            <el-icon><TrendIcon /></el-icon>
             <span>学习动态</span>
           </div>
         </div>
@@ -236,7 +226,10 @@
             class="activity-item"
           >
             <div class="activity-dot" :class="`dot-${activity.type}`">
-              <component :is="activity.icon" class="activity-icon-svg" />
+              <AccountSvgIcon
+                :name="activity.icon || 'activity'"
+                class="activity-icon-svg"
+              />
             </div>
             <div class="activity-body">
               <div class="activity-content">{{ activity.content }}</div>
@@ -271,9 +264,11 @@
           >
             <div class="avatar-container">
               <el-avatar v-if="avatarUrl" :src="avatarUrl" :size="100" />
-              <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+              <div v-else class="avatar-uploader-icon">
+                <AccountSvgIcon name="plus" />
+              </div>
               <div class="edit-icon">
-                <el-icon><Edit /></el-icon>
+                <AccountSvgIcon name="edit" />
               </div>
             </div>
           </el-upload>
@@ -293,12 +288,11 @@
           >
             <template #suffix>
               <el-dropdown trigger="click" @command="handleBannerCommand">
-                <el-icon
+                <AccountSvgIcon
+                  name="chevron-down"
                   class="el-input__icon cursor-pointer"
                   style="margin-right: 8px"
-                >
-                  <ArrowDown />
-                </el-icon>
+                />
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="preset"
@@ -367,7 +361,7 @@
         >
           <img :src="url" alt="preset" />
           <div class="preset-overlay">
-            <el-icon><Plus /></el-icon>
+            <AccountSvgIcon name="plus" />
             <span>点击裁剪</span>
           </div>
         </div>
@@ -463,19 +457,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive, watch } from "vue";
 import { useRouter } from "vue-router";
-import {
-  Edit,
-  Plus,
-  Lock,
-  Calendar,
-  Message,
-  Check,
-  ArrowDown,
-  Clock
-} from "@element-plus/icons-vue";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
 import ReCropper from "@/components/ReCropper";
+import AccountSvgIcon from "./AccountSvgIcon.vue";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
 import { userKey, removeToken, getToken, setToken } from "@/utils/auth";
@@ -496,13 +481,6 @@ import {
 } from "@/api/user";
 import { getFrontendCourseList } from "@/api/frontend/course";
 import dayjs from "dayjs";
-
-// 导入新图标
-import CheckIcon from "@/assets/newicon/check-correct-svgrepo-com.svg?component";
-import EmailIcon from "@/assets/newicon/email-svgrepo-com.svg?component";
-import PlayIcon from "@/assets/newicon/play-svgrepo-com.svg?component";
-import TrendIcon from "@/assets/newicon/trend-up-svgrepo-com.svg?component";
-import DeskIcon from "@/assets/newicon/desk-computer-svgrepo-com.svg?component";
 
 const props = defineProps<{
   currentTheme?: string;
@@ -611,13 +589,12 @@ const studyStats = reactive(getInitialStats());
 // 最近学习课程
 const recentCourses = ref([]);
 
-// 图标映射
 const iconMap = {
-  CheckIcon,
-  EmailIcon,
-  PlayIcon,
-  TrendIcon,
-  DeskIcon
+  CheckIcon: "check",
+  EmailIcon: "mail",
+  PlayIcon: "play",
+  TrendIcon: "activity",
+  DeskIcon: "desktop"
 };
 
 // 学习动态
@@ -627,28 +604,28 @@ const learningActivities = ref([
     content: "完成了《Python 基础入门》第三章的学习",
     timestamp: "10分钟前",
     type: "success",
-    icon: CheckIcon
+    icon: "check"
   },
   {
     id: 2,
     content: "提交了《Web 前端开发》的中期作业",
     timestamp: "2小时前",
     type: "primary",
-    icon: EmailIcon
+    icon: "mail"
   },
   {
     id: 3,
     content: "开始学习新课程《人工智能导论》",
     timestamp: "昨天",
     type: "warning",
-    icon: PlayIcon
+    icon: "play"
   },
   {
     id: 4,
     content: "《数据结构与算法》课程进度达到 60%",
     timestamp: "2天前",
     type: "info",
-    icon: TrendIcon
+    icon: "activity"
   }
 ]);
 
@@ -658,7 +635,7 @@ const fetchActivities = async () => {
     if (res?.code === 200 && res.data?.list) {
       learningActivities.value = res.data.list.map(item => ({
         ...item,
-        icon: iconMap[item.iconName] || TrendIcon
+        icon: iconMap[item.iconName] || "activity"
       }));
     }
   } catch (error) {
@@ -1442,15 +1419,8 @@ onMounted(async () => {
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       &::after {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        content: "";
-        background: linear-gradient(90deg, #97b4f7, #dce2f7, transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        display: none;
+        content: none;
       }
 
       .dark & {
@@ -1468,10 +1438,6 @@ onMounted(async () => {
           0 8px 30px -4px rgb(151 180 247 / 20%),
           0 2px 8px rgb(0 0 0 / 4%);
         transform: translateY(-3px);
-
-        &::after {
-          opacity: 1;
-        }
 
         .dark & {
           box-shadow:
@@ -1563,20 +1529,10 @@ onMounted(async () => {
 
         .time-value {
           font-size: 14.5px;
-
-          .el-icon {
-            font-size: 16px;
-            color: #97b4f7;
-          }
         }
 
         .email-value {
           font-size: 14.5px;
-
-          .el-icon {
-            font-size: 16px;
-            color: #10b981;
-          }
         }
 
         .score-value {
@@ -1594,16 +1550,17 @@ onMounted(async () => {
     }
 
     .info-group.stats {
-      background: linear-gradient(160deg, #f0fdf4, #dcfce7);
-      border-color: rgb(16 185 129 / 15%);
+      background: linear-gradient(160deg, #fefefe, #f0f4ff);
+      border-color: rgb(151 180 247 / 15%);
 
       .dark & {
-        background: linear-gradient(160deg, #064e3b, #022c22);
-        border-color: rgb(16 185 129 / 15%);
+        background: linear-gradient(160deg, #0f172a, #111b2d);
+        border-color: rgb(56 189 248 / 10%);
       }
 
       &::after {
-        background: linear-gradient(90deg, #10b981, #059669, transparent);
+        display: none;
+        content: none;
       }
     }
 
@@ -1627,7 +1584,7 @@ onMounted(async () => {
         min-width: 12px;
         font-size: 15px;
         font-weight: 800;
-        color: #10b981;
+        color: #4f7df3;
       }
 
       .loading-placeholder {
@@ -2039,7 +1996,7 @@ onMounted(async () => {
         }
 
         &.elective {
-          background: linear-gradient(135deg, #10b981, #059669);
+          background: linear-gradient(135deg, #6366f1, #4f46e5);
         }
       }
     }
@@ -2141,22 +2098,23 @@ onMounted(async () => {
         flex-shrink: 0;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 34px;
+        width: 38px;
+        height: 38px;
         border-radius: 10px;
 
         .activity-icon-svg {
-          width: 17px;
-          height: 17px;
+          width: 30px;
+          height: 30px;
+          --account-icon-stroke: 2.7;
         }
 
         &.dot-success {
-          color: #10b981;
-          background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+          color: #4f7df3;
+          background: linear-gradient(135deg, #e8eeff, #d8e3ff);
 
           .dark & {
-            color: #34d399;
-            background: rgb(16 185 129 / 15%);
+            color: #8fb1ff;
+            background: rgb(79 125 243 / 16%);
           }
         }
 

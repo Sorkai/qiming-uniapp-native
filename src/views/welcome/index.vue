@@ -243,7 +243,7 @@ watchEffect(() => {
         :sm="24"
         :xs="24"
       >
-        <el-card shadow="never" class="chart-card h-full">
+        <el-card shadow="never" class="chart-card analysis-chart-card h-full">
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-lg font-bold flex items-center">
@@ -260,7 +260,7 @@ watchEffect(() => {
 
       <!-- 所有用户(包括教师)都可以看到课程统计 -->
       <re-col v-motion class="mb-[24px]" :value="24" :md="14" :sm="24" :xs="24">
-        <el-card shadow="never" class="chart-card h-full">
+        <el-card shadow="never" class="chart-card analysis-chart-card h-full">
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-lg font-bold flex items-center">
@@ -362,6 +362,12 @@ watchEffect(() => {
 
   :deep(.el-card__body) {
     padding: 0 24px 24px;
+  }
+}
+
+.analysis-chart-card {
+  :deep(.el-card__body) {
+    padding-top: 16px;
   }
 }
 

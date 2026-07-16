@@ -1,15 +1,40 @@
 <template>
   <div class="homework-management">
     <div
-      class="mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg"
+      class="mb-5 flex flex-wrap justify-between items-center gap-3 bg-[var(--el-fill-color-light)] p-4 rounded-lg"
     >
       <div class="text-[var(--el-text-color-regular)] font-medium">
         <el-icon class="mr-1 mt-0.5"><Notebook /></el-icon>
         作业列表 ({{ total }})
       </div>
-      <el-button type="primary" :icon="Plus" round @click="showCreateDialog">
-        添加作业
-      </el-button>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <el-button
+          class="batch-generate-button"
+          type="primary"
+          plain
+          :icon="MagicStick"
+          :loading="batchGenerating"
+          :disabled="batchGenerating"
+          @click="generateAllHourHomeworks"
+        >
+          {{
+            batchGenerating
+              ? batchProgress.total
+                ? `生成中 ${batchProgress.completed}/${batchProgress.total}`
+                : "准备中..."
+              : "一键生成全课练习"
+          }}
+        </el-button>
+        <el-button
+          type="primary"
+          :icon="Plus"
+          :disabled="batchGenerating"
+          round
+          @click="showCreateDialog"
+        >
+          添加作业
+        </el-button>
+      </div>
     </div>
 
     <!-- 作业列表 -->
@@ -314,21 +339,40 @@
 <script lang="ts" setup>
 import { ref, watch, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus } from "@element-plus/icons-vue";
+import { MagicStick, Plus } from "@element-plus/icons-vue";
+import dayjs from "dayjs";
 import {
   getHomeworkList,
   getHomeworkQuestionList,
   createHomework,
   updateHomework,
-  deleteHomework
+  deleteHomework,
+  type HomeworkListResult
 } from "@/api/homework";
 import { deleteWorkQuestion, addRandomWorkQuestion } from "@/api/work";
-import { getCourseHoursList } from "@/api/course";
+import { getCourseHoursList, type CourseHoursListResult } from "@/api/course";
+
+type HomeworkItem = HomeworkListResult["homeworkList"][number];
+type CourseChapter = CourseHoursListResult["courseChapters"][number];
+type CourseHour = CourseChapter["hourList"][number];
+
+interface BulkHomeworkTarget {
+  chapterId: number;
+  chapterName: string;
+  hourId: number;
+  hourTitle: string;
+}
+
+const HOMEWORK_PAGE_SIZE = 100;
 
 const props = defineProps({
   courseId: {
     type: [Number, null],
     required: true
+  },
+  courseEndTime: {
+    type: String,
+    default: ""
   }
 });
 
@@ -340,8 +384,12 @@ const pageSize = ref(10);
 const total = ref(0);
 
 // 章节和课时选项
-const chapterOptions = ref([]);
-const hourOptions = ref([]);
+const chapterOptions = ref<CourseChapter[]>([]);
+const hourOptions = ref<CourseHour[]>([]);
+
+// 一键生成全课练习
+const batchGenerating = ref(false);
+const batchProgress = ref({ completed: 0, total: 0 });
 
 // 作业表单相关
 const dialogVisible = ref(false);
@@ -385,10 +433,12 @@ const currentQuestion = ref(null);
 watch(
   () => props.courseId,
   newVal => {
+    chapterOptions.value = [];
+    hourOptions.value = [];
     if (newVal) {
       currentPage.value = 1;
       fetchHomeworkList();
-      fetchChapters();
+      fetchChapters(Number(newVal));
     } else {
       homeworkList.value = [];
       total.value = 0;
@@ -418,13 +468,199 @@ const fetchHomeworkList = async () => {
 };
 
 // 获取章节和课时列表
-const fetchChapters = async () => {
+const fetchChapters = async (
+  courseId = Number(props.courseId)
+): Promise<CourseChapter[]> => {
+  if (!courseId) return [];
+
   try {
-    const { data } = await getCourseHoursList({ courseId: props.courseId });
-    chapterOptions.value = data.courseChapters || [];
+    const { data } = await getCourseHoursList({ courseId });
+    const chapters = data.courseChapters || data.hoursList || [];
+    if (Number(props.courseId) === courseId) {
+      chapterOptions.value = chapters;
+    }
+    return chapters;
   } catch (error) {
     console.error("获取章节列表失败", error);
     ElMessage.error("获取章节列表失败");
+    return [];
+  }
+};
+
+const getAllHomeworkTargets = (
+  chapters: CourseChapter[] = chapterOptions.value
+): BulkHomeworkTarget[] => {
+  const targetMap = new Map<number, BulkHomeworkTarget>();
+
+  chapters.forEach(chapter => {
+    (chapter.hourList || []).forEach(hour => {
+      const chapterId = Number(chapter.chapterId);
+      const hourId = Number(hour.hourId);
+      if (!chapterId || !hourId || targetMap.has(hourId)) return;
+
+      targetMap.set(hourId, {
+        chapterId,
+        chapterName: chapter.name || `章节 ${chapterId}`,
+        hourId,
+        hourTitle: hour.title || `课时 ${hourId}`
+      });
+    });
+  });
+
+  return Array.from(targetMap.values());
+};
+
+const fetchAllCourseHomeworks = async (
+  courseId: number
+): Promise<HomeworkItem[]> => {
+  const allHomeworks: HomeworkItem[] = [];
+  let pageNum = 1;
+  let totalCount = 0;
+
+  do {
+    const { data } = await getHomeworkList({
+      pageNum,
+      pageSize: HOMEWORK_PAGE_SIZE,
+      courseId
+    });
+    const pageItems = data?.homeworkList || [];
+    totalCount = Number(data?.total) || 0;
+    allHomeworks.push(...pageItems);
+
+    if (pageItems.length === 0) break;
+    pageNum += 1;
+  } while (allHomeworks.length < totalCount);
+
+  return allHomeworks;
+};
+
+const resolveBulkDueDate = () => {
+  const now = dayjs();
+  const courseEndTime = dayjs(props.courseEndTime);
+
+  if (
+    props.courseEndTime &&
+    courseEndTime.isValid() &&
+    courseEndTime.isAfter(now)
+  ) {
+    return courseEndTime.format("YYYY-MM-DD HH:mm:ss");
+  }
+
+  return now.add(30, "day").endOf("day").format("YYYY-MM-DD HH:mm:ss");
+};
+
+const generateAllHourHomeworks = async () => {
+  const courseId = Number(props.courseId);
+  if (!courseId || batchGenerating.value) return;
+
+  batchGenerating.value = true;
+  batchProgress.value = { completed: 0, total: 0 };
+
+  try {
+    const chapters = await fetchChapters(courseId);
+    const allTargets = getAllHomeworkTargets(chapters);
+    if (allTargets.length === 0) {
+      ElMessage.warning("当前课程没有可生成练习的课时");
+      return;
+    }
+
+    const existingHomeworks = await fetchAllCourseHomeworks(courseId);
+    const existingHourIds = new Set(
+      existingHomeworks.map(item => Number(item.hourId)).filter(Boolean)
+    );
+    const pendingTargets = allTargets.filter(
+      target => !existingHourIds.has(target.hourId)
+    );
+    const skippedCount = allTargets.length - pendingTargets.length;
+
+    if (pendingTargets.length === 0) {
+      ElMessage.info("当前课程的所有课时都已有作业，无需重复生成");
+      return;
+    }
+
+    const dueDate = resolveBulkDueDate();
+    await ElMessageBox.confirm(
+      `当前课程共 ${allTargets.length} 个课时，${skippedCount} 个课时已有作业；将为剩余 ${pendingTargets.length} 个课时依次创建练习，每份自动生成最多 10 道题，截止日期为 ${dueDate}。是否继续？`,
+      "一键生成全课练习",
+      {
+        confirmButtonText: "开始生成",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    );
+
+    batchProgress.value = { completed: 0, total: pendingTargets.length };
+    const failedTargets: BulkHomeworkTarget[] = [];
+    const createdHomeworkIds = new Set<number>();
+
+    for (const target of pendingTargets) {
+      try {
+        const { data } = await createHomework({
+          courseId,
+          chapterId: target.chapterId,
+          hourId: target.hourId,
+          title: `${target.hourTitle} 课后练习`,
+          description: `围绕“${target.chapterName} / ${target.hourTitle}”自动生成的课后练习。`,
+          dueDate
+        });
+        const homeworkId = Number(data?.homeworkId);
+        if (homeworkId) createdHomeworkIds.add(homeworkId);
+      } catch (error) {
+        failedTargets.push(target);
+        console.error(`为课时“${target.hourTitle}”生成练习失败`, error);
+      } finally {
+        batchProgress.value.completed += 1;
+      }
+    }
+
+    const refreshedHomeworks = await fetchAllCourseHomeworks(courseId);
+    const emptyQuestionHomeworks = refreshedHomeworks.filter(
+      item =>
+        createdHomeworkIds.has(Number(item.homeworkId)) &&
+        Number(item.questionNum) === 0
+    );
+    const successCount = pendingTargets.length - failedTargets.length;
+
+    if (Number(props.courseId) === courseId) {
+      currentPage.value = 1;
+      await fetchHomeworkList();
+    }
+
+    if (failedTargets.length === 0 && emptyQuestionHomeworks.length === 0) {
+      ElMessage.success(
+        `已为 ${successCount} 个课时创建练习，跳过 ${skippedCount} 个已有作业的课时`
+      );
+      return;
+    }
+
+    const failedNames = failedTargets
+      .slice(0, 5)
+      .map(item => item.hourTitle)
+      .join("、");
+    const emptyNames = emptyQuestionHomeworks
+      .slice(0, 5)
+      .map(item => item.hourName || item.title)
+      .join("、");
+    const detailParts = [
+      failedTargets.length
+        ? `${failedTargets.length} 个课时创建失败${failedNames ? `（${failedNames}）` : ""}`
+        : "",
+      emptyQuestionHomeworks.length
+        ? `${emptyQuestionHomeworks.length} 份作业暂未生成题目${emptyNames ? `（${emptyNames}）` : ""}`
+        : ""
+    ].filter(Boolean);
+
+    ElMessage.warning({
+      message: `已创建 ${successCount} 份作业；${detailParts.join("；")}`,
+      duration: 8000,
+      showClose: true
+    });
+  } catch (error: any) {
+    if (error === "cancel" || error === "close") return;
+    console.error("一键生成全课练习失败", error);
+    ElMessage.error("一键生成全课练习失败，请稍后重试");
+  } finally {
+    batchGenerating.value = false;
   }
 };
 
@@ -711,7 +947,7 @@ const handleQuestionDialogClosed = () => {
 onMounted(() => {
   if (props.courseId) {
     fetchHomeworkList();
-    fetchChapters();
+    fetchChapters(Number(props.courseId));
   }
 });
 </script>
@@ -719,6 +955,10 @@ onMounted(() => {
 <style lang="scss" scoped>
 .homework-management {
   padding: 10px 0;
+}
+
+.batch-generate-button {
+  min-width: 176px;
 }
 
 .operation-bar {
