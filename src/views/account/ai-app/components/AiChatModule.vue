@@ -1675,6 +1675,20 @@ watch(
       if (!activeMessageIds.has(key)) messageContentLengths.delete(key);
     });
 
+    const anchoredMessage = answerAnchorMessageId
+      ? messages.find(
+          message => messageKey(message.id) === answerAnchorMessageId
+        )
+      : undefined;
+    if (
+      answerAnchorMessageId &&
+      (!anchoredMessage || !anchoredMessage.streaming)
+    ) {
+      clearAnswerAnchor();
+      scrollToLatestMessage();
+      return;
+    }
+
     if (startedAnswer) {
       beginStreamingAnswer(startedAnswer);
       return;
@@ -1695,7 +1709,13 @@ watch(
 watch(
   () => props.loading,
   loading => {
-    if (!loading) return;
+    if (!loading) {
+      if (answerAnchorMessageId) {
+        clearAnswerAnchor();
+        scrollToLatestMessage();
+      }
+      return;
+    }
     thinkingStepIndex.value = 0;
   }
 );

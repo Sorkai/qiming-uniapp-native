@@ -414,6 +414,10 @@ export interface AssistantSpeechSession {
   status: string;
   live_delivery_status?: string;
   archive_status?: string;
+  archive_failure_stage?: string;
+  archive_retry_after?: string;
+  archive_retain_until?: string;
+  archive_redrive_count?: number;
   terminal_event?: string;
   archive_disposition?: string;
   last_audio_seq?: number;
@@ -452,6 +456,10 @@ export interface AssistantSpeechSessionSummary {
   timeline_source?: string;
   live_delivery_status?: string;
   archive_status?: string;
+  archive_failure_stage?: string;
+  archive_retry_after?: string;
+  archive_retain_until?: string;
+  archive_redrive_count?: number;
   terminal_event?: string;
   archive_resume_ms?: number;
   retryable?: boolean;

@@ -43,9 +43,19 @@ export interface SpeechPlaybackDiagnostic {
   eventSequence?: number;
   segmentSequence?: number;
   audioSequence?: number;
+  audioSequenceGapCount?: number;
+  maxAudioFrameGapMs?: number;
   playedSample?: number;
   bufferedMs?: number;
+  minBufferedMs?: number;
+  underrunCount?: number;
+  rebuffering?: boolean;
   peakRms?: number;
+  reservationLatencyMs?: number;
+  websocketReadyLatencyMs?: number;
+  streamBindLatencyMs?: number;
+  firstAudioLatencyMs?: number;
+  playbackBufferLatencyMs?: number;
   audioContextState?: AudioContextState;
   websocketCloseCode?: number;
   websocketCloseReason?: string;
@@ -53,6 +63,10 @@ export interface SpeechPlaybackDiagnostic {
   sessionStatus?: string;
   liveDeliveryStatus?: string;
   archiveStatus?: string;
+  archiveFailureStage?: string;
+  archiveRetryAfter?: string;
+  archiveRetainUntil?: string;
+  archiveRedriveCount?: number;
   terminalEvent?: string;
   archiveDisposition?: string;
   lastAudioSequence?: number;
@@ -113,6 +127,90 @@ const RUNNING_STATUSES = new Set([
 ]);
 const READY_STATUSES = new Set(["ready", "ready_degraded"]);
 const VALID_VISEMES = new Set(["sil", "aa", "ih", "ou", "ee", "oh"]);
+
+type SpeechSessionStateProjection = Pick<AssistantSpeechSession, "status"> &
+  Partial<
+    Pick<
+      AssistantSpeechSession,
+      | "archive_status"
+      | "archive_retry_after"
+      | "archive_retain_until"
+      | "poll_after_ms"
+    >
+  >;
+
+const hasPollAfter = (session: SpeechSessionStateProjection) =>
+  typeof session.poll_after_ms === "number" &&
+  Number.isFinite(session.poll_after_ms) &&
+  session.poll_after_ms >= 0;
+
+const hasArchiveRecoveryWindow = (session: SpeechSessionStateProjection) =>
+  Boolean(session.archive_retry_after) && Boolean(session.archive_retain_until);
+
+export const shouldPollSpeechSession = (
+  session: SpeechSessionStateProjection
+) =>
+  RUNNING_STATUSES.has(session.status) ||
+  (session.status === "partial" && hasPollAfter(session));
+
+export const isSpeechArchiveRecovering = (
+  session: SpeechSessionStateProjection
+) =>
+  session.status === "partial" &&
+  session.archive_status === "failed" &&
+  hasArchiveRecoveryWindow(session);
+
+export function mapSpeechSessionPlaybackState(
+  session: SpeechSessionStateProjection
+): SpeechPlaybackState {
+  if (session.status === "unavailable") return "unavailable";
+  if (READY_STATUSES.has(session.status)) return "ready";
+  if (session.status === "cancelled") return "cancelled";
+  if (
+    session.status === "partial" &&
+    (hasPollAfter(session) || isSpeechArchiveRecovering(session))
+  ) {
+    return "finalizing";
+  }
+  if (
+    ["failed", "partial", "unknown_outcome", "expired"].includes(session.status)
+  ) {
+    return "failed";
+  }
+  if (
+    ["reserved", "connecting", "queued", "synthesizing", "retrying"].includes(
+      session.status
+    )
+  ) {
+    return "connecting";
+  }
+  if (session.status === "streaming") return "streaming";
+  return "finalizing";
+}
+
+interface LiveDeliveryProjection {
+  status?: string;
+  live_delivery_status?: string;
+  partial?: boolean;
+  audio_sample_count?: number;
+  relayed_sample_count?: number;
+}
+
+const isIncompleteLiveDelivery = (projection: LiveDeliveryProjection) => {
+  if (projection.partial || projection.status === "partial") return true;
+  if (
+    ["partial", "failed", "unknown_outcome"].includes(
+      projection.live_delivery_status || ""
+    )
+  ) {
+    return true;
+  }
+  return (
+    typeof projection.audio_sample_count === "number" &&
+    typeof projection.relayed_sample_count === "number" &&
+    projection.relayed_sample_count < projection.audio_sample_count
+  );
+};
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -181,6 +279,14 @@ export class SpeechPlaybackController {
   private realtimeSessionId = "";
   private realtimeSampleRate = 24000;
   private lastAudioSequence = 0;
+  private audioSequenceGapCount = 0;
+  private lastAudioFrameReceivedAt = 0;
+  private maxAudioFrameGapMs = 0;
+  private reservationLatencyMs = 0;
+  private realtimeConnectStartedAt = 0;
+  private streamReadyAt = 0;
+  private streamBoundAt = 0;
+  private firstAudioReceivedAt = 0;
   private lastServerEventSequence = 0;
   private playedSample = 0;
   private bufferedMs = 0;
@@ -199,6 +305,10 @@ export class SpeechPlaybackController {
   private readonly polling = new Map<string, AbortController>();
   private readonly sessionClientIds = new Map<string, string | number>();
   private readonly sessionAutoplay = new Map<string, boolean>();
+  private readonly canonicalSessions = new Map<
+    string,
+    AssistantSpeechSession
+  >();
   private diagnostic: SpeechPlaybackDiagnostic = {};
   private readonly handleVisibilityChange = () => {
     if (document.hidden) this.sendPlaybackProgress(true);
@@ -241,6 +351,10 @@ export class SpeechPlaybackController {
       sessionStatus: session.status,
       liveDeliveryStatus: session.live_delivery_status,
       archiveStatus: session.archive_status,
+      archiveFailureStage: session.archive_failure_stage,
+      archiveRetryAfter: session.archive_retry_after,
+      archiveRetainUntil: session.archive_retain_until,
+      archiveRedriveCount: session.archive_redrive_count,
       terminalEvent: session.terminal_event,
       archiveDisposition: session.archive_disposition,
       lastAudioSequence: session.last_audio_seq,
@@ -251,6 +365,34 @@ export class SpeechPlaybackController {
       pollAfterMs: session.poll_after_ms,
       errorCode: session.error_code
     });
+  }
+
+  private adoptSessionProjection(
+    session: AssistantSpeechSession,
+    source: "canonical" | "event"
+  ) {
+    const sessionId = session.session_id;
+    if (!sessionId) return session;
+    if (source === "canonical") {
+      const current = this.canonicalSessions.get(sessionId);
+      const currentUpdatedAt = current?.updated_at
+        ? Date.parse(current.updated_at)
+        : Number.NaN;
+      const nextUpdatedAt = session.updated_at
+        ? Date.parse(session.updated_at)
+        : Number.NaN;
+      if (
+        current &&
+        Number.isFinite(currentUpdatedAt) &&
+        Number.isFinite(nextUpdatedAt) &&
+        nextUpdatedAt < currentUpdatedAt
+      ) {
+        return current;
+      }
+      this.canonicalSessions.set(sessionId, session);
+      return session;
+    }
+    return this.canonicalSessions.get(sessionId) || session;
   }
 
   private chooseTimeline(): SpeechTimelineRequest {
@@ -299,8 +441,9 @@ export class SpeechPlaybackController {
       this.setStatus("preparing", "正在建立实时语音");
       const controller = new AbortController();
       try {
-        await this.ensureAudioContext();
-        const reservation = await createAssistantSpeechStreamReservation(
+        const reservationStartedAt = performance.now();
+        const audioReady = this.ensureAudioContext();
+        const reservationReady = createAssistantSpeechStreamReservation(
           {
             conversation_id: context.conversationId,
             course_id: context.courseId,
@@ -318,7 +461,14 @@ export class SpeechPlaybackController {
           },
           controller.signal,
           capabilities.realtime!.reservation_endpoint
-        );
+        ).then(reservation => {
+          this.reservationLatencyMs = Math.max(
+            0,
+            performance.now() - reservationStartedAt
+          );
+          return reservation;
+        });
+        const [reservation] = await Promise.all([reservationReady, audioReady]);
         await this.connectRealtime(reservation);
         return {
           ...baseRequest,
@@ -443,10 +593,18 @@ export class SpeechPlaybackController {
       this.websocket = websocket;
       this.realtimeStreamId = reservation.stream.stream_id;
       this.realtimeSessionId = "";
+      this.realtimeConnectStartedAt = performance.now();
+      this.streamReadyAt = 0;
+      this.streamBoundAt = 0;
+      this.firstAudioReceivedAt = 0;
       this.lastAudioSequence = 0;
+      this.audioSequenceGapCount = 0;
+      this.lastAudioFrameReceivedAt = 0;
+      this.maxAudioFrameGapMs = 0;
       this.lastServerEventSequence = 0;
       this.playedSample = 0;
       this.bufferedMs = 0;
+      this.lastProgressSentAt = 0;
       this.peakRms = 0;
       this.liveStarted = false;
       this.liveFailed = false;
@@ -463,9 +621,19 @@ export class SpeechPlaybackController {
         eventSequence: undefined,
         segmentSequence: undefined,
         audioSequence: undefined,
+        audioSequenceGapCount: undefined,
+        maxAudioFrameGapMs: undefined,
         playedSample: undefined,
         bufferedMs: undefined,
+        minBufferedMs: undefined,
+        underrunCount: undefined,
+        rebuffering: undefined,
         peakRms: undefined,
+        reservationLatencyMs: Number(this.reservationLatencyMs.toFixed(1)),
+        websocketReadyLatencyMs: undefined,
+        streamBindLatencyMs: undefined,
+        firstAudioLatencyMs: undefined,
+        playbackBufferLatencyMs: undefined,
         audioContextState: this.audioContext?.state,
         websocketCloseCode: undefined,
         websocketCloseReason: undefined,
@@ -473,6 +641,10 @@ export class SpeechPlaybackController {
         sessionStatus: "reserved",
         liveDeliveryStatus: undefined,
         archiveStatus: undefined,
+        archiveFailureStage: undefined,
+        archiveRetryAfter: undefined,
+        archiveRetainUntil: undefined,
+        archiveRedriveCount: undefined,
         terminalEvent: undefined,
         archiveDisposition: undefined,
         lastAudioSequence: undefined,
@@ -609,6 +781,14 @@ export class SpeechPlaybackController {
 
     switch (control.event) {
       case "stream.ready": {
+        if (!this.streamReadyAt) {
+          this.streamReadyAt = performance.now();
+          this.updateDiagnostic({
+            websocketReadyLatencyMs: Number(
+              (this.streamReadyAt - this.realtimeConnectStartedAt).toFixed(1)
+            )
+          });
+        }
         const audio = control.audio;
         if (!audio || audio.codec !== "pcm_s16le" || audio.channels !== 1) {
           throw new Error("speech_stream_audio_unsupported");
@@ -627,6 +807,17 @@ export class SpeechPlaybackController {
         break;
       }
       case "stream.bound":
+        if (!this.streamBoundAt) {
+          this.streamBoundAt = performance.now();
+          this.updateDiagnostic({
+            streamBindLatencyMs: Number(
+              (
+                this.streamBoundAt -
+                (this.streamReadyAt || this.realtimeConnectStartedAt)
+              ).toFixed(1)
+            )
+          });
+        }
         this.realtimeSessionId = control.session_id || "";
         this.setStatus("connecting", "语音流已绑定，等待首段内容");
         break;
@@ -647,13 +838,14 @@ export class SpeechPlaybackController {
         break;
       case "stream.completed":
         this.liveTerminalReceived = true;
+        this.liveFailed ||= isIncompleteLiveDelivery(control);
         this.realtimeSessionId = control.session_id || this.realtimeSessionId;
         this.liveArchiveStatus = control.archive_status || "";
         this.workletNode?.port.postMessage({ type: "end" });
         this.setStatus(
-          control.archive_status === "failed" ? "streaming" : "finalizing",
-          control.archive_status === "failed"
-            ? "实时音频已完成，完整录音归档失败"
+          "finalizing",
+          this.liveFailed
+            ? "实时播报未完整交付，正在等待完整录音"
             : "实时音频输入完成，等待播放结束"
         );
         void this.refreshSession(this.realtimeSessionId);
@@ -705,10 +897,32 @@ export class SpeechPlaybackController {
     if (this.liveTerminalReceived) return;
     try {
       const frame = parseA3AUFrame(buffer);
+      const receivedAt = performance.now();
+      if (!this.firstAudioReceivedAt) {
+        this.firstAudioReceivedAt = receivedAt;
+        this.updateDiagnostic({
+          firstAudioLatencyMs: Number(
+            (
+              receivedAt -
+              (this.streamBoundAt ||
+                this.streamReadyAt ||
+                this.realtimeConnectStartedAt)
+            ).toFixed(1)
+          )
+        });
+      }
+      if (this.lastAudioFrameReceivedAt > 0) {
+        this.maxAudioFrameGapMs = Math.max(
+          this.maxAudioFrameGapMs,
+          receivedAt - this.lastAudioFrameReceivedAt
+        );
+      }
+      this.lastAudioFrameReceivedAt = receivedAt;
       const sequenceGap =
         this.lastAudioSequence > 0 &&
         frame.sequence !== this.lastAudioSequence + 1;
       if (frame.sequence <= this.lastAudioSequence) return;
+      if (sequenceGap) this.audioSequenceGapCount += 1;
       this.lastAudioSequence = frame.sequence;
       if (frame.sequence === 1 || sequenceGap || frame.discontinuity) {
         this.updateDiagnostic({
@@ -740,15 +954,79 @@ export class SpeechPlaybackController {
   private handleWorkletMessage(data: Record<string, any>) {
     if (data.type === "started") {
       this.liveStarted = true;
-      this.updateDiagnostic({ clientEvent: "playback.started" });
+      this.playedSample = Math.max(0, Number(data.playedSample) || 0);
+      this.bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
+      this.updateDiagnostic({
+        clientEvent: "playback.started",
+        playedSample: this.playedSample,
+        bufferedMs: this.bufferedMs,
+        playbackBufferLatencyMs: this.firstAudioReceivedAt
+          ? Number((performance.now() - this.firstAudioReceivedAt).toFixed(1))
+          : undefined,
+        underrunCount: Number(data.underrunCount) || 0,
+        rebuffering: false
+      });
       this.callbacks.renderer.setState("speaking");
       this.setStatus("streaming", "正在实时播报");
       this.sendRealtimeControl({
         event: "playback.started",
-        played_sample: Math.max(0, Number(data.playedSample) || 0),
-        buffered_ms: 0,
+        played_sample: this.playedSample,
+        buffered_ms: this.bufferedMs,
         client_time_ms: Date.now()
       });
+      this.sendPlaybackProgress(true);
+      return;
+    }
+    if (data.type === "buffer-low") {
+      this.playedSample = Math.max(
+        this.playedSample,
+        Number(data.playedSample) || 0
+      );
+      this.bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
+      this.updateDiagnostic({
+        clientEvent: "playback.buffer_low",
+        playedSample: this.playedSample,
+        bufferedMs: this.bufferedMs,
+        underrunCount: Number(data.underrunCount) || 0
+      });
+      this.sendPlaybackProgress(true);
+      return;
+    }
+    if (data.type === "underrun") {
+      this.playedSample = Math.max(
+        this.playedSample,
+        Number(data.playedSample) || 0
+      );
+      this.bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
+      this.currentViseme = "sil";
+      this.callbacks.renderer.applyViseme("sil", 0);
+      this.callbacks.renderer.setAmplitude(0);
+      this.updateDiagnostic({
+        clientEvent: "playback.underrun",
+        playedSample: this.playedSample,
+        bufferedMs: this.bufferedMs,
+        underrunCount: Number(data.underrunCount) || 0,
+        rebuffering: true
+      });
+      this.setStatus("streaming", "实时语音缓冲中");
+      this.sendPlaybackProgress(true);
+      return;
+    }
+    if (data.type === "resumed") {
+      this.playedSample = Math.max(
+        this.playedSample,
+        Number(data.playedSample) || 0
+      );
+      this.bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
+      this.callbacks.renderer.setState("speaking");
+      this.updateDiagnostic({
+        clientEvent: "playback.resumed",
+        playedSample: this.playedSample,
+        bufferedMs: this.bufferedMs,
+        underrunCount: Number(data.underrunCount) || 0,
+        rebuffering: false
+      });
+      this.setStatus("streaming", "正在实时播报");
       this.sendPlaybackProgress(true);
       return;
     }
@@ -757,14 +1035,25 @@ export class SpeechPlaybackController {
       this.bufferedMs = clamp(Number(data.bufferedMs) || 0, 0, 60000);
       const rms = clamp(Number(data.rms) || 0, 0, 1);
       this.peakRms = Math.max(this.peakRms, rms);
-      this.applyRealtimeRenderer(this.playedSample, rms);
+      if (data.rebuffering) {
+        this.currentViseme = "sil";
+        this.callbacks.renderer.applyViseme("sil", 0);
+        this.callbacks.renderer.setAmplitude(0);
+      } else {
+        this.applyRealtimeRenderer(this.playedSample, rms);
+      }
       const now = Date.now();
-      if (now - this.lastProgressSentAt >= 750) {
+      if (now - this.lastProgressSentAt >= 500) {
         this.lastProgressSentAt = now;
         this.updateDiagnostic({
           audioSequence: this.lastAudioSequence,
+          audioSequenceGapCount: this.audioSequenceGapCount,
+          maxAudioFrameGapMs: Number(this.maxAudioFrameGapMs.toFixed(1)),
           playedSample: this.playedSample,
           bufferedMs: this.bufferedMs,
+          minBufferedMs: Number(data.minBufferedMs) || 0,
+          underrunCount: Number(data.underrunCount) || 0,
+          rebuffering: Boolean(data.rebuffering),
           peakRms: Number(this.peakRms.toFixed(6))
         });
         this.sendPlaybackProgress();
@@ -792,18 +1081,17 @@ export class SpeechPlaybackController {
         audioSequence: this.lastAudioSequence,
         playedSample: this.playedSample,
         bufferedMs: 0,
+        minBufferedMs: Number(data.minBufferedMs) || 0,
+        underrunCount: Number(data.underrunCount) || 0,
+        rebuffering: false,
         peakRms: Number(this.peakRms.toFixed(6))
       });
       this.setStatus(
-        this.liveFailed && !this.liveTerminalReceived
-          ? "finalizing"
-          : this.liveArchiveStatus === "failed"
-            ? "ready"
-            : "finalizing",
+        "finalizing",
         this.liveFailed && !this.liveTerminalReceived
           ? "实时播报中断，正在等待完整录音"
           : this.liveArchiveStatus === "failed"
-            ? "实时播报完成，完整录音不可用"
+            ? "实时播报完成，正在确认完整录音恢复状态"
             : "实时播报完成，正在生成完整录音"
       );
     }
@@ -818,7 +1106,6 @@ export class SpeechPlaybackController {
         this.currentViseme = id;
         this.callbacks.renderer.applyViseme(id, clamp(viseme.weight, 0, 1));
       }
-      this.callbacks.renderer.setAmplitude(0);
     } else {
       this.currentViseme = "sil";
       this.callbacks.renderer.setAmplitude(clamp(rms * 4, 0, 1));
@@ -858,7 +1145,9 @@ export class SpeechPlaybackController {
     event: AssistantChatStreamEvent,
     clientMessageId: string | number
   ) {
-    const session = event.speech;
+    const session = event.speech
+      ? this.adoptSessionProjection(event.speech, "event")
+      : undefined;
     if (session?.session_id) {
       this.realtimeSessionId = session.session_id;
       this.updateSessionDiagnostic(session);
@@ -866,7 +1155,7 @@ export class SpeechPlaybackController {
       this.callbacks.onSession?.(
         clientMessageId,
         session,
-        this.mapSessionState(session)
+        mapSpeechSessionPlaybackState(session)
       );
     }
     if (event.event === "speech.stream.degraded") {
@@ -878,8 +1167,10 @@ export class SpeechPlaybackController {
   trackSession(
     session: AssistantSpeechSession,
     clientMessageId: string | number,
-    autoplay = true
+    autoplay = true,
+    source: "canonical" | "event" = "canonical"
   ) {
+    session = this.adoptSessionProjection(session, source);
     if (!session.session_id || session.status === "unavailable") {
       this.callbacks.onSession?.(
         clientMessageId,
@@ -889,14 +1180,26 @@ export class SpeechPlaybackController {
       return;
     }
     this.sessionClientIds.set(session.session_id, clientMessageId);
-    this.sessionAutoplay.set(session.session_id, autoplay);
+    if (!this.sessionAutoplay.has(session.session_id)) {
+      this.sessionAutoplay.set(session.session_id, autoplay);
+    } else if (!autoplay) {
+      this.sessionAutoplay.set(session.session_id, false);
+    }
     this.updateSessionDiagnostic(session);
     this.callbacks.onSession?.(
       clientMessageId,
       session,
-      this.mapSessionState(session)
+      mapSpeechSessionPlaybackState(session)
     );
-    if (session.archive_status === "failed") {
+    if (isSpeechArchiveRecovering(session)) {
+      this.setStatus("finalizing", "实时播放不完整，录音正在恢复");
+    } else if (
+      session.status === "partial" &&
+      session.archive_status === "failed" &&
+      hasPollAfter(session)
+    ) {
+      this.setStatus("finalizing", "完整录音正在等待后端恢复");
+    } else if (session.archive_status === "failed") {
       this.setStatus(
         this.liveStarted ? "ready" : "failed",
         this.liveStarted
@@ -909,7 +1212,10 @@ export class SpeechPlaybackController {
       void this.resolveReadySession(session);
       return;
     }
-    if (!RUNNING_STATUSES.has(session.status)) return;
+    if (!shouldPollSpeechSession(session)) {
+      this.setTerminalSessionStatus(session);
+      return;
+    }
     if (this.polling.has(session.session_id)) return;
     const controller = new AbortController();
     this.polling.set(session.session_id, controller);
@@ -919,12 +1225,19 @@ export class SpeechPlaybackController {
   private async refreshSession(sessionId?: string) {
     if (!sessionId) return;
     try {
-      const session = (await getAssistantSpeechSession(sessionId, false))
-        .speech;
+      const session = this.adoptSessionProjection(
+        (await getAssistantSpeechSession(sessionId, false)).speech,
+        "canonical"
+      );
       this.updateSessionDiagnostic(session);
       const clientMessageId = this.sessionClientIds.get(sessionId);
       if (clientMessageId !== undefined) {
-        this.trackSession(session, clientMessageId, true);
+        this.trackSession(
+          session,
+          clientMessageId,
+          this.sessionAutoplay.get(sessionId) ?? true,
+          "canonical"
+        );
       }
     } catch {
       // The stream terminal event is authoritative for live playback. Session
@@ -939,40 +1252,68 @@ export class SpeechPlaybackController {
     let current = initial;
     const sessionId = initial.session_id!;
     try {
-      while (RUNNING_STATUSES.has(current.status)) {
+      while (shouldPollSpeechSession(current)) {
         await delay(
           clamp(
-            current.poll_after_ms || 1000,
+            current.poll_after_ms ?? 1000,
             250,
             document.hidden ? 10000 : 5000
           ),
           controller.signal
         );
-        const response = await getAssistantSpeechSession(
-          sessionId,
-          false,
-          controller.signal
-        );
-        current = response.speech;
+        try {
+          const response = await getAssistantSpeechSession(
+            sessionId,
+            false,
+            controller.signal
+          );
+          current = this.adoptSessionProjection(response.speech, "canonical");
+        } catch (error: any) {
+          if (error?.name === "AbortError") throw error;
+          this.setStatus("finalizing", "录音状态暂时无法获取，正在重试");
+          await delay(2000, controller.signal);
+          continue;
+        }
         this.updateSessionDiagnostic(current);
         const clientMessageId = this.sessionClientIds.get(sessionId);
         if (clientMessageId !== undefined) {
           this.callbacks.onSession?.(
             clientMessageId,
             current,
-            this.mapSessionState(current)
+            mapSpeechSessionPlaybackState(current)
           );
         }
       }
       if (READY_STATUSES.has(current.status)) {
         await this.resolveReadySession(current);
+      } else {
+        this.setTerminalSessionStatus(current);
       }
     } catch (error: any) {
       if (error?.name !== "AbortError") {
-        this.setStatus("failed", "语音归档状态获取失败");
+        this.setStatus("finalizing", "录音状态跟踪已暂停，可稍后继续");
       }
     } finally {
       this.polling.delete(sessionId);
+    }
+  }
+
+  private setTerminalSessionStatus(session: AssistantSpeechSession) {
+    if (session.status === "partial") {
+      this.setStatus(
+        this.liveStarted ? "ready" : "failed",
+        this.liveStarted
+          ? "实时播放不完整，完整录音不可用"
+          : "语音未完整生成，文字回答不受影响"
+      );
+      return;
+    }
+    if (session.status === "cancelled") {
+      this.setStatus("cancelled", "语音已停止");
+      return;
+    }
+    if (["failed", "unknown_outcome", "expired"].includes(session.status)) {
+      this.setStatus("failed", "语音不可用，文字回答不受影响");
     }
   }
 
@@ -981,8 +1322,10 @@ export class SpeechPlaybackController {
     let ready = session;
     if (!ready.timeline || !ready.audio?.url) {
       try {
-        ready = (await getAssistantSpeechSession(session.session_id, true))
-          .speech;
+        ready = this.adoptSessionProjection(
+          (await getAssistantSpeechSession(session.session_id, true)).speech,
+          "canonical"
+        );
       } catch {
         this.setStatus("ready", "完整录音已就绪");
         return;
@@ -993,10 +1336,14 @@ export class SpeechPlaybackController {
       this.callbacks.onSession?.(clientMessageId, ready, "ready");
     }
     this.setStatus("ready", "完整录音已就绪");
+    const isCurrentLiveSession = ready.session_id === this.realtimeSessionId;
     const shouldAutoplay =
       this.sessionAutoplay.get(session.session_id) &&
-      (ready.delivery !== "realtime" || this.liveFailed || !this.liveStarted);
+      (ready.delivery !== "realtime" ||
+        isIncompleteLiveDelivery(ready) ||
+        (isCurrentLiveSession && (this.liveFailed || !this.liveStarted)));
     if (shouldAutoplay && ready.audio?.url) {
+      this.sessionAutoplay.set(session.session_id, false);
       await this.playArchive(
         ready,
         clientMessageId,
@@ -1013,21 +1360,31 @@ export class SpeechPlaybackController {
     if (!sessionId) return;
     this.sessionClientIds.set(sessionId, clientMessageId);
     try {
-      const ready = (await getAssistantSpeechSession(sessionId, true)).speech;
+      const ready = this.adoptSessionProjection(
+        (await getAssistantSpeechSession(sessionId, true)).speech,
+        "canonical"
+      );
       if (READY_STATUSES.has(ready.status) && ready.audio?.url) {
         await this.playArchive(ready, clientMessageId);
-      } else if (RUNNING_STATUSES.has(ready.status)) {
+      } else if (shouldPollSpeechSession(ready)) {
         this.trackSession(ready, clientMessageId, true);
       } else {
         this.callbacks.onSession?.(
           clientMessageId,
           ready,
-          this.mapSessionState(ready)
+          mapSpeechSessionPlaybackState(ready)
         );
       }
     } catch {
       this.setStatus("failed", "语音不可用或已失效");
     }
+  }
+
+  resumeSession(sessionId: string, clientMessageId: string | number) {
+    if (!sessionId) return;
+    this.sessionClientIds.set(sessionId, clientMessageId);
+    this.sessionAutoplay.set(sessionId, false);
+    void this.refreshSession(sessionId);
   }
 
   private async playArchive(
@@ -1044,8 +1401,10 @@ export class SpeechPlaybackController {
       urlExpiresAt <= Date.now() + 20000
     ) {
       try {
-        session = (await getAssistantSpeechSession(session.session_id, true))
-          .speech;
+        session = this.adoptSessionProjection(
+          (await getAssistantSpeechSession(session.session_id, true)).speech,
+          "canonical"
+        );
       } catch {
         this.setStatus("failed", "语音播放地址刷新失败");
         return;
@@ -1102,12 +1461,14 @@ export class SpeechPlaybackController {
   }
 
   private shouldResumeArchive(session: AssistantSpeechSession) {
+    const isCurrentLiveSession = session.session_id === this.realtimeSessionId;
     return Boolean(
       session.delivery === "realtime" &&
         session.archive_disposition !== "discard" &&
         session.archive_resume_ms &&
         session.archive_resume_ms > 0 &&
-        (this.liveFailed || !this.liveStarted)
+        (isIncompleteLiveDelivery(session) ||
+          (isCurrentLiveSession && (this.liveFailed || !this.liveStarted)))
     );
   }
 
@@ -1190,6 +1551,7 @@ export class SpeechPlaybackController {
     this.polling.clear();
     this.sessionClientIds.clear();
     this.sessionAutoplay.clear();
+    this.canonicalSessions.clear();
     this.stopArchiveAudio();
     void this.stopLive("context_changed", false);
     this.liveStarted = false;
@@ -1215,6 +1577,14 @@ export class SpeechPlaybackController {
     this.realtimeStreamId = "";
     this.realtimeSessionId = "";
     this.lastAudioSequence = 0;
+    this.audioSequenceGapCount = 0;
+    this.lastAudioFrameReceivedAt = 0;
+    this.maxAudioFrameGapMs = 0;
+    this.reservationLatencyMs = 0;
+    this.realtimeConnectStartedAt = 0;
+    this.streamReadyAt = 0;
+    this.streamBoundAt = 0;
+    this.firstAudioReceivedAt = 0;
     this.lastServerEventSequence = 0;
     this.peakRms = 0;
     this.bufferedMs = 0;
@@ -1222,58 +1592,10 @@ export class SpeechPlaybackController {
     this.timeline = null;
     this.currentViseme = "sil";
     this.updateDiagnostic({
-      streamId: undefined,
-      sessionId: undefined,
-      phase: undefined,
-      serverEvent: undefined,
       clientEvent: "stream.closed",
-      eventSequence: undefined,
-      segmentSequence: undefined,
-      audioSequence: undefined,
-      playedSample: undefined,
-      bufferedMs: undefined,
-      peakRms: undefined,
-      audioContextState: this.audioContext?.state,
-      websocketCloseCode: undefined,
-      websocketCloseReason: undefined,
-      websocketWasClean: undefined,
-      sessionStatus: undefined,
-      liveDeliveryStatus: undefined,
-      archiveStatus: undefined,
-      terminalEvent: undefined,
-      archiveDisposition: undefined,
-      lastAudioSequence: undefined,
-      audioSampleCount: undefined,
-      relayedSampleCount: undefined,
-      lastPlayedSample: undefined,
-      archiveResumeMs: undefined,
-      pollAfterMs: undefined,
-      errorCode: undefined
+      rebuffering: false,
+      audioContextState: this.audioContext?.state
     });
-  }
-
-  private mapSessionState(
-    session: AssistantSpeechSession
-  ): SpeechPlaybackState {
-    if (session.status === "unavailable") return "unavailable";
-    if (READY_STATUSES.has(session.status)) return "ready";
-    if (session.status === "cancelled") return "cancelled";
-    if (
-      ["failed", "partial", "unknown_outcome", "expired"].includes(
-        session.status
-      )
-    ) {
-      return "failed";
-    }
-    if (
-      ["reserved", "connecting", "queued", "synthesizing", "retrying"].includes(
-        session.status
-      )
-    ) {
-      return "connecting";
-    }
-    if (session.status === "streaming") return "streaming";
-    return "finalizing";
   }
 
   dispose() {
@@ -1283,6 +1605,7 @@ export class SpeechPlaybackController {
     );
     this.polling.forEach(controller => controller.abort());
     this.polling.clear();
+    this.canonicalSessions.clear();
     this.stopArchiveAudio();
     void this.stopLive("page_unloaded", false);
     this.callbacks.renderer.reset();

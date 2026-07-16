@@ -82,7 +82,10 @@ import {
   type AssistantSpeechSessionSummary
 } from "@/api/frontend/assistant";
 import {
+  isSpeechArchiveRecovering,
+  mapSpeechSessionPlaybackState,
   SpeechPlaybackController,
+  shouldPollSpeechSession,
   type SpeechPlaybackDiagnostic,
   type SpeechPlaybackState
 } from "./speech-playback-controller";
@@ -196,9 +199,19 @@ const speechDiagnosticText = computed(() => {
     ["session_id", diagnostic.sessionId],
     ["segment_seq", diagnostic.segmentSequence],
     ["audio_seq", diagnostic.audioSequence],
+    ["audio_seq_gap_count", diagnostic.audioSequenceGapCount],
+    ["max_audio_frame_gap_ms", diagnostic.maxAudioFrameGapMs],
     ["played_sample", diagnostic.playedSample],
     ["buffered_ms", diagnostic.bufferedMs],
+    ["min_buffered_ms", diagnostic.minBufferedMs],
+    ["underrun_count", diagnostic.underrunCount],
+    ["rebuffering", diagnostic.rebuffering],
     ["peak_rms", diagnostic.peakRms],
+    ["reservation_ms", diagnostic.reservationLatencyMs],
+    ["websocket_ready_ms", diagnostic.websocketReadyLatencyMs],
+    ["stream_bind_ms", diagnostic.streamBindLatencyMs],
+    ["bind_to_first_audio_ms", diagnostic.firstAudioLatencyMs],
+    ["first_audio_to_playback_ms", diagnostic.playbackBufferLatencyMs],
     ["audio_context_state", diagnostic.audioContextState],
     ["websocket_close_code", diagnostic.websocketCloseCode],
     ["websocket_close_reason", diagnostic.websocketCloseReason],
@@ -206,6 +219,10 @@ const speechDiagnosticText = computed(() => {
     ["session_status", diagnostic.sessionStatus],
     ["live_delivery_status", diagnostic.liveDeliveryStatus],
     ["archive_status", diagnostic.archiveStatus],
+    ["archive_failure_stage", diagnostic.archiveFailureStage],
+    ["archive_retry_after", diagnostic.archiveRetryAfter],
+    ["archive_retain_until", diagnostic.archiveRetainUntil],
+    ["archive_redrive_count", diagnostic.archiveRedriveCount],
     ["terminal_event", diagnostic.terminalEvent],
     ["archive_disposition", diagnostic.archiveDisposition],
     ["last_audio_seq", diagnostic.lastAudioSequence],
@@ -1395,7 +1412,12 @@ const handleAssistantStreamEvent = (
       if (active) active.title = event.conversation_title;
     }
     if (event.speech) {
-      speechController.trackSession(event.speech, assistantMessageId, true);
+      speechController.trackSession(
+        event.speech,
+        assistantMessageId,
+        true,
+        "event"
+      );
     } else if (
       !assistantBootstrap.value?.speech?.enabled &&
       !currentMessage?.speech?.session_id
@@ -2040,22 +2062,18 @@ const loadConversationMessages = async (conversation: ConversationView) => {
         item.explanation_images || item.metadata?.explanation_images || [],
       speech: item.speech || null,
       speechPlaybackState: item.speech
-        ? item.speech.status === "ready" ||
-          item.speech.status === "ready_degraded"
-          ? "ready"
-          : ["expired", "failed", "partial", "unknown_outcome"].includes(
-                item.speech.status
-              )
-            ? "failed"
-            : item.speech.status === "cancelled"
-              ? "cancelled"
-              : item.speech.status === "unavailable"
-                ? "unavailable"
-                : "finalizing"
+        ? mapSpeechSessionPlaybackState(item.speech)
         : "disabled"
     }));
     messages.value.forEach(message => {
       if (message.type !== "system") return;
+      if (
+        message.speech?.session_id &&
+        (shouldPollSpeechSession(message.speech) ||
+          isSpeechArchiveRecovering(message.speech))
+      ) {
+        speechController.resumeSession(message.speech.session_id, message.id);
+      }
       (message.explanationImages || []).forEach(image => {
         startExplanationImagePolling(image, message.id);
       });
@@ -2339,6 +2357,7 @@ const handleNewChat = async (payload: { course: string }) => {
     const identity = buildAssistantIdentity(courseId);
     const { data } = await createAssistantConversation({
       ...identity,
+      course_id: courseId,
       title:
         interactionScope.value === "course_general"
           ? `${courseName} 课程通用问答`

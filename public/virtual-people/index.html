@@ -1041,39 +1041,100 @@
         }
       }
     }
+    const __externalMouthKeys = ['aa', 'ih', 'ou', 'ee', 'oh'];
+    const __externalMouth = {
+      current: { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 },
+      target: { aa: 0, ih: 0, ou: 0, ee: 0, oh: 0 },
+      frame: 0,
+      lastFrameAt: 0,
+    };
+    function __cancelExternalMouthSmoothing() {
+      if (__externalMouth.frame) {
+        cancelAnimationFrame(__externalMouth.frame);
+        __externalMouth.frame = 0;
+      }
+      __externalMouth.lastFrameAt = 0;
+      for (const key of __externalMouthKeys) {
+        __externalMouth.current[key] = 0;
+        __externalMouth.target[key] = 0;
+      }
+      resetMouth();
+    }
+    function __runExternalMouthFrame(now) {
+      const elapsed = __externalMouth.lastFrameAt
+        ? Math.min(50, Math.max(1, now - __externalMouth.lastFrameAt))
+        : 16;
+      __externalMouth.lastFrameAt = now;
+      const weights = {};
+      let moving = false;
+      let maxWeight = 0;
+
+      for (const key of __externalMouthKeys) {
+        const current = __externalMouth.current[key];
+        const target = __externalMouth.target[key];
+        const timeConstant = target > current ? 72 : 110;
+        const alpha = 1 - Math.exp(-elapsed / timeConstant);
+        let next = current + (target - current) * alpha;
+        if (Math.abs(target - next) < 0.003) next = target;
+        __externalMouth.current[key] = next;
+        weights[key] = next;
+        maxWeight = Math.max(maxWeight, next, target);
+        if (next !== target) moving = true;
+      }
+
+      setMouthWeights(weights);
+      state.isSpeaking = maxWeight > 0.015;
+      if (moving) {
+        __externalMouth.frame = requestAnimationFrame(__runExternalMouthFrame);
+      } else {
+        __externalMouth.frame = 0;
+        __externalMouth.lastFrameAt = 0;
+      }
+    }
+    function __setExternalMouthTarget(weights = {}) {
+      for (const key of __externalMouthKeys) {
+        __externalMouth.target[key] = Math.max(
+          0,
+          Math.min(1, Number(weights[key]) || 0),
+        );
+      }
+      if (!__externalMouth.frame) {
+        __externalMouth.frame = requestAnimationFrame(__runExternalMouthFrame);
+      }
+    }
     function __setExternalSpeechState(nextState) {
       const speaking = nextState === 'speaking';
       if (speaking) {
         stopSpeaking({ keepPanel: true });
-        applyMood('happy', 0.28);
+        __cancelExternalMouthSmoothing();
+        applyMood('neutral');
         state.isSpeaking = true;
         state.speakingMotionTime = 0;
         return;
       }
-      if (nextState === 'error') {
-        state.isSpeaking = false;
-        resetMouth();
-        return;
-      }
       state.isSpeaking = false;
-      resetMouth();
+      __cancelExternalMouthSmoothing();
       resetSpeechMotion();
       applyMood('neutral');
     }
     function __applyExternalViseme(id, weight) {
       const viseme = ['aa', 'ih', 'ou', 'ee', 'oh'].includes(id) ? id : null;
       const value = Math.max(0, Math.min(1, Number(weight) || 0));
-      state.isSpeaking = Boolean(viseme && value > 0);
       if (!viseme || id === 'sil') {
-        resetMouth();
+        __setExternalMouthTarget();
         return;
       }
-      setMouthWeights({ [viseme]: value });
+      __setExternalMouthTarget({ [viseme]: Math.min(0.62, value * 0.62) });
     }
     function __applyExternalAmplitude(value) {
       const amplitude = Math.max(0, Math.min(1, Number(value) || 0));
-      state.isSpeaking = amplitude > 0.02;
-      setMouthWeights({ aa: amplitude * 0.72 });
+      __setExternalMouthTarget({ aa: Math.min(0.46, amplitude * 0.55) });
+    }
+    function __resetExternalSpeech() {
+      stopSpeaking();
+      __cancelExternalMouthSmoothing();
+      resetSpeechMotion();
+      applyMood('neutral');
     }
     function __playExternalMotion(key) {
       const keywordMap = {
@@ -1105,7 +1166,7 @@
       } else if (data.type === 'speechMotion' && typeof data.key === 'string') {
         __playExternalMotion(data.key);
       } else if (data.type === 'speechReset') {
-        stopSpeaking();
+        __resetExternalSpeech();
       } else if (data.type === 'speak' && typeof data.text === 'string') {
         if (!__trySpeak(data.text)) {
           __pendingSpeakQueue.push(data.text);
