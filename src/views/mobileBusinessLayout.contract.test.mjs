@@ -22,6 +22,7 @@ const accountSettings = readView("account-settings/index.vue");
 const videoAnalysis = readView("course/video-analysis/index.vue");
 const examResult = readView("exam-paper/result/index.vue");
 const accountHome = readView("account/index.vue");
+const wrongExercise = readView("account/wrong-exercise.vue");
 const homeworkManagement = readView(
   "course/assessment/components/HomeworkManagement.vue"
 );
@@ -56,6 +57,20 @@ test("student detail flows remove layered mobile gutters", () => {
   assert.match(studentPaperDetail, /\.paper-info-card,[\s\S]*padding: 8px/);
   assert.match(homeworkDetail, /\.main-content[\s\S]*padding: 0 8px/);
   assert.match(examDetail, /\.main-content[\s\S]*padding: 0 8px/);
+});
+
+test("wrong exercise keeps phone content wide and reports unavailable APIs", () => {
+  assert.match(
+    wrongExercise,
+    /practice-container:not\(\[data-embedded="true"\]\) \.main-content[\s\S]*padding: 0 8px[\s\S]*margin: 0 !important/
+  );
+  assert.match(wrongExercise, /courseId\.value !== undefined/);
+  assert.match(
+    wrongExercise,
+    /:deep\(\.filter-date\)[\s\S]*width: 100% !important/
+  );
+  assert.match(wrongExercise, /错题记录暂不可用/);
+  assert.match(wrongExercise, /historyUnavailable/);
 });
 
 test("student detail controls preserve phone touch targets", () => {
