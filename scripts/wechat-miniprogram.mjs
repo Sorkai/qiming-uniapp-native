@@ -549,21 +549,18 @@ function patchProjectConfig(options) {
       : "";
   config.projectname = config.projectname || "IntellEdu";
   config.condition = config.condition || {};
+  // A large generated condition list crashes DevTools 2.01.2510290 while it
+  // enumerates package files. Route coverage belongs to the audit runners;
+  // project.config.json only needs the active simulator launch condition.
   config.condition.miniprogram = {
     current: 0,
     list: [
       {
         name: "current",
         pathName: "pages/index/index",
-        query: buildQuery(launch.entry, launch.role, launch.devServer)
-      },
-      ...routeMatrix.map((route, index) => ({
-        id: index,
-        name: route.name,
-        pathName: "pages/index/index",
-        query: buildQuery(route.entry, "", launch.devServer),
+        query: buildQuery(launch.entry, launch.role, launch.devServer),
         scene: null
-      }))
+      }
     ]
   };
   writeJson(projectConfigPath, config);
@@ -658,10 +655,27 @@ function collectChecks(options) {
     const config = patchProjectConfig(options);
     launchOptions = readLaunchOptions(config);
     const list = config.condition?.miniprogram?.list || [];
+    const activeLaunch = list[0];
     add(
-      list.length >= routeMatrix.length + 1 ? "OK" : "FAIL",
-      "route matrix",
-      `${list.length}/${routeMatrix.length + 1} launch conditions`
+      list.length === 1 &&
+        activeLaunch?.pathName === "pages/index/index" &&
+        activeLaunch?.scene === null
+        ? "OK"
+        : "FAIL",
+      "DevTools launch condition",
+      `${list.length} active condition`
+    );
+    const routeNames = new Set(routeMatrix.map(route => route.name));
+    add(
+      routeMatrix.length > 0 &&
+        routeNames.size === routeMatrix.length &&
+        routeMatrix.every(
+          route => route.entry.startsWith("/") && Boolean(route.expectText)
+        )
+        ? "OK"
+        : "FAIL",
+      "H5 audit route matrix",
+      `${routeMatrix.length} unique routes`
     );
     add(
       hasRealAppId(config.appid) ? "OK" : "WARN",
@@ -1722,7 +1736,7 @@ function printHelp() {
 
 Commands:
   doctor   Check local mini program tooling.
-  build    Build native-app as mp-weixin and patch launch conditions.
+  build    Build native-app as mp-weixin and patch the active launch condition.
   smoke    Verify generated mp-weixin files and route conditions.
   h5-smoke Capture mobile screenshots for the H5 route matrix.
   devtools-smoke
