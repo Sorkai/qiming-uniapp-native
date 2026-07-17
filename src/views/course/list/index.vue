@@ -1,5 +1,5 @@
 <template>
-  <div class="main p-4">
+  <div class="main course-list-page p-4">
     <!-- 统计概览 -->
     <CourseStats :stats="courseStats" @date-change="handleStatsDateChange" />
 
@@ -210,7 +210,12 @@
     </el-dialog>
 
     <!-- 课时列表弹窗 -->
-    <el-dialog v-model="hoursDialogVisible" title="课时列表" width="70%">
+    <el-dialog
+      v-model="hoursDialogVisible"
+      class="course-hours-dialog"
+      title="课时列表"
+      width="70%"
+    >
       <div v-loading="hoursLoading">
         <div
           v-if="!hoursLoading && courseHours.length === 0"
@@ -265,7 +270,43 @@
                 >
               </div>
 
+              <div v-if="isMobile" class="mobile-hour-list">
+                <article
+                  v-for="hour in chapter.hourList"
+                  :key="hour.hourId"
+                  class="mobile-hour-card"
+                >
+                  <div class="mobile-hour-card__header">
+                    <span class="mobile-hour-card__id"
+                      >课时 {{ hour.hourId }}</span
+                    >
+                    <el-tag size="small">{{ hour.rType }}</el-tag>
+                  </div>
+                  <h4 class="mobile-hour-card__title">{{ hour.title }}</h4>
+                  <div class="mobile-hour-card__meta">
+                    时长：{{ formatDuration(hour.duration) }}
+                  </div>
+                  <div class="mobile-hour-card__actions">
+                    <el-button
+                      size="small"
+                      type="primary"
+                      @click="previewResource(hour.fileUrl)"
+                    >
+                      预览
+                    </el-button>
+                    <el-button
+                      size="small"
+                      type="danger"
+                      @click="confirmDeleteHour(hour, chapter, currentCourse)"
+                    >
+                      删除
+                    </el-button>
+                  </div>
+                </article>
+              </div>
+
               <el-table
+                v-else
                 :data="chapter.hourList"
                 stripe
                 style="width: 100%"
@@ -2506,6 +2547,54 @@ onMounted(async () => {
 
   :deep(.el-dialog__body) {
     padding: 16px;
+  }
+
+  .mobile-hour-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-hour-card {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px;
+    background: var(--el-bg-color-overlay);
+    border: 1px solid var(--el-border-color-lighter);
+    border-radius: 12px;
+  }
+
+  .mobile-hour-card__header,
+  .mobile-hour-card__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-hour-card__id,
+  .mobile-hour-card__meta {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+
+  .mobile-hour-card__title {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--el-text-color-primary);
+  }
+
+  .mobile-hour-card__actions {
+    justify-content: flex-end;
+  }
+
+  .mobile-hour-card__actions .el-button {
+    min-width: 72px;
+    min-height: 40px;
+    margin-left: 0;
   }
 }
 </style>
