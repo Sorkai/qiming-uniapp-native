@@ -6,9 +6,11 @@ on:
   push:
     branches:
       - main
+      - wechat-miniprogram
   pull_request:
     branches:
       - main
+      - wechat-miniprogram
 
 jobs:
   build:
