@@ -640,6 +640,17 @@ if (selfTest) {
       failures.push(`invalid required request path: ${route.name}`);
     }
   }
+  const interactionRoutes = matrixRoutes.filter(route => route.action);
+  if (interactionRoutes.length !== 7) {
+    failures.push(
+      `expected 7 shared interaction routes, got ${interactionRoutes.length}`
+    );
+  }
+  for (const route of interactionRoutes) {
+    if (!route.action.selector || !Array.isArray(route.readyExpect)) {
+      failures.push(`invalid interaction contract: ${route.name}`);
+    }
+  }
   for (const route of androidDynamicRoutes) {
     if (!route.fixtureKind || !/\{[A-Za-z][A-Za-z0-9]*\}/.test(route.entry)) {
       failures.push(`dynamic fixture contract missing: ${route.name}`);
@@ -829,6 +840,7 @@ if (selfTest) {
         requiredResponses: matrixRoutes.filter(
           route => route.requiredRequestPath
         ).length,
+        interactionRoutes: interactionRoutes.length,
         resumePolicyAssertions: 5,
         child: childSelfTest.stdout.trim()
       },
@@ -981,11 +993,11 @@ for (const [routeIndex, route] of routes.entries()) {
     commandArgs.push("--ready-expect-text", readyExpected);
   }
   if (route.action) {
+    commandArgs.push("--action-selector", route.action.selector);
+    if (route.action.text) {
+      commandArgs.push("--action-text", route.action.text);
+    }
     commandArgs.push(
-      "--action-selector",
-      route.action.selector,
-      "--action-text",
-      route.action.text,
       "--post-action-wait-ms",
       String(route.postActionWaitMs || 2000)
     );
