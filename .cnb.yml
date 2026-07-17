@@ -42,6 +42,8 @@ wechat-miniprogram:
             test -f dist/version.json
             test -f dist/hyWOiOCR1C.txt
             test -f dist/homepage/bannerphoto.png
+            test -f 'dist/edge-functions/mindmap-file/[[default]].js'
+            test -f dist/package.json
 
         - name: Deploy to EdgeOne Pages
           script: |

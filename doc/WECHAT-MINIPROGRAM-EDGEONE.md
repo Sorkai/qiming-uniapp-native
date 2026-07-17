@@ -9,6 +9,12 @@
 3. CNB 运行 `pnpm --ignore-workspace edgeone:install` 和 `pnpm --ignore-workspace edgeone:build`，产出微信 H5 `dist/`。
 4. CNB 调用 `edgeone pages deploy`，把 `dist/` 发布到目标 EdgeOne Pages 项目。
 
+构建同时携带 `edge-functions/mindmap-file/[[default]].js`。浏览器、Android
+WebView 和 iOS WKWebView 读取 `aiedu-file.intelledu.cn` 的课程文件时，统一经
+`https://aiedu-mp.intelledu.cn/mindmap-file/*` 转发，避免对象存储未返回 CORS
+响应头导致资源预览失败。该函数只允许 `GET`、`HEAD`、`OPTIONS`，上游域名固定，
+不会转发登录令牌或 Cookie。
+
 ## 关键配置
 
 | 配置项 | 值 |
@@ -47,6 +53,8 @@ https://cnb.cool/sorkai/qiming-uniapp-native-secrets/-/blob/main/envs.yml
 - `dist/hyWOiOCR1C.txt`
 - `dist/static/js/*`
 - `dist/homepage/bannerphoto.png`
+- `dist/edge-functions/mindmap-file/[[default]].js`
+- `dist/package.json`
 
 ## 部署后校验
 
@@ -66,6 +74,16 @@ https://aiedu-mp.intelledu.cn/version.json
 ```
 
 如果仍然看到 `wechat-h5-static-mirror`，说明线上还是旧镜像，不是当前源码构建，小程序继续白屏或旧 UI 都是预期结果。
+
+资源代理还必须返回文件正文和跨域响应头：
+
+```bash
+curl -i -H 'Origin: null' \
+  'https://aiedu-mp.intelledu.cn/mindmap-file/demo-resources/人工智能基础/exercise-set.json'
+```
+
+正确结果必须是 `2xx`，并包含 `Access-Control-Allow-Origin: *`。仅验证首页或
+`version.json` 不代表资源预览已经通过验收。
 
 微信体验版页面路径保持：
 

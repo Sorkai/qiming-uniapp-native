@@ -1,9 +1,16 @@
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
 const distDir = join(root, "dist");
+const edgeFunctionsDir = join(root, "edge-functions");
 const verifyFile = "hyWOiOCR1C.txt";
 const sourceName = "Sorkai/qiming-uniapp-native/wechat-miniprogram";
 
@@ -32,7 +39,9 @@ function run(command, args, env = {}) {
   });
 
   if (result.status !== 0) {
-    throw new Error(`${command} ${args.join(" ")} failed with ${result.status}`);
+    throw new Error(
+      `${command} ${args.join(" ")} failed with ${result.status}`
+    );
   }
 }
 
@@ -54,7 +63,14 @@ function assertFile(pathname, message = `${pathname} was not generated`) {
 function assertDistContains(needle, message) {
   const result = spawnSync(
     "grep",
-    ["-R", "-F", "-q", needle, join(distDir, "static"), join(distDir, "index.html")],
+    [
+      "-R",
+      "-F",
+      "-q",
+      needle,
+      join(distDir, "static"),
+      join(distDir, "index.html")
+    ],
     {
       cwd: root,
       stdio: "ignore"
@@ -72,16 +88,18 @@ function assertOutput() {
   if (html.length < 1024) {
     throw new Error(`dist/index.html is too small (${html.length} bytes)`);
   }
-  if (!html.includes('/static/js/')) {
+  if (!html.includes("/static/js/")) {
     throw new Error("dist/index.html does not reference a local JS entry");
   }
   if (html.includes("https://aiedu.intelledu.cn/static/")) {
-    throw new Error("dist/index.html still points to the old production static origin");
+    throw new Error(
+      "dist/index.html still points to the old production static origin"
+    );
   }
 
-  const staticEntries = [...html.matchAll(/\/(static\/(?:js|css)\/[^\"']+)/g)].map(
-    match => match[1]
-  );
+  const staticEntries = [
+    ...html.matchAll(/\/(static\/(?:js|css)\/[^\"']+)/g)
+  ].map(match => match[1]);
   for (const entry of staticEntries) {
     assertFile(entry, `HTML references missing asset: ${entry}`);
   }
@@ -93,6 +111,8 @@ function assertOutput() {
   assertFile("icons/app-512.png");
   assertFile("platform-config.json");
   assertFile("homepage/bannerphoto.png");
+  assertFile("edge-functions/mindmap-file/[[default]].js");
+  assertFile("package.json");
 
   assertDistContains(
     "IntellEdu",
@@ -102,10 +122,47 @@ function assertOutput() {
     "aiedu-api.intelledu.cn",
     "dist does not contain the production API origin"
   );
+  assertDistContains(
+    "https://aiedu-mp.intelledu.cn",
+    "dist does not contain the production EdgeOne proxy origin"
+  );
+  assertDistContains(
+    "/mindmap-file",
+    "dist does not route platform files through the EdgeOne proxy path"
+  );
+}
+
+function stageEdgeFunctions() {
+  if (!existsSync(edgeFunctionsDir)) {
+    throw new Error("edge-functions source directory is missing");
+  }
+  cpSync(edgeFunctionsDir, join(distDir, "edge-functions"), {
+    recursive: true
+  });
+  writeFileSync(
+    join(distDir, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "qiming-edgeone-functions",
+        private: true,
+        type: "module"
+      },
+      null,
+      2
+    )}\n`
+  );
 }
 
 rmSync(distDir, { recursive: true, force: true });
-run("pnpm", ["--ignore-workspace", "exec", "vite", "build", "--mode", "wechat-h5"]);
+run("pnpm", [
+  "--ignore-workspace",
+  "exec",
+  "vite",
+  "build",
+  "--mode",
+  "wechat-h5"
+]);
+stageEdgeFunctions();
 assertOutput();
 
 writeFileSync(

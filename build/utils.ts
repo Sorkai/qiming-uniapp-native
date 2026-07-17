@@ -62,6 +62,7 @@ const wrapperEnv = (envConf: Recordable): ViteEnv => {
     VITE_API_URL: "",
     VITE_PROXY_TARGET: "https://aiedu-api.intelledu.cn",
     VITE_MINDMAP_FILE_PROXY_TARGET: "https://aiedu-file.intelledu.cn",
+    VITE_PLATFORM_FILE_PROXY_ORIGIN: "",
     VITE_MOCK_SCOPE: "all"
   };
 
