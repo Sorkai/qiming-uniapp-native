@@ -391,6 +391,7 @@ const routes = [
     role: "teacher",
     name: "teacher-course-list",
     entry: "/course/list",
+    minContentUtilization: 0.9,
     readyExpect: ["课程名称"],
     action: { selector: ".course-card .action-btn", text: "章节课时" },
     expect: ["课时列表"],
@@ -406,6 +407,7 @@ const routes = [
     role: "teacher",
     name: "teacher-course-assessment",
     entry: "/course/assessment",
+    minContentUtilization: 0.9,
     readyExpect: ["请从左侧选择一个课程开始管理"],
     action: { selector: ".assessment-management .course-item" },
     expect: ["作业列表"],
@@ -415,6 +417,7 @@ const routes = [
     role: "teacher",
     name: "teacher-course-plan",
     entry: "/course/teacherplan",
+    minContentUtilization: 0.9,
     readyExpect: ["开启智能教案设计"],
     action: { selector: ".teacher-plan-container .course-item" },
     expect: ["AI 智能生成工作台"],
@@ -644,6 +647,7 @@ const routes = [
     role: "admin",
     name: "admin-course-list",
     entry: "/course/list",
+    minContentUtilization: 0.9,
     readyExpect: ["课程名称"],
     action: { selector: ".course-card .action-btn", text: "章节课时" },
     expect: ["课时列表"],
@@ -659,6 +663,7 @@ const routes = [
     role: "admin",
     name: "admin-course-assessment",
     entry: "/course/assessment",
+    minContentUtilization: 0.9,
     readyExpect: ["请从左侧选择一个课程开始管理"],
     action: { selector: ".assessment-management .course-item" },
     expect: ["作业列表"],
@@ -843,6 +848,7 @@ const routes = [
     role: "admin",
     name: "admin-course-plan",
     entry: "/course/teacherplan",
+    minContentUtilization: 0.9,
     readyExpect: ["开启智能教案设计"],
     action: { selector: ".teacher-plan-container .course-item" },
     expect: ["AI 智能生成工作台"],
@@ -1314,6 +1320,32 @@ const inspectExpression = `(() => {
       visible: isVisibleElement(el)
     };
   };
+  const boxInfo = el => {
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const style = getComputedStyle(el);
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const paddingLeft = Number.parseFloat(style.paddingLeft) || 0;
+    const paddingRight = Number.parseFloat(style.paddingRight) || 0;
+    const contentInnerWidth = Math.max(
+      0,
+      rect.width - paddingLeft - paddingRight
+    );
+    const roundRatio = value => Math.round(value * 1000) / 1000;
+    return {
+      ...rectInfo(el),
+      className: String(el.className || '').slice(0, 240),
+      paddingLeft: Math.round(paddingLeft),
+      paddingRight: Math.round(paddingRight),
+      innerWidth: Math.round(contentInnerWidth),
+      leftGap: Math.max(0, Math.round(rect.left)),
+      rightGap: Math.max(0, Math.round(viewportWidth - rect.right)),
+      widthRatio: viewportWidth ? roundRatio(rect.width / viewportWidth) : 0,
+      innerWidthRatio: viewportWidth
+        ? roundRatio(contentInnerWidth / viewportWidth)
+        : 0
+    };
+  };
   const text = (document.body?.innerText || '').replace(/\\s+/g, ' ').trim();
   const loadingEls = Array.from(document.querySelectorAll('.el-loading-mask, .pure-loading, [class*=loading], [class*=Loading]')).filter(isVisibleElement);
   const brokenImages = Array.from(document.images)
@@ -1336,6 +1368,30 @@ const inspectExpression = `(() => {
   const navbar = document.querySelector('.navbar, .header');
   const accountMain = document.querySelector('.account-main');
   const activeAccountMenu = Array.from(document.querySelectorAll('.account-menu .el-menu-item.is-active')).find(isVisibleElement);
+  const textWithoutSvg = element => {
+    if (!element) return '';
+    const clone = element.cloneNode(true);
+    clone.querySelectorAll('svg, style, script').forEach(node => node.remove());
+    return String(clone.textContent || '').replace(/\\s+/g, ' ').trim();
+  };
+  const routeContent = Array.from(document.querySelectorAll('.qiming-route-content')).find(isVisibleElement);
+  const routeChildren = Array.from(routeContent?.children || [])
+    .filter(isVisibleElement)
+    .sort((left, right) => {
+      const leftRect = left.getBoundingClientRect();
+      const rightRect = right.getBoundingClientRect();
+      return rightRect.width - leftRect.width || rightRect.height - leftRect.height;
+    });
+  const primaryRouteChild = routeChildren[0] || null;
+  const activeDialog = Array.from(document.querySelectorAll('.el-dialog')).filter(isVisibleElement).at(-1) || null;
+  const activeDialogBody = activeDialog?.querySelector('.el-dialog__body') || null;
+  const measuredContent = activeDialogBody || primaryRouteChild || routeContent;
+  const measuredContentBox = boxInfo(measuredContent);
+  const contentUtilization = measuredContentBox
+    ? activeDialogBody
+      ? measuredContentBox.innerWidthRatio
+      : measuredContentBox.widthRatio
+    : 0;
   const aiRoot = document.querySelector('.ai-app-root');
   const aiLeftRail = document.querySelector('.ai-app-left-rail');
   const sidebarLogo = document.querySelector('.sidebar-logo-container');
@@ -1367,6 +1423,7 @@ const inspectExpression = `(() => {
   const hashQuery = location.hash.includes('?') ? location.hash.slice(location.hash.indexOf('?') + 1) : '';
   return {
     href: location.href,
+    htmlClass: String(document.documentElement.className || ''),
     routePath: (() => {
       const hash = location.hash.replace(/^#/, '');
       const path = hash.split('?')[0] || location.pathname;
@@ -1391,7 +1448,7 @@ const inspectExpression = `(() => {
       auditRole: localStorage.getItem('qimingRealAuditRole') || ''
     },
     account: {
-      activeMenuText: String(activeAccountMenu?.textContent || '').replace(/\s+/g, ' ').trim(),
+      activeMenuText: textWithoutSvg(activeAccountMenu),
       mainText: String(accountMain?.innerText || accountMain?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 4000)
     },
     course: {
@@ -1404,6 +1461,11 @@ const inspectExpression = `(() => {
       navbar: rectInfo(navbar),
       main: rectInfo(main),
       accountMain: rectInfo(accountMain),
+      routeContent: boxInfo(routeContent),
+      primaryRouteChild: boxInfo(primaryRouteChild),
+      activeDialog: boxInfo(activeDialog),
+      activeDialogBody: boxInfo(activeDialogBody),
+      contentUtilization,
       aiRoot: rectInfo(aiRoot),
       aiLeftRail: rectInfo(aiLeftRail),
       sidebarLogo: rectInfo(sidebarLogo),
@@ -1481,6 +1543,14 @@ function analyze(
   if (info.loadingCount > 0)
     failures.push(`loading-visible:${info.loadingCount}`);
   if (info.overflowX > 2) failures.push(`overflow-x:${info.overflowX}`);
+  if (route.minContentUtilization) {
+    const contentUtilization = Number(info.layout?.contentUtilization || 0);
+    if (contentUtilization < route.minContentUtilization) {
+      failures.push(
+        `content-too-narrow:${contentUtilization.toFixed(3)}<${route.minContentUtilization.toFixed(3)}`
+      );
+    }
+  }
   if (info.brokenImages?.length)
     failures.push(`broken-images:${info.brokenImages.length}`);
   const forbiddenPage =
@@ -1838,6 +1908,23 @@ function runSelfTest() {
       failures.push(`invalid action wait: ${route.name}`);
     }
   }
+  const contentUtilizationRoutes = routes.filter(
+    route => route.minContentUtilization !== undefined
+  );
+  if (contentUtilizationRoutes.length !== 6) {
+    failures.push(
+      `expected 6 content-utilization routes, got ${contentUtilizationRoutes.length}`
+    );
+  }
+  for (const route of contentUtilizationRoutes) {
+    if (
+      !Number.isFinite(route.minContentUtilization) ||
+      route.minContentUtilization < 0.8 ||
+      route.minContentUtilization > 1
+    ) {
+      failures.push(`invalid content-utilization contract: ${route.name}`);
+    }
+  }
   for (const name of [
     "student-account-cloud-disk",
     "teacher-cloud-disk",
@@ -1879,6 +1966,7 @@ function runSelfTest() {
         requiredResponses: routes.filter(route => route.requiredRequestPath)
           .length,
         interactionRoutes: interactionRoutes.length,
+        contentUtilizationRoutes: contentUtilizationRoutes.length,
         envelopeCases: envelopeCases.length
       },
       null,
@@ -1975,6 +2063,13 @@ async function main() {
       width: 390,
       height: 844,
       deviceScaleFactor: 3,
+      mobile: true
+    });
+    await client.send("Emulation.setUserAgentOverride", {
+      userAgent:
+        "Mozilla/5.0 (Linux; Android 14; QimingAudit) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36",
+      acceptLanguage: "zh-CN,zh;q=0.9",
+      platform: "Android",
       mobile: true
     });
 
@@ -2179,7 +2274,7 @@ async function main() {
       };
       results.push(result);
       console.log(
-        `[${result.ok ? "OK" : "FAIL"}] ${route.name.padEnd(32, " ")} text=${String(info.textLength || 0).padStart(4)} broken=${info.brokenImages?.length || 0} overflowX=${info.overflowX ?? "?"} ${failures.join(",") || screenshotPath}${warnings.length ? ` warnings=${warnings.join(",")}` : ""}`
+        `[${result.ok ? "OK" : "FAIL"}] ${route.name.padEnd(32, " ")} text=${String(info.textLength || 0).padStart(4)} broken=${info.brokenImages?.length || 0} overflowX=${info.overflowX ?? "?"} content=${info.layout?.contentUtilization ?? "?"} ${failures.join(",") || screenshotPath}${warnings.length ? ` warnings=${warnings.join(",")}` : ""}`
       );
       unsubscribe();
     }

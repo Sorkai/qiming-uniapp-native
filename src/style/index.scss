@@ -113,6 +113,32 @@ html.qiming-native-webview.ua-mobile.qiming-native-android
   box-sizing: border-box;
 }
 
+html.qiming-native-webview.ua-mobile
+  :is(
+    .course-list-page,
+    .teacher-plan-container,
+    .assessment-management
+  ).qiming-route-content {
+  padding-right: 0 !important;
+  padding-left: 0 !important;
+}
+
+html.qiming-native-webview.ua-mobile .course-hours-dialog.el-dialog {
+  width: calc(100vw - 12px) !important;
+  max-width: calc(100vw - 12px) !important;
+  margin-top: 3vh !important;
+  padding: 0 !important;
+  border-radius: 18px;
+}
+
+html.qiming-native-webview.ua-mobile .course-hours-dialog .el-dialog__header {
+  padding: 16px 16px 12px;
+}
+
+html.qiming-native-webview.ua-mobile .course-hours-dialog .el-dialog__body {
+  padding: 12px !important;
+}
+
 html.qiming-mini-program-webview.ua-mobile {
   --qiming-native-statusbar-offset: 0px;
   --pure-safe-area-top: 0px;
@@ -788,6 +814,7 @@ html.qiming-mini-program-webview.ua-mobile
 html.qiming-mini-program-webview.ua-mobile .app-main {
   height: auto;
   min-height: 100dvh;
+  padding-top: 0 !important;
 }
 
 html.qiming-mini-program-webview.ua-mobile .main-container > .el-scrollbar,

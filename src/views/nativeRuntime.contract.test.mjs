@@ -209,6 +209,20 @@ test("account audit ignores SVG style text and expects rendered page content", (
   );
 });
 
+test("real route audit enforces usable width on teacher mobile workflows", () => {
+  assert.match(sharedRouteMatrix, /minContentUtilization: 0\.9/g);
+  assert.equal(
+    sharedRouteMatrix.match(/minContentUtilization: 0\.9/g)?.length,
+    6
+  );
+  assert.match(sharedRouteMatrix, /contentUtilizationRoutes\.length !== 6/);
+  assert.match(sharedRouteMatrix, /content-too-narrow:/);
+  assert.match(sharedRouteMatrix, /activeDialogBody/);
+  assert.match(sharedRouteMatrix, /primaryRouteChild/);
+  assert.match(sharedRouteMatrix, /Emulation\.setUserAgentOverride/);
+  assert.match(sharedRouteMatrix, /QimingAudit/);
+});
+
 test("Android route runner enforces compact digital-human checks", () => {
   const androidRunner = read("../../scripts/android-real-device-audit.mjs");
   assert.match(androidRunner, /expect-compact-digital-human/);
