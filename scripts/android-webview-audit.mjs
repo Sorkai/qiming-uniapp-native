@@ -98,7 +98,7 @@ function executionFailureReport(error) {
 
 function printUsage() {
   process.stdout.write(
-    `Usage: node scripts/android-webview-audit.mjs [options]\n\nOptions:\n  --strict                         Exit non-zero when an audit assertion fails\n  --role <student|teacher|admin>   Seed a real role session before auditing\n  --entry <route>                  Navigate to a hash route before auditing\n  --expect-text <text>             Require page/account body text\n  --ready-expect-text <text>       Require text before a configured action\n  --account-menu-text <text>       Require the active account menu and account body\n  --action-selector <selector>     Click the first visible matching element\n  --action-text <text>             Optionally narrow --action-selector by text\n  --required-request-path <path>   Require a successful API response and code 0/200\n  --expect-forbidden               Require the route to resolve to the 403 page\n  --serial <adb-serial>             Target one Android device\n  --port <port>                    Local CDP forwarding port (default: 9223)\n  --url-pattern <text>             WebView target URL pattern\n  --wait-ms <ms>                   Wait after navigation/session seed\n  --post-action-wait-ms <ms>       Wait after the configured action\n  --min-content-ratio <ratio>      Minimum main-content/viewport width ratio\n  --api-origin <url>               API origin used for real login\n  --out <path>                     Write the JSON report to a file\n  --self-test                      Run pure response-envelope checks and exit\n  -h, --help                       Show this help and exit\n`
+    `Usage: node scripts/android-webview-audit.mjs [options]\n\nOptions:\n  --strict                         Exit non-zero when an audit assertion fails\n  --role <student|teacher|admin>   Seed a real role session before auditing\n  --entry <route>                  Navigate to a hash route before auditing\n  --expect-text <text>             Require page/account body text\n  --ready-expect-text <text>       Require text before a configured action\n  --account-menu-text <text>       Require the active account menu and account body\n  --action-selector <selector>     Click the first visible matching element\n  --action-text <text>             Optionally narrow --action-selector by text\n  --action-after-selector <css>    Require a visible element after the action\n  --action-after-text <text>       Require text inside the post-action element\n  --required-request-path <path>   Require a successful API response and code 0/200\n  --expect-forbidden               Require the route to resolve to the 403 page\n  --serial <adb-serial>             Target one Android device\n  --port <port>                    Local CDP forwarding port (default: 9223)\n  --url-pattern <text>             WebView target URL pattern\n  --wait-ms <ms>                   Wait after navigation/session seed\n  --post-action-wait-ms <ms>       Wait after the configured action\n  --min-content-ratio <ratio>      Minimum main-content/viewport width ratio\n  --api-origin <url>               API origin used for real login\n  --out <path>                     Write the JSON report to a file\n  --self-test                      Run pure response-envelope checks and exit\n  -h, --help                       Show this help and exit\n`
   );
   process.stdout.write(
     "  --package <application-id>        Android package owning the WebView\n"
@@ -184,6 +184,8 @@ const expectedText = readArg("--expect-text");
 const readyExpectedText = readArg("--ready-expect-text");
 const actionSelector = readArg("--action-selector");
 const actionText = readArg("--action-text");
+const actionAfterSelector = readArg("--action-after-selector");
+const actionAfterText = readArg("--action-after-text");
 const accountMenuText = readArg("--account-menu-text");
 const expectCompactDigitalHuman = hasFlag("--expect-compact-digital-human");
 const expectForbidden = hasFlag("--expect-forbidden");
@@ -268,6 +270,12 @@ if (entry && !entry.startsWith("/")) {
 
 if (!actionSelector && actionText) {
   throw new Error("--action-text requires --action-selector");
+}
+if (!actionSelector && actionAfterSelector) {
+  throw new Error("--action-after-selector requires --action-selector");
+}
+if (!actionAfterSelector && actionAfterText) {
+  throw new Error("--action-after-text requires --action-after-selector");
 }
 
 if (requiredRequestPath && !requiredRequestPath.startsWith("/")) {
@@ -869,7 +877,48 @@ try {
         reason: "action-returned-no-result"
       };
     }
-    if (actionResult.ok) await wait(postActionWaitMs);
+    if (actionResult.ok) {
+      await wait(postActionWaitMs);
+      if (actionAfterSelector) {
+        const afterEvaluation = await command("Runtime.evaluate", {
+          expression: `(() => {
+            const selector = ${JSON.stringify(actionAfterSelector)};
+            const element = Array.from(document.querySelectorAll(selector)).find(element => {
+              const style = getComputedStyle(element);
+              const rect = element.getBoundingClientRect();
+              return style.display !== "none" &&
+                style.visibility !== "hidden" &&
+                rect.width > 0 &&
+                rect.height > 0;
+            });
+            return {
+              visible: Boolean(element),
+              text: String(element?.textContent || "").replace(/\\s+/g, " ").trim().slice(0, 1000)
+            };
+          })()`,
+          returnByValue: true
+        });
+        const afterResult = afterEvaluation.result?.value || {
+          visible: false,
+          text: ""
+        };
+        const afterSelectorVisible = afterResult.visible === true;
+        const afterTextFound =
+          !actionAfterText ||
+          String(afterResult.text).includes(actionAfterText);
+        actionResult.afterSelector = actionAfterSelector;
+        actionResult.afterSelectorVisible = afterSelectorVisible;
+        actionResult.afterSelectorText = afterResult.text;
+        actionResult.afterText = actionAfterText || null;
+        actionResult.afterTextFound = afterTextFound;
+        if (!afterSelectorVisible || !afterTextFound) {
+          actionResult.ok = false;
+          actionResult.reason = afterSelectorVisible
+            ? "after-text-not-found"
+            : "after-selector-not-visible";
+        }
+      }
+    }
   }
 
   const evaluation = await command("Runtime.evaluate", {
@@ -1079,7 +1128,13 @@ try {
     expectedText: expectedText || null,
     readyExpectedText: readyExpectedText || null,
     action: actionSelector
-      ? { selector: actionSelector, text: actionText, postActionWaitMs }
+      ? {
+          selector: actionSelector,
+          text: actionText,
+          afterSelector: actionAfterSelector || null,
+          afterText: actionAfterText || null,
+          postActionWaitMs
+        }
       : null,
     accountMenuText: accountMenuText || null,
     expectCompactDigitalHuman,

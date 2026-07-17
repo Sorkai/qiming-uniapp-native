@@ -293,6 +293,9 @@ HTTPS H5 地址可访问性、小程序构建产物和三端启动矩阵。
 业务域名的 HTTPS 前端 H5 地址；`http://localhost:8851` 只适合微信开发者工具模拟器和本机截图验证。
 当前小程序专用 H5 域名为 `https://aiedu-mp.intelledu.cn`，EdgeOne Pages 构建命令应使用
 安装命令 `pnpm --ignore-workspace edgeone:install`、构建命令 `pnpm --ignore-workspace edgeone:build`，输出目录为 `dist`。
+移动端课程文件预览统一通过该域名的 `/mindmap-file/*` Edge Function 读取固定的
+`aiedu-file.intelledu.cn` 上游；发布验收必须同时检查文件正文和
+`Access-Control-Allow-Origin`，不能只看首页是否打开。
 当前自动化发布链路为 GitHub Actions 同步 `wechat-miniprogram` 到 CNB，再由 CNB 执行 `.cnb.yml`
 完成构建并通过 EdgeOne CLI 发布；详情见 `doc/CI-CD-CNB.md`。
 `https://aiedu-api.intelledu.cn` 是后端 API 地址，不能作为 `web-view` 页面入口。

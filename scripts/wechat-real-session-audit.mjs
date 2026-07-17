@@ -87,7 +87,11 @@ const routes = [
     name: "student-account-home",
     entry: "/account?menu=home",
     accountMenuText: "首页",
-    expect: ["课程信息", "AI总结"]
+    readyExpect: ["课程信息", "AI总结"],
+    action: { selector: ".quick-access-card.course-access" },
+    expect: ["我的课程"],
+    afterActionAccountMenuText: "课程",
+    postActionWaitMs: 1200
   },
   {
     role: "student",
@@ -101,7 +105,13 @@ const routes = [
     name: "student-account-resources",
     entry: "/account?menu=student-resources",
     accountMenuText: "教学资源",
-    expect: ["个性化教学资源", "教学资源"]
+    readyExpect: ["点击资源卡片进入在线预览与文件辅导"],
+    action: {
+      selector: ".resource-card",
+      afterSelector: ".resource-preview__back"
+    },
+    expect: ["资源列表"],
+    postActionWaitMs: 2500
   },
   {
     role: "student",
@@ -122,7 +132,13 @@ const routes = [
     name: "student-learning-profile",
     entry: "/account?menu=learning-profile",
     accountMenuText: "学生画像",
-    expect: ["学习画像", "画像地形"]
+    readyExpect: ["学习画像", "画像地形"],
+    action: {
+      selector: ".radar-point",
+      afterSelector: ".account-assistant-dialog"
+    },
+    expect: ["画像地形"],
+    postActionWaitMs: 1200
   },
   {
     role: "student",
@@ -476,7 +492,13 @@ const routes = [
     role: "teacher",
     name: "teacher-ai-governance",
     entry: "/ai-app/governance",
-    expect: ["治理看板"]
+    readyExpect: ["治理看板"],
+    action: {
+      selector: ".a3-governance-tabs .el-tabs__item",
+      text: "教学资源"
+    },
+    expect: ["查看教学资源"],
+    postActionWaitMs: 1200
   },
   {
     role: "teacher",
@@ -608,7 +630,15 @@ const routes = [
     role: "admin",
     name: "admin-user-list",
     entry: "/user/list",
-    expect: ["用户列表", "用户"]
+    readyExpect: ["用户列表", "用户"],
+    action: {
+      selector: ".mobile-user-card__actions .el-button",
+      text: "修改角色",
+      afterSelector: ".el-dialog",
+      afterText: "修改用户角色"
+    },
+    expect: ["用户列表"],
+    postActionWaitMs: 1200
   },
   {
     role: "admin",
@@ -698,7 +728,13 @@ const routes = [
     role: "admin",
     name: "admin-ai-governance",
     entry: "/ai-app/governance",
-    expect: ["治理看板"]
+    readyExpect: ["治理看板"],
+    action: {
+      selector: ".a3-governance-tabs .el-tabs__item",
+      text: "教学资源"
+    },
+    expect: ["查看教学资源"],
+    postActionWaitMs: 1200
   },
   {
     role: "admin",
@@ -1436,7 +1472,11 @@ function analyze(
       `route-mismatch:${info.routePath || "none"}!=${expectedPath}`
     );
   }
-  const textScope = route.accountMenuText
+  const expectedAccountMenuText =
+    actionResult?.ok && route.afterActionAccountMenuText
+      ? route.afterActionAccountMenuText
+      : route.accountMenuText;
+  const textScope = expectedAccountMenuText
     ? String(info.account?.mainText || "")
     : info.textSample;
   if (
@@ -1448,11 +1488,11 @@ function analyze(
   }
   if (
     !route.expectedForbidden &&
-    route.accountMenuText &&
-    info.account?.activeMenuText !== route.accountMenuText
+    expectedAccountMenuText &&
+    info.account?.activeMenuText !== expectedAccountMenuText
   ) {
     failures.push(
-      `account-menu-mismatch:${info.account?.activeMenuText || "none"}!=${route.accountMenuText}`
+      `account-menu-mismatch:${info.account?.activeMenuText || "none"}!=${expectedAccountMenuText}`
     );
   }
   failures.push(...courseStateFailures(info, route.courseState));
@@ -1625,7 +1665,55 @@ async function performRouteAction(client, action) {
       return { ok: true, selector, expectedText, clickedText: String(target.textContent || '').replace(/\\s+/g, ' ').trim() };
     })()`
   });
-  return evaluated.result?.value || { ok: false, reason: "no-action-result" };
+  const actionResult = evaluated.result?.value || {
+    ok: false,
+    reason: "no-action-result"
+  };
+  if (!actionResult.ok || !action.afterSelector) return actionResult;
+
+  const startedAt = Date.now();
+  let lastAfterResult = { visible: false, text: "" };
+  do {
+    await wait(200);
+    const afterEvaluation = await client.send("Runtime.evaluate", {
+      returnByValue: true,
+      expression: `(() => {
+        ${isVisibleElementSource}
+        const selector = ${JSON.stringify(action.afterSelector)};
+        const element = Array.from(document.querySelectorAll(selector)).find(isVisibleElement);
+        return {
+          visible: Boolean(element),
+          text: String(element?.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 1000)
+        };
+      })()`
+    });
+    lastAfterResult = afterEvaluation.result?.value || lastAfterResult;
+    const afterTextFound =
+      !action.afterText || lastAfterResult.text.includes(action.afterText);
+    if (lastAfterResult.visible && afterTextFound) {
+      return {
+        ...actionResult,
+        afterSelector: action.afterSelector,
+        afterSelectorVisible: true,
+        afterSelectorText: lastAfterResult.text,
+        afterText: action.afterText || null,
+        afterTextFound
+      };
+    }
+  } while (Date.now() - startedAt < 4000);
+
+  return {
+    ...actionResult,
+    ok: false,
+    reason: lastAfterResult.visible
+      ? "after-text-not-found"
+      : "after-selector-not-visible",
+    afterSelector: action.afterSelector,
+    afterSelectorVisible: lastAfterResult.visible,
+    afterSelectorText: lastAfterResult.text,
+    afterText: action.afterText || null,
+    afterTextFound: false
+  };
 }
 
 async function captureBottom(client) {
@@ -1691,14 +1779,26 @@ function runSelfTest() {
     }
   }
   const interactionRoutes = routes.filter(route => route.action);
-  if (interactionRoutes.length !== 7) {
+  if (interactionRoutes.length !== 13) {
     failures.push(
-      `expected 7 interaction routes, got ${interactionRoutes.length}`
+      `expected 13 interaction routes, got ${interactionRoutes.length}`
     );
   }
   for (const route of interactionRoutes) {
     if (!route.action.selector || !Array.isArray(route.readyExpect)) {
       failures.push(`invalid interaction contract: ${route.name}`);
+    }
+    if (
+      route.action.afterSelector !== undefined &&
+      !String(route.action.afterSelector).trim()
+    ) {
+      failures.push(`invalid post-action selector: ${route.name}`);
+    }
+    if (
+      route.action.afterText !== undefined &&
+      (!route.action.afterSelector || !String(route.action.afterText).trim())
+    ) {
+      failures.push(`invalid post-action text: ${route.name}`);
     }
   }
   for (const name of [
