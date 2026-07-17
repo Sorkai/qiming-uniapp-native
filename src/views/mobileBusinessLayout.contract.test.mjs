@@ -185,6 +185,14 @@ test("course learning and discussion mobile controls stay touch sized", () => {
     courseStudy,
     /\.header-btn[\s\S]*width: 44px[\s\S]*height: 44px/
   );
+  assert.match(
+    courseStudy,
+    /@media \(width <= 479px\)[\s\S]*\.study-container \{[\s\S]*156px\) 8px/
+  );
+  assert.match(
+    courseStudy,
+    /\.card-body \{[\s\S]*\.el-scrollbar__wrap \{[\s\S]*padding: 6px/
+  );
   assert.match(courseQa, /\.filter-tab[\s\S]*min-height: 44px/);
   assert.match(courseQa, /\.toolbar-btn[\s\S]*width: 44px[\s\S]*height: 44px/);
   assert.match(courseQa, /\.reply-action-btn[\s\S]*min-height: 44px/);

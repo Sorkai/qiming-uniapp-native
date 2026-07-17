@@ -2151,7 +2151,7 @@ $shadow-xl:
 /* stylelint-disable-next-line order/order */
 @media (width <= 479px) {
   .study-container {
-    padding: var(--course-mobile-top-offset, 156px) 12px
+    padding: var(--course-mobile-top-offset, 156px) 8px
       calc(16px + var(--course-mobile-fab-clearance, 92px));
   }
 
@@ -2187,7 +2187,7 @@ $shadow-xl:
   .card-body {
     :deep(.el-scrollbar) {
       .el-scrollbar__wrap {
-        padding: 14px;
+        padding: 6px;
       }
     }
   }
