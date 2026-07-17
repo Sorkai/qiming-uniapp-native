@@ -157,33 +157,40 @@ onMounted(() => {
 
         <div class="answer-card">
           <div class="card-title">答题明细</div>
-          <el-table :data="result.answers || []" border stripe>
-            <el-table-column prop="questionId" label="题号" width="100" />
-            <el-table-column label="你的答案" min-width="220">
-              <template #default="scope">
-                <span>{{ formatAnswer(scope.row.answer) }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column prop="score" label="得分" width="100" />
-            <el-table-column label="判题" width="120">
-              <template #default="scope">
-                <el-tag
-                  v-if="scope.row.isCorrect !== undefined"
-                  :type="scope.row.isCorrect ? 'success' : 'danger'"
-                  size="small"
-                >
-                  {{ scope.row.isCorrect ? "正确" : "错误" }}
-                </el-tag>
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column
-              prop="comment"
-              label="评语"
-              min-width="220"
-              show-overflow-tooltip
-            />
-          </el-table>
+          <div
+            class="answer-table-scroll"
+            role="region"
+            aria-label="考试答题明细表格"
+            tabindex="0"
+          >
+            <el-table :data="result.answers || []" border stripe>
+              <el-table-column prop="questionId" label="题号" width="100" />
+              <el-table-column label="你的答案" min-width="220">
+                <template #default="scope">
+                  <span>{{ formatAnswer(scope.row.answer) }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="score" label="得分" width="100" />
+              <el-table-column label="判题" width="120">
+                <template #default="scope">
+                  <el-tag
+                    v-if="scope.row.isCorrect !== undefined"
+                    :type="scope.row.isCorrect ? 'success' : 'danger'"
+                    size="small"
+                  >
+                    {{ scope.row.isCorrect ? "正确" : "错误" }}
+                  </el-tag>
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="comment"
+                label="评语"
+                min-width="220"
+                show-overflow-tooltip
+              />
+            </el-table>
+          </div>
         </div>
       </template>
     </div>
@@ -345,6 +352,19 @@ onMounted(() => {
   }
 }
 
+.answer-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+
+  :deep(.el-table) {
+    min-width: 760px;
+  }
+}
+
 @media (max-width: 980px) {
   .score-card {
     grid-template-columns: 1fr;
@@ -363,6 +383,64 @@ onMounted(() => {
 
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (width <= 768px) {
+  .exam-result-page {
+    min-width: 0;
+    padding: 8px;
+    margin: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .header-row {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+
+    .title {
+      font-size: 20px;
+    }
+
+    .subtitle {
+      line-height: 1.6;
+    }
+
+    :deep(.el-button) {
+      width: 100%;
+      min-height: 44px;
+      margin: 0;
+    }
+  }
+
+  .score-card,
+  .summary-card {
+    padding: 12px;
+  }
+
+  .answer-card {
+    min-width: 0;
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  .answer-table-scroll {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (width <= 380px) {
+  .exam-result-page {
+    padding: 6px;
+  }
+
+  .score-card,
+  .summary-card,
+  .answer-card {
+    padding: 6px;
   }
 }
 </style>

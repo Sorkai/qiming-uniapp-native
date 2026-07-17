@@ -249,7 +249,7 @@
     <el-dialog
       v-model="dialogVisible"
       title="修改个人资料"
-      width="500px"
+      width="min(500px, calc(100vw - 24px))"
       destroy-on-close
       :close-on-click-modal="false"
     >
@@ -349,7 +349,7 @@
     <el-dialog
       v-model="presetDialogVisible"
       title="选择预设背景图"
-      width="600px"
+      width="min(600px, calc(100vw - 24px))"
       append-to-body
     >
       <div class="preset-banners-grid">
@@ -372,7 +372,7 @@
     <el-dialog
       v-model="cropperDialogVisible"
       :title="currentCroppingType === 'avatar' ? '裁剪头像' : '裁剪横幅图'"
-      width="800px"
+      width="min(800px, calc(100vw - 24px))"
       append-to-body
       destroy-on-close
     >
@@ -405,7 +405,7 @@
     <el-dialog
       v-model="passwordDialogVisible"
       title="修改密码"
-      width="500px"
+      width="min(500px, calc(100vw - 24px))"
       destroy-on-close
       :close-on-click-modal="false"
     >

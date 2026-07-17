@@ -94,7 +94,8 @@ native-app, platform adapters, and release tooling stay in this repository.`);
     }
   }
 
-  if (!options.targetRemotes.length) fail("At least one target remote is required");
+  if (!options.targetRemotes.length)
+    fail("At least one target remote is required");
   return options;
 }
 
@@ -123,6 +124,7 @@ function isAncestor(ancestor, descendant) {
 function verifyBuilds() {
   const checks = [
     ["pnpm", ["lint"]],
+    ["pnpm", ["test:contracts"]],
     ["pnpm", ["typecheck"]],
     ["pnpm", ["build:app-h5"]],
     ["pnpm", ["sync:app-h5"]],
@@ -260,5 +262,13 @@ try {
     `[sync-web] complete: ${sourceShort}${createdCommit ? " merged" : " already current"}`
   );
 } catch (error) {
+  const mergeInProgress =
+    git(["rev-parse", "-q", "--verify", "MERGE_HEAD"], {
+      allowFailure: true,
+      capture: true
+    }).status === 0;
+  if (mergeInProgress) {
+    git(["merge", "--abort"], { allowFailure: true });
+  }
   fail(error instanceof Error ? error.message : String(error));
 }

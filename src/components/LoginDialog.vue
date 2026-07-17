@@ -527,7 +527,20 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { userRegister, userLogin, getUserDetail } from "@/api/user";
-import { setToken, getToken } from "@/utils/auth";
+import { setToken, getToken, removeToken } from "@/utils/auth";
+
+const rolesForRoleType = (roleType?: number) => {
+  switch (Number(roleType)) {
+    case 1:
+      return ["student"];
+    case 2:
+      return ["teacher"];
+    case 3:
+      return ["admin"];
+    default:
+      return ["common"];
+  }
+};
 
 const props = defineProps({
   visible: {
@@ -614,13 +627,6 @@ const errors = reactive({
   confirmPassword: ""
 });
 
-const rolesByRoleType = (roleType?: number | null) => {
-  if (roleType === 3) return ["admin"];
-  if (roleType === 2) return ["teacher"];
-  if (roleType === 1) return ["student"];
-  return ["common"];
-};
-
 // 清除错误
 const clearErrors = () => {
   Object.keys(errors).forEach(key => {
@@ -695,7 +701,7 @@ const fetchUserDetail = async () => {
         username: userInfo.mobile,
         nickname: userInfo.nickname,
         avatar: userInfo.avatar,
-        roles: rolesByRoleType(userInfo.roleType),
+        roles: rolesForRoleType(userInfo.roleType),
         permissions: ["*:*:*"],
         roleType: userInfo.roleType,
         userId: userInfo.id
@@ -745,11 +751,16 @@ const handlePasswordLogin = async () => {
         refreshToken: res.data.accessToken,
         username: loginForm.username,
         nickname: loginForm.username,
-        roles: ["common"],
-        permissions: ["*:*:*"]
+        roles: [],
+        permissions: ["*:*:*"],
+        roleType: 0
       });
 
-      await fetchUserDetail();
+      const detail = await fetchUserDetail();
+      if (!detail?.data?.userInfo) {
+        removeToken();
+        throw new Error("Unable to load the authenticated user role");
+      }
       message(t("login.pureLoginSuccess"), { type: "success" });
 
       setTimeout(() => {
@@ -858,11 +869,16 @@ const handleRegister = async () => {
         refreshToken: res.data.accessToken,
         username: registerForm.phone,
         nickname: registerForm.phone,
-        roles: ["common"],
-        permissions: ["*:*:*"]
+        roles: [],
+        permissions: ["*:*:*"],
+        roleType: 0
       });
 
-      await fetchUserDetail();
+      const detail = await fetchUserDetail();
+      if (!detail?.data?.userInfo) {
+        removeToken();
+        throw new Error("Unable to load the registered user role");
+      }
       ElMessage.success("注册成功，已自动登录");
 
       setTimeout(() => {

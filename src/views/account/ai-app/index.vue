@@ -843,7 +843,7 @@ const routineTasks = ref([
     role: "student",
     status: "active",
     lastRun: "上周五 18:00",
-    icon: "Calendar"
+    icon: Calendar
   },
   {
     id: "r2",
@@ -852,7 +852,7 @@ const routineTasks = ref([
     role: "student",
     status: "active",
     lastRun: "昨天 20:00",
-    icon: "Bell"
+    icon: Bell
   },
   {
     id: "r3",
@@ -861,7 +861,7 @@ const routineTasks = ref([
     role: "student",
     status: "paused",
     lastRun: "-",
-    icon: "Document"
+    icon: Document
   },
   {
     id: "r4",
@@ -870,7 +870,7 @@ const routineTasks = ref([
     role: "teacher",
     status: "active",
     lastRun: "昨天 22:00",
-    icon: "DataBoard"
+    icon: DataBoard
   },
   {
     id: "r5",
@@ -879,7 +879,7 @@ const routineTasks = ref([
     role: "teacher",
     status: "active",
     lastRun: "上周日 12:00",
-    icon: "ChatLineRound"
+    icon: ChatLineRound
   }
 ]);
 const routineTaskRole = computed(() =>
@@ -2571,7 +2571,7 @@ onUnmounted(() => {
         <!-- 课程 / 学生上下文工具栏 -->
         <div
           v-if="showCourseContext"
-          class="flex-none flex items-center justify-end gap-3 bg-white mb-5 px-6 py-3 border border-gray-100 rounded-lg z-10 relative overflow-hidden"
+          class="ai-course-context-bar flex-none flex items-center justify-end gap-3 bg-white mb-5 px-6 py-3 border border-gray-100 rounded-lg z-10 relative overflow-hidden"
         >
           <span class="text-xs text-gray-500 font-medium">{{
             courseContextLabel
@@ -2840,6 +2840,7 @@ onUnmounted(() => {
                       type="button"
                       class="quick-attachment-remove"
                       title="删除附件"
+                      aria-label="删除附件"
                       @click="removeQuickAttachment(attachment.id)"
                     >
                       <el-icon><Close /></el-icon>
@@ -3136,10 +3137,10 @@ onUnmounted(() => {
             </div>
             <div
               v-else
-              class="h-full w-full min-w-0 min-h-0 flex gap-4 overflow-hidden"
+              class="ai-profile-workspace h-full w-full min-w-0 min-h-0 flex gap-4 overflow-hidden"
             >
               <div
-                class="flex-1 min-w-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                class="ai-profile-main flex-1 min-w-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiLearningProfile
                   :course-id="selectedCourseId"
@@ -3150,7 +3151,7 @@ onUnmounted(() => {
                 />
               </div>
               <div
-                class="w-[440px] flex-shrink-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                class="ai-profile-inspector w-[440px] flex-shrink-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiInspector
                   :profileDimensions="profileDimensions"
@@ -3206,15 +3207,18 @@ onUnmounted(() => {
           <!-- 【场景 C】 常规任务 (原自动化) -->
           <div
             v-else-if="activeRail === `automation`"
-            class="h-full w-full min-w-0 overflow-hidden flex justify-center bg-white"
+            class="ai-automation-view h-full w-full min-w-0 overflow-hidden flex justify-center bg-white"
           >
             <div
-              class="flex w-full min-w-0 h-full gap-4 transition-all duration-500 ease-in-out p-6"
-              :class="selectedTaskId ? 'max-w-full' : 'max-w-5xl'"
+              class="ai-automation-workspace flex w-full min-w-0 h-full gap-4 transition-all duration-500 ease-in-out p-6"
+              :class="[
+                selectedTaskId ? 'max-w-full' : 'max-w-5xl',
+                { 'is-task-selected': selectedTaskId }
+              ]"
             >
               <!-- 左侧：任务列表 -->
               <div
-                class="h-full min-w-0 bg-white p-2 overflow-y-auto transition-all duration-500"
+                class="ai-automation-list h-full min-w-0 bg-white p-2 overflow-y-auto transition-all duration-500"
                 :class="selectedTaskId ? 'w-[45%]' : 'w-full'"
               >
                 <div class="mb-8">
@@ -3228,23 +3232,27 @@ onUnmounted(() => {
                   <div
                     v-for="task in visibleRoutineTasks"
                     :key="task.id"
-                    class="flex items-start justify-between p-5 rounded-2xl border transition-all group cursor-pointer"
+                    class="ai-automation-task-card flex items-start justify-between p-5 rounded-2xl border transition-all group"
                     :class="
                       selectedTaskId === task.id
                         ? 'border-primary/40 bg-primary/5 shadow-md shadow-primary/10'
                         : 'border-gray-100 hover:border-primary/20 hover:shadow-md bg-gray-50/50'
                     "
-                    @click="selectedTaskId = task.id"
                   >
-                    <div class="flex items-start gap-4">
+                    <button
+                      type="button"
+                      class="ai-automation-task-main flex flex-1 min-w-0 items-start gap-4 rounded-xl border-0 bg-transparent p-0 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                      :aria-label="`查看任务记录：${task.title}`"
+                      @click="selectedTaskId = task.id"
+                    >
                       <div
-                        class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary"
+                        class="ai-automation-task-icon w-12 h-12 flex-shrink-0 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary"
                       >
                         <component :is="task.icon" class="w-6 h-6" />
                       </div>
-                      <div>
+                      <div class="min-w-0 flex-1">
                         <h4
-                          class="text-base font-semibold text-gray-800 flex items-center gap-2"
+                          class="text-base font-semibold text-gray-800 flex flex-wrap items-center gap-2"
                         >
                           {{ task.title }}
                           <span
@@ -3269,9 +3277,9 @@ onUnmounted(() => {
                           }}
                         </p>
                       </div>
-                    </div>
+                    </button>
                     <div
-                      class="flex flex-col items-end justify-between h-full pl-2"
+                      class="ai-automation-task-actions flex flex-shrink-0 flex-col items-end justify-between h-full pl-2"
                     >
                       <el-switch
                         v-model="task.status"
@@ -3283,12 +3291,13 @@ onUnmounted(() => {
                       <el-button
                         type="primary"
                         link
-                        class="mt-4 transition-opacity"
+                        class="ai-automation-record-button mt-4 transition-opacity"
                         :class="
                           selectedTaskId === task.id
                             ? 'opacity-100 font-bold'
-                            : 'opacity-0 group-hover:opacity-100'
+                            : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
                         "
+                        @click.stop="selectedTaskId = task.id"
                       >
                         记录 <el-icon class="ml-1"><ArrowRight /></el-icon>
                       </el-button>
@@ -3312,7 +3321,7 @@ onUnmounted(() => {
               <!-- 右侧：历史记录面板 -->
               <div
                 v-if="selectedTaskId"
-                class="flex-1 min-w-0 h-full bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fade-in"
+                class="ai-automation-history flex-1 min-w-0 h-full bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fade-in"
               >
                 <!-- 头部 -->
                 <div
@@ -3396,14 +3405,14 @@ onUnmounted(() => {
     <el-dialog
       v-model="stackPreviewVisible"
       title="栈 (Stack) 操作可视化"
-      width="640px"
+      width="min(640px, calc(100vw - 24px))"
       align-center
       destroy-on-close
     >
-      <div class="flex gap-6">
+      <div class="stack-preview-content flex gap-6">
         <!-- 栈可视化区 -->
         <div
-          class="relative w-44 h-72 mx-auto bg-gray-50 rounded-2xl border border-dashed border-blue-200 flex flex-col-reverse items-center p-3 gap-2 overflow-hidden"
+          class="stack-preview-visual relative w-44 h-72 mx-auto bg-gray-50 rounded-2xl border border-dashed border-blue-200 flex flex-col-reverse items-center p-3 gap-2 overflow-hidden"
         >
           <div
             class="absolute top-2 left-3 text-[11px] font-bold text-blue-500"
@@ -3437,8 +3446,8 @@ onUnmounted(() => {
         </div>
 
         <!-- 操作 + 日志 -->
-        <div class="flex-1 flex flex-col gap-3">
-          <div class="flex flex-wrap gap-2">
+        <div class="stack-preview-actions flex-1 flex flex-col gap-3">
+          <div class="stack-preview-controls flex flex-wrap gap-2">
             <el-button type="primary" @click="stackPush">push 压栈</el-button>
             <el-button type="danger" @click="stackPop">pop 出栈</el-button>
             <el-button type="warning" @click="stackPeek">peek 栈顶</el-button>
@@ -3887,6 +3896,18 @@ onUnmounted(() => {
   transform: scale(1);
 }
 
+.quick-attachment-card:focus-within .quick-attachment-remove,
+.quick-attachment-remove:focus-visible {
+  pointer-events: auto;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.quick-attachment-remove:focus-visible {
+  outline: 2px solid #1570ef;
+  outline-offset: 2px;
+}
+
 .quick-attachment-remove:hover {
   background: rgba(220, 38, 38, 0.9);
 }
@@ -4193,7 +4214,160 @@ onUnmounted(() => {
   }
 }
 
+@media (hover: none), (pointer: coarse) {
+  .quick-attachment-remove {
+    top: 4px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    color: #b42318;
+    pointer-events: auto;
+    touch-action: manipulation;
+    background: rgb(255 255 255 / 96%);
+    border-color: rgb(254 202 202 / 96%);
+    box-shadow: 0 4px 12px rgb(15 23 42 / 14%);
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .quick-attachment-remove:hover,
+  .quick-attachment-remove:focus-visible {
+    color: #fff;
+    background: #d92d20;
+  }
+}
+
 @media (max-width: 768px) {
+  .ai-course-context-bar {
+    align-items: stretch;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .ai-course-context-bar > span:not(:first-child) {
+    margin-top: 4px;
+  }
+
+  .ai-course-context-bar :deep(.el-select) {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .ai-course-context-bar :deep(.el-select__wrapper) {
+    min-height: 44px;
+  }
+
+  .ai-profile-workspace {
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 0 8px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .ai-profile-main {
+    flex: 0 0 auto;
+    width: 100%;
+    height: clamp(420px, 68dvh, 680px) !important;
+    min-height: 420px;
+    border-radius: 12px;
+  }
+
+  .ai-profile-inspector {
+    flex: 0 0 auto;
+    width: 100% !important;
+    height: clamp(420px, 64dvh, 620px) !important;
+    min-height: 420px;
+    border-radius: 12px;
+  }
+
+  .ai-automation-view {
+    align-items: stretch;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .ai-automation-workspace {
+    flex-direction: column;
+    gap: 12px;
+    height: auto !important;
+    min-height: 100%;
+    padding: 4px 0 12px;
+  }
+
+  .ai-automation-list {
+    flex: 0 0 auto;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .ai-automation-workspace.is-task-selected .ai-automation-list {
+    min-height: 320px;
+    max-height: 48dvh;
+    padding-right: 4px;
+    overflow-y: auto;
+  }
+
+  .ai-automation-task-card {
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .ai-automation-task-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .ai-automation-task-actions {
+    min-width: 44px;
+    padding-left: 0;
+  }
+
+  .ai-automation-record-button {
+    min-width: 44px;
+    min-height: 44px;
+    padding-inline: 4px;
+    opacity: 1 !important;
+  }
+
+  .ai-automation-history {
+    flex: 0 0 auto;
+    width: 100%;
+    height: min(560px, 68dvh) !important;
+    min-height: 360px;
+    border-radius: 16px;
+  }
+
+  .stack-preview-content {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .stack-preview-visual {
+    flex: 0 0 auto;
+    width: min(176px, 100%);
+  }
+
+  .stack-preview-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stack-preview-controls :deep(.el-button) {
+    min-height: 44px;
+    margin-left: 0;
+  }
+
   .ai-app-left-rail {
     position: absolute;
     top: 8px;
@@ -4234,6 +4408,27 @@ onUnmounted(() => {
 
   .quick-chat-model-trigger {
     max-width: 180px;
+  }
+
+  .quick-attachment-remove {
+    top: 4px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    color: #b42318;
+    pointer-events: auto;
+    touch-action: manipulation;
+    background: rgb(255 255 255 / 96%);
+    border-color: rgb(254 202 202 / 96%);
+    box-shadow: 0 4px 12px rgb(15 23 42 / 14%);
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .quick-attachment-remove:hover,
+  .quick-attachment-remove:focus-visible {
+    color: #fff;
+    background: #d92d20;
   }
 }
 </style>

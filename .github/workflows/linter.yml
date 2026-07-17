@@ -1,14 +1,17 @@
 name: Validate Three Clients
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_OPTIONS: --max-old-space-size=8192
 
 on:
   push:
     branches:
       - main
+      - wechat-miniprogram
   pull_request:
     branches:
       - main
+      - wechat-miniprogram
 
 jobs:
   build:
@@ -60,7 +63,14 @@ jobs:
       - name: Type-check web and uni-app
         run: |
           pnpm typecheck
+          pnpm test:contracts
           pnpm --dir native-app type-check
+
+      - name: Self-test device audit tooling
+        run: |
+          pnpm native:audit:android:self-test
+          pnpm mini:real-audit:self-test
+          pnpm ios-native:self-test
 
       - name: Build Android and iOS app resources
         run: |

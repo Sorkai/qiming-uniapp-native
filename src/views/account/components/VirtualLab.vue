@@ -51,7 +51,12 @@
         :key="item.id"
         class="lab-card"
         :class="{ 'is-featured': item.featured }"
+        role="button"
+        tabindex="0"
+        :aria-label="`开始体验：${item.title}`"
         @click="openLab(item)"
+        @keydown.enter="openLab(item)"
+        @keydown.space.prevent="openLab(item)"
       >
         <div class="card-preview" :style="{ background: item.gradient }">
           <div class="preview-icon">{{ item.icon }}</div>
@@ -80,10 +85,10 @@
           </div>
         </div>
         <div class="card-actions">
-          <el-button type="primary" size="small" round>
+          <span class="card-action-label">
             开始体验
             <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-          </el-button>
+          </span>
         </div>
       </div>
     </div>
@@ -98,14 +103,17 @@
     <el-dialog
       v-model="labDialogVisible"
       :title="currentLab?.title"
-      width="90%"
+      width="min(1100px, calc(100vw - 24px))"
+      top="3vh"
       class="lab-dialog"
+      destroy-on-close
       :before-close="handleDialogClose"
     >
       <div class="lab-iframe-container">
         <iframe
           v-if="currentLab"
           :src="currentLab.url"
+          :title="`${currentLab.title}实验内容`"
           frameborder="0"
           allowfullscreen
           class="lab-iframe"
@@ -428,6 +436,11 @@ const handleDialogClose = () => {
       }
     }
 
+    &:focus-visible {
+      outline: 3px solid var(--el-color-primary-light-5);
+      outline-offset: 2px;
+    }
+
     &.is-featured {
       border: 2px solid #f59e0b;
     }
@@ -521,6 +534,20 @@ const handleDialogClose = () => {
 
     .card-actions {
       padding: 0 16px 16px;
+
+      .card-action-label {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--el-color-primary);
+        border-radius: 999px;
+      }
     }
   }
 }
@@ -531,11 +558,141 @@ const handleDialogClose = () => {
   }
 
   .lab-iframe-container {
-    height: 70vh;
+    height: min(70vh, calc(100dvh - 140px));
 
     .lab-iframe {
       width: 100%;
       height: 100%;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .virtual-lab {
+    min-width: 0;
+
+    .lab-header {
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+
+      .header-content {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .header-left {
+        min-width: 0;
+
+        h2 {
+          display: flex;
+          align-items: center;
+          margin-bottom: 6px;
+          font-size: 20px;
+        }
+
+        p {
+          line-height: 1.6;
+          overflow-wrap: anywhere;
+        }
+      }
+
+      .header-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+
+        .stat-item {
+          min-width: 0;
+          padding: 8px 4px;
+          background: rgb(255 255 255 / 28%);
+          border-radius: 6px;
+
+          .stat-value {
+            font-size: 22px;
+          }
+
+          .stat-label {
+            display: block;
+            overflow-wrap: anywhere;
+          }
+        }
+      }
+    }
+
+    .category-tabs {
+      margin-bottom: 16px;
+
+      :deep(.el-radio-group) {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+
+        .el-radio-button {
+          width: 100%;
+
+          .el-radio-button__inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 44px;
+            padding: 8px;
+            white-space: normal;
+          }
+        }
+      }
+    }
+
+    .lab-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .lab-card {
+      min-width: 0;
+      border-radius: 8px;
+
+      &:hover {
+        transform: none;
+      }
+
+      .card-actions .card-action-label {
+        width: 100%;
+      }
+    }
+  }
+
+  .lab-dialog {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    margin-bottom: 12px;
+
+    :deep(.el-dialog__header) {
+      min-height: 52px;
+      padding: 12px 52px 12px 16px;
+      margin-right: 0;
+    }
+
+    :deep(.el-dialog__title) {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    :deep(.el-dialog__headerbtn) {
+      width: 44px;
+      height: 44px;
+    }
+
+    .lab-iframe-container {
+      height: calc(100dvh - 108px);
+      min-height: 320px;
+      max-height: 720px;
     }
   }
 }
