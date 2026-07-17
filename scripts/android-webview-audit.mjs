@@ -51,6 +51,51 @@ function inspectBusinessEnvelope(body) {
   };
 }
 
+function environmentInterruption(message) {
+  const text = String(message || "");
+  const patterns = [
+    [
+      "device-unavailable",
+      /(?:no devices\/emulators found|device .* not found|device offline|device unauthorized|adb server.*(?:failed|not running)|cannot connect to daemon)/i
+    ],
+    [
+      "android-runtime-stopped",
+      /(?:Android runtime is not running|Command failed:.*\bpidof\b)/i
+    ],
+    [
+      "webview-devtools-unavailable",
+      /(?:Unable to list WebView targets|No WebView page matched|ECONNREFUSED|fetch failed)/i
+    ],
+    [
+      "cdp-connection-lost",
+      /(?:Timed out connecting to|Failed to connect to|CDP WebSocket (?:closed|failed)|WebSocket.*(?:closed|not open)|(?:Runtime|Network)\.(?:enable|evaluate|getResponseBody) timed out|Inspected target.*(?:closed|navigated)|Session closed)/i
+    ]
+  ];
+  const matched = patterns.find(([, pattern]) => pattern.test(text));
+  return matched ? { code: matched[0], message: text } : null;
+}
+
+function executionFailureReport(error) {
+  const message = [
+    error instanceof Error ? error.message : String(error || "Unknown error"),
+    error && typeof error === "object" ? error.stderr : "",
+    error && typeof error === "object" ? error.stdout : ""
+  ]
+    .filter(Boolean)
+    .map(value => String(value).trim())
+    .filter(Boolean)
+    .join("; ");
+  const environment = environmentInterruption(message);
+  return {
+    capturedAt: new Date().toISOString(),
+    auditStatus: environment ? "environment-interrupted" : "runner-error",
+    androidPackage: packageName,
+    requestedEntry: entry || null,
+    environment,
+    error: { message }
+  };
+}
+
 function printUsage() {
   process.stdout.write(
     `Usage: node scripts/android-webview-audit.mjs [options]\n\nOptions:\n  --strict                         Exit non-zero when an audit assertion fails\n  --role <student|teacher|admin>   Seed a real role session before auditing\n  --entry <route>                  Navigate to a hash route before auditing\n  --expect-text <text>             Require page/account body text\n  --ready-expect-text <text>       Require text before a configured action\n  --account-menu-text <text>       Require the active account menu and account body\n  --action-selector <selector>     Click a visible element matching selector/text\n  --action-text <text>             Text used with --action-selector\n  --required-request-path <path>   Require a successful API response and code 0/200\n  --expect-forbidden               Require the route to resolve to the 403 page\n  --serial <adb-serial>             Target one Android device\n  --port <port>                    Local CDP forwarding port (default: 9223)\n  --url-pattern <text>             WebView target URL pattern\n  --wait-ms <ms>                   Wait after navigation/session seed\n  --post-action-wait-ms <ms>       Wait after the configured action\n  --min-content-ratio <ratio>      Minimum main-content/viewport width ratio\n  --api-origin <url>               API origin used for real login\n  --out <path>                     Write the JSON report to a file\n  --self-test                      Run pure response-envelope checks and exit\n  -h, --help                       Show this help and exit\n`
@@ -83,11 +128,32 @@ function runSelfTest() {
       ? []
       : [`${name}:${JSON.stringify(result)}`];
   });
+  const environmentCases = [
+    ["Runtime.enable timed out", "cdp-connection-lost"],
+    [
+      "Command failed: adb shell pidof io.dcloud.HBuilder",
+      "android-runtime-stopped"
+    ],
+    ["device 'R5CT31RDS6E' not found", "device-unavailable"],
+    [
+      'No WebView page matched "hybrid/html/index.html". Targets: www/index.html',
+      "webview-devtools-unavailable"
+    ]
+  ];
+  for (const [message, expectedCode] of environmentCases) {
+    const result = environmentInterruption(message);
+    if (result?.code !== expectedCode) {
+      failures.push(`${expectedCode}:${JSON.stringify(result)}`);
+    }
+  }
+  if (environmentInterruption("expected text not found: 课程")) {
+    failures.push("business failure misclassified as environment interruption");
+  }
   if (failures.length) {
     throw new Error(`Self-test failed: ${failures.join(", ")}`);
   }
   process.stdout.write(
-    `android-webview-audit self-test: ${cases.length} passed\n`
+    `android-webview-audit self-test: ${cases.length + environmentCases.length + 1} passed\n`
   );
 }
 
@@ -251,6 +317,11 @@ function createCdpClient(socket) {
   let sequence = 0;
   const pending = new Map();
 
+  const rejectPending = error => {
+    for (const request of pending.values()) request.reject(error);
+    pending.clear();
+  };
+
   socket.addEventListener("message", event => {
     const message = JSON.parse(String(event.data));
     if (!message.id || !pending.has(message.id)) return;
@@ -265,9 +336,19 @@ function createCdpClient(socket) {
     }
     request.resolve(message.result);
   });
+  socket.addEventListener("close", () => {
+    rejectPending(new Error("CDP WebSocket closed"));
+  });
+  socket.addEventListener("error", () => {
+    rejectPending(new Error("CDP WebSocket failed"));
+  });
 
   return (method, params = {}) =>
     new Promise((resolveCommand, rejectCommand) => {
+      if (socket.readyState !== WebSocket.OPEN) {
+        rejectCommand(new Error("CDP WebSocket is not open"));
+        return;
+      }
       const id = ++sequence;
       const timer = setTimeout(() => {
         pending.delete(id);
@@ -978,6 +1059,17 @@ try {
   process.stdout.write(serialized);
 
   if (strict && failures.length > 0) process.exitCode = 1;
+} catch (error) {
+  const report = executionFailureReport(error);
+  const serialized = `${JSON.stringify(report, null, 2)}\n`;
+  if (outputPath) {
+    const absoluteOutput = resolve(outputPath);
+    mkdirSync(dirname(absoluteOutput), { recursive: true });
+    writeFileSync(absoluteOutput, serialized, "utf8");
+  }
+  process.stdout.write(serialized);
+  process.stderr.write(`[${report.auditStatus}] ${report.error.message}\n`);
+  process.exitCode = report.auditStatus === "environment-interrupted" ? 2 : 3;
 } finally {
   socket?.close();
 }

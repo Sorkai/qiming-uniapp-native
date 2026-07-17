@@ -12,7 +12,7 @@ const argv = process.argv.slice(2);
 
 function printUsage() {
   process.stdout.write(
-    `Usage: node scripts/android-real-device-audit.mjs [options]\n\nOptions:\n  --role <student|teacher|admin>  Audit one role from the shared matrix\n  --route, --only <name>          Audit one named route\n  --serial <adb-serial>            Target one Android device\n  --api-origin <url>              API origin used for real login/fixtures\n  --wait-ms <ms>                  Per-route navigation wait\n  --min-content-ratio <ratio>     Minimum main-content/viewport width ratio\n  --min-usable-content-ratio <r>  Minimum width after route-root padding\n  --max-routes <count>            Limit the selected route count\n  --out-dir <path>                Artifact output directory\n  --list                          List selected routes and exit\n  --list-json                     Print selected route definitions as JSON\n  --self-test                     Validate the shared matrix without a device\n  -h, --help                      Show this help and exit\n`
+    `Usage: node scripts/android-real-device-audit.mjs [options]\n\nOptions:\n  --role <student|teacher|admin>  Audit one role from the shared matrix\n  --route, --only <name>          Audit one named route\n  --from-route <name>             Resume inclusively from one matrix route\n  --serial <adb-serial>            Target one Android device\n  --api-origin <url>              API origin used for real login/fixtures\n  --wait-ms <ms>                  Per-route navigation wait\n  --min-content-ratio <ratio>     Minimum main-content/viewport width ratio\n  --min-usable-content-ratio <r>  Minimum width after route-root padding\n  --max-routes <count>            Limit routes after all other filters\n  --out-dir <path>                Artifact output directory\n  --list                          List selected routes and exit\n  --list-json                     Print selected route definitions as JSON\n  --self-test                     Validate the shared matrix without a device\n  -h, --help                      Show this help and exit\n`
   );
   process.stdout.write(
     "  --package <application-id>       Android package owning the WebView\n"
@@ -31,6 +31,7 @@ function readArg(name, fallback = "") {
 
 const roleFilter = readArg("--role");
 const routeFilter = readArg("--route") || readArg("--only");
+const fromRoute = readArg("--from-route");
 const serial = readArg("--serial");
 const packageName = readArg(
   "--package",
@@ -84,6 +85,82 @@ function runNode(script, args, options = {}) {
   });
 }
 
+function legacyEnvironmentInterruption(message) {
+  const text = String(message || "");
+  const patterns = [
+    [
+      "device-unavailable",
+      /(?:no devices\/emulators found|device .* not found|device offline|device unauthorized|adb server.*(?:failed|not running)|cannot connect to daemon)/i
+    ],
+    [
+      "android-runtime-stopped",
+      /(?:Android runtime is not running|Command failed:.*\bpidof\b)/i
+    ],
+    [
+      "webview-devtools-unavailable",
+      /(?:Unable to list WebView targets|No WebView page matched|ECONNREFUSED|fetch failed)/i
+    ],
+    [
+      "cdp-connection-lost",
+      /(?:Timed out connecting to|Failed to connect to|CDP WebSocket (?:closed|failed)|WebSocket.*(?:closed|not open)|(?:Runtime|Network)\.(?:enable|evaluate|getResponseBody) timed out|Inspected target.*(?:closed|navigated)|Session closed)/i
+    ]
+  ];
+  const matched = patterns.find(([, pattern]) => pattern.test(text));
+  return matched ? { code: matched[0], message: text } : null;
+}
+
+function parseAuditExecution(auditResult) {
+  let report = null;
+  let parseError = "";
+  try {
+    report = JSON.parse(auditResult.stdout);
+  } catch (error) {
+    parseError = error instanceof Error ? error.message : String(error);
+  }
+
+  if (report?.auditStatus === "environment-interrupted" && report.environment) {
+    return {
+      auditResult,
+      report,
+      parseError,
+      interruption: {
+        kind: "environment-interrupted",
+        ...report.environment
+      }
+    };
+  }
+  if (report?.auditStatus === "runner-error") {
+    return {
+      auditResult,
+      report,
+      parseError,
+      interruption: {
+        kind: "runner-error",
+        code: "audit-runner-error",
+        message: report.error?.message || "Android audit runner failed"
+      }
+    };
+  }
+  if (report) return { auditResult, report, parseError, interruption: null };
+
+  const details = [parseError, auditResult.stderr, auditResult.stdout]
+    .filter(Boolean)
+    .join("; ");
+  const environment = legacyEnvironmentInterruption(details);
+  return {
+    auditResult,
+    report: null,
+    parseError,
+    interruption: environment
+      ? { kind: "environment-interrupted", ...environment }
+      : {
+          kind: "runner-error",
+          code: "audit-output-unavailable",
+          message: details || `audit child exited ${auditResult.status}`
+        }
+  };
+}
+
 async function fetchJson(url, init = {}) {
   const response = await fetch(url, init);
   const body = await response.text();
@@ -133,6 +210,37 @@ async function resolveStudentCourseFixture() {
   return Number(course.courseId);
 }
 
+function selectAuditRoutes(
+  matrix,
+  { role = "", route = "", from = "", limit = 0 } = {}
+) {
+  if (route && from) {
+    throw new Error("--route/--only cannot be combined with --from-route");
+  }
+  if (route && !matrix.some(item => item.name === route)) {
+    throw new Error(`Unknown --route value: ${route}`);
+  }
+  if (from && !matrix.some(item => item.name === from)) {
+    throw new Error(`Unknown --from-route value: ${from}`);
+  }
+
+  let selected = role ? matrix.filter(item => item.role === role) : [...matrix];
+  if (route) {
+    selected = selected.filter(item => item.name === route);
+    if (selected.length === 0) {
+      throw new Error(`Route ${route} is outside the selected ${role} role`);
+    }
+  }
+  if (from) {
+    const resumeIndex = selected.findIndex(item => item.name === from);
+    if (resumeIndex < 0) {
+      throw new Error(`Route ${from} is outside the selected ${role} role`);
+    }
+    selected = selected.slice(resumeIndex);
+  }
+  return limit > 0 ? selected.slice(0, limit) : selected;
+}
+
 const routeResult = runNode(routeSource, ["--list-json"]);
 if (routeResult.status !== 0) {
   throw new Error(
@@ -141,13 +249,12 @@ if (routeResult.status !== 0) {
 }
 
 const matrixRoutes = JSON.parse(routeResult.stdout);
-let routes = [...matrixRoutes];
-routes = routes.filter(route => {
-  if (roleFilter && route.role !== roleFilter) return false;
-  if (routeFilter && route.name !== routeFilter) return false;
-  return true;
+const routes = selectAuditRoutes(matrixRoutes, {
+  role: roleFilter,
+  route: routeFilter,
+  from: fromRoute,
+  limit: maxRoutes
 });
-if (maxRoutes > 0) routes = routes.slice(0, maxRoutes);
 if (routes.length === 0) throw new Error("No Android audit routes selected");
 
 if (selfTest) {
@@ -214,6 +321,90 @@ if (selfTest) {
       `android webview self-test failed: ${(childSelfTest.stderr || childSelfTest.stdout).trim()}`
     );
   }
+  const executionCases = [
+    {
+      name: "structured environment interruption",
+      result: {
+        status: 2,
+        stdout: JSON.stringify({
+          auditStatus: "environment-interrupted",
+          environment: { code: "cdp-connection-lost", message: "closed" }
+        }),
+        stderr: ""
+      },
+      kind: "environment-interrupted"
+    },
+    {
+      name: "legacy CDP timeout",
+      result: {
+        status: 1,
+        stdout: "",
+        stderr: "Error: Runtime.enable timed out"
+      },
+      kind: "environment-interrupted"
+    },
+    {
+      name: "unstructured runner failure",
+      result: { status: 1, stdout: "", stderr: "SyntaxError: broken" },
+      kind: "runner-error"
+    },
+    {
+      name: "normal audit report",
+      result: { status: 0, stdout: '{"session":{}}', stderr: "" },
+      kind: null
+    }
+  ];
+  for (const executionCase of executionCases) {
+    const execution = parseAuditExecution(executionCase.result);
+    const actualKind = execution.interruption?.kind || null;
+    if (actualKind !== executionCase.kind) {
+      failures.push(
+        `${executionCase.name}: expected ${executionCase.kind}, got ${actualKind}`
+      );
+    }
+  }
+  const selectionMatrix = [
+    { name: "student-a", role: "student" },
+    { name: "teacher-a", role: "teacher" },
+    { name: "teacher-b", role: "teacher" },
+    { name: "student-b", role: "student" }
+  ];
+  const resumed = selectAuditRoutes(selectionMatrix, { from: "teacher-a" });
+  if (
+    resumed.map(item => item.name).join(",") !== "teacher-a,teacher-b,student-b"
+  ) {
+    failures.push("--from-route is not inclusive or does not preserve order");
+  }
+  const filteredResume = selectAuditRoutes(selectionMatrix, {
+    role: "teacher",
+    from: "teacher-b",
+    limit: 1
+  });
+  if (filteredResume.map(item => item.name).join(",") !== "teacher-b") {
+    failures.push("role/from-route/max-routes filter order is invalid");
+  }
+  for (const [name, options, expectedMessage] of [
+    ["unknown", { from: "missing" }, "Unknown --from-route"],
+    [
+      "role mismatch",
+      { role: "student", from: "teacher-a" },
+      "outside the selected student role"
+    ],
+    [
+      "conflicting filters",
+      { route: "student-a", from: "student-a" },
+      "cannot be combined"
+    ]
+  ]) {
+    try {
+      selectAuditRoutes(selectionMatrix, options);
+      failures.push(`${name} selection did not throw`);
+    } catch (error) {
+      if (!String(error).includes(expectedMessage)) {
+        failures.push(`${name} selection error was not actionable: ${error}`);
+      }
+    }
+  }
   if (failures.length)
     throw new Error(`Matrix self-test failed: ${failures.join("; ")}`);
   process.stdout.write(
@@ -232,6 +423,7 @@ if (selfTest) {
         requiredResponses: matrixRoutes.filter(
           route => route.requiredRequestPath
         ).length,
+        resumePolicyAssertions: 5,
         child: childSelfTest.stdout.trim()
       },
       null,
@@ -265,8 +457,9 @@ const expectedRole = {
 };
 const results = [];
 let activeRole = "";
+let terminalInterruption = null;
 
-for (const route of routes) {
+for (const [routeIndex, route] of routes.entries()) {
   const routeEntry = route.requiresCourse
     ? route.entry.replace(/\/course\/1(?=\?|$)/, `/course/${studentCourseId}`)
     : route.entry;
@@ -320,14 +513,45 @@ for (const route of routes) {
     commandArgs.push("--role", route.role);
   }
 
-  const auditResult = runNode(routeAudit, commandArgs);
-  let report = null;
-  let parseError = "";
-  try {
-    report = JSON.parse(auditResult.stdout);
-  } catch (error) {
-    parseError = error instanceof Error ? error.message : String(error);
+  const execution = parseAuditExecution(runNode(routeAudit, commandArgs));
+
+  if (execution.interruption?.kind === "environment-interrupted") {
+    terminalInterruption = {
+      ...execution.interruption,
+      route: route.name,
+      routeIndex,
+      reason: execution.interruption.message
+    };
+  } else if (execution.interruption?.kind === "runner-error") {
+    terminalInterruption = {
+      ...execution.interruption,
+      route: route.name,
+      routeIndex,
+      reason: execution.interruption.message
+    };
   }
+
+  if (terminalInterruption) {
+    results.push({
+      role: route.role,
+      name: route.name,
+      entry: route.entry,
+      resolvedEntry: routeEntry,
+      expectedText: expected,
+      status: terminalInterruption.kind,
+      ok: false,
+      failures: [],
+      reportPath,
+      report: execution.report,
+      interruption: terminalInterruption
+    });
+    process.stdout.write(
+      `[INTERRUPTED] ${route.role.padEnd(7)} ${route.name}: ${terminalInterruption.code} ${String(terminalInterruption.reason).replace(/\s+/g, " ")}\n`
+    );
+    break;
+  }
+
+  const { auditResult, report } = execution;
 
   const roleExpectation = expectedRole[route.role];
   const roleMatches =
@@ -341,23 +565,14 @@ for (const route of routes) {
       `role mismatch: ${report?.session?.username || "none"}/${report?.session?.roleType || 0}/${report?.session?.roles?.join("+") || "none"}`
     );
   }
-  if (!report) {
-    const auditFailureDetails = [
-      parseError,
-      auditResult.stderr.trim(),
-      `exit ${auditResult.status}`
-    ]
-      .filter(Boolean)
-      .join("; ");
-    failures.push(`audit output unavailable: ${auditFailureDetails}`);
-  }
-
   const result = {
     role: route.role,
     name: route.name,
     entry: route.entry,
     resolvedEntry: routeEntry,
     expectedText: expected,
+    status:
+      auditResult.status === 0 && failures.length === 0 ? "passed" : "failed",
     ok: auditResult.status === 0 && failures.length === 0,
     failures,
     reportPath,
@@ -379,14 +594,41 @@ const summary = {
   waitMs,
   minContentRatio: Number(minContentRatio),
   minUsableContentRatio: Number(minUsableContentRatio),
+  fromRoute: fromRoute || null,
+  status: terminalInterruption
+    ? terminalInterruption.kind
+    : results.some(result => result.status === "failed")
+      ? "failed"
+      : "passed",
   totals: {
-    routes: results.length,
-    ok: results.filter(result => result.ok).length,
-    fail: results.filter(result => !result.ok).length
+    routes: routes.length,
+    completed: results.filter(result =>
+      ["passed", "failed"].includes(result.status)
+    ).length,
+    ok: results.filter(result => result.status === "passed").length,
+    fail: results.filter(result => result.status === "failed").length,
+    environmentInterrupted: results.filter(
+      result => result.status === "environment-interrupted"
+    ).length,
+    runnerError: results.filter(result => result.status === "runner-error")
+      .length,
+    notRun: routes.length - results.length
   },
+  interruption: terminalInterruption,
+  notRunRoutes: terminalInterruption
+    ? routes.slice(terminalInterruption.routeIndex + 1).map(route => ({
+        role: route.role,
+        name: route.name,
+        entry: route.entry,
+        reason: "matrix stopped after audit execution interruption"
+      }))
+    : [],
   results
 };
 const summaryPath = join(outDir, "summary.json");
 writeFileSync(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf8");
 process.stdout.write(`Summary written: ${summaryPath}\n`);
-if (summary.totals.fail > 0) process.exitCode = 1;
+if (terminalInterruption?.kind === "environment-interrupted")
+  process.exitCode = 2;
+else if (terminalInterruption?.kind === "runner-error") process.exitCode = 3;
+else if (summary.totals.fail > 0) process.exitCode = 1;
