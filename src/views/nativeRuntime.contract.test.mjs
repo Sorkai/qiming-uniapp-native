@@ -20,6 +20,7 @@ const sharedRouteMatrix = read("../../scripts/wechat-real-session-audit.mjs");
 const mainRuntime = read("../main.ts");
 const globalStyles = read("../style/index.scss");
 const nativeSync = read("../../scripts/sync-app-h5.mjs");
+const wechatMiniProgram = read("../../scripts/wechat-miniprogram.mjs");
 
 test("Android native status bar keeps an extra top clearance", () => {
   assert.match(mainRuntime, /isAndroidNative \? 6 : 0/);
@@ -50,6 +51,13 @@ test("native device runs rebuild the embedded H5 before launch", () => {
   assert.match(
     packageJson.scripts["native:run:ios"],
     /^pnpm native:prepare && /
+  );
+});
+
+test("WeChat bootstrap installs the nested uni-app outside the root workspace", () => {
+  assert.match(
+    wechatMiniProgram,
+    /\[\s*"--ignore-workspace",\s*"--dir",\s*"native-app",\s*"install",\s*"--frozen-lockfile"\s*\]/
   );
 });
 

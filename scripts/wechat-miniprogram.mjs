@@ -580,7 +580,13 @@ function assertRealAppId(options, command) {
 
 function ensureBuildInstalled() {
   if (existsSync(join(nativeProject, "node_modules"))) return;
-  run(pnpmCommand(), ["--dir", "native-app", "install", "--frozen-lockfile"]);
+  run(pnpmCommand(), [
+    "--ignore-workspace",
+    "--dir",
+    "native-app",
+    "install",
+    "--frozen-lockfile"
+  ]);
 }
 
 function runBuild(options) {
