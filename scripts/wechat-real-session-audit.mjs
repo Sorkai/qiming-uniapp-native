@@ -1650,25 +1650,33 @@ async function waitForExpectedPage(
 
 async function performRouteAction(client, action) {
   if (!action) return null;
-  const evaluated = await client.send("Runtime.evaluate", {
-    returnByValue: true,
-    awaitPromise: true,
-    expression: `(() => {
-      ${isVisibleElementSource}
-      const selector = ${JSON.stringify(action.selector)};
-      const expectedText = ${JSON.stringify(action.text || "")};
-      const target = Array.from(document.querySelectorAll(selector)).find(el =>
-        isVisibleElement(el) && String(el.textContent || '').replace(/\\s+/g, ' ').trim().includes(expectedText)
-      );
-      if (!target) return { ok: false, reason: 'target-not-found', selector, expectedText };
-      target.click();
-      return { ok: true, selector, expectedText, clickedText: String(target.textContent || '').replace(/\\s+/g, ' ').trim() };
-    })()`
-  });
-  const actionResult = evaluated.result?.value || {
-    ok: false,
-    reason: "no-action-result"
-  };
+  const actionStartedAt = Date.now();
+  const actionWaitMs = Number(action.waitMs || 6000);
+  let actionResult = { ok: false, reason: "target-not-found" };
+  do {
+    const evaluated = await client.send("Runtime.evaluate", {
+      returnByValue: true,
+      awaitPromise: true,
+      expression: `(() => {
+        ${isVisibleElementSource}
+        const selector = ${JSON.stringify(action.selector)};
+        const expectedText = ${JSON.stringify(action.text || "")};
+        const target = Array.from(document.querySelectorAll(selector)).find(el =>
+          isVisibleElement(el) && String(el.textContent || '').replace(/\\s+/g, ' ').trim().includes(expectedText)
+        );
+        if (!target) return { ok: false, reason: 'target-not-found', selector, expectedText };
+        target.click();
+        return { ok: true, selector, expectedText, clickedText: String(target.textContent || '').replace(/\\s+/g, ' ').trim() };
+      })()`
+    });
+    actionResult = evaluated.result?.value || {
+      ok: false,
+      reason: "no-action-result"
+    };
+    if (actionResult.ok || actionResult.reason !== "target-not-found") break;
+    await wait(200);
+  } while (Date.now() - actionStartedAt < actionWaitMs);
+
   if (!actionResult.ok || !action.afterSelector) return actionResult;
 
   const startedAt = Date.now();
@@ -1799,6 +1807,14 @@ function runSelfTest() {
       (!route.action.afterSelector || !String(route.action.afterText).trim())
     ) {
       failures.push(`invalid post-action text: ${route.name}`);
+    }
+    if (
+      route.action.waitMs !== undefined &&
+      (!Number.isFinite(Number(route.action.waitMs)) ||
+        Number(route.action.waitMs) < 0 ||
+        Number(route.action.waitMs) > 30_000)
+    ) {
+      failures.push(`invalid action wait: ${route.name}`);
     }
   }
   for (const name of [
