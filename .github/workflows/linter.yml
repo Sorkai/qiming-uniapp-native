@@ -1,6 +1,7 @@
 name: Validate Three Clients
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_OPTIONS: --max-old-space-size=8192
 
 on:
   push:
