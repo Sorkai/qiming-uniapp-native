@@ -22,6 +22,7 @@ const accountSettings = readView("account-settings/index.vue");
 const videoAnalysis = readView("course/video-analysis/index.vue");
 const examResult = readView("exam-paper/result/index.vue");
 const accountHome = readView("account/index.vue");
+const wrongExercise = readView("account/wrong-exercise.vue");
 const homeworkManagement = readView(
   "course/assessment/components/HomeworkManagement.vue"
 );
@@ -33,13 +34,49 @@ const studentResources = readView("course/student-resource/index.vue");
 const structuredResourcePreview = readView(
   "../components/PlatformResourcePreview/PlatformStructuredJsonPreview.vue"
 );
+const layContent = readView("../layout/components/lay-content/index.vue");
+const globalStyles = readView("../style/index.scss");
+const androidAudit = readView("../../scripts/android-webview-audit.mjs");
+
+test("Android route roots use compact gutters and audit usable width", () => {
+  assert.equal(
+    layContent.match(/main-content qiming-route-content/g)?.length,
+    4
+  );
+  assert.match(
+    globalStyles,
+    /qiming-native-android[\s\S]*\.qiming-route-content[\s\S]*max-width: calc\(100vw - 12px\)[\s\S]*margin: 6px 6px 0 !important[\s\S]*padding-right: 6px !important[\s\S]*padding-left: 6px !important/
+  );
+  assert.match(androidAudit, /mainContentUsableWidthRatio/);
+  assert.match(androidAudit, /--min-usable-content-ratio/);
+});
 
 test("student detail flows remove layered mobile gutters", () => {
   assert.match(studentPaperDetail, /@media \(width <= 768px\)/);
   assert.match(studentPaperDetail, /margin: 0 !important/);
   assert.match(studentPaperDetail, /\.paper-info-card,[\s\S]*padding: 8px/);
-  assert.match(homeworkDetail, /\.main-content[\s\S]*padding: 0 8px/);
-  assert.match(examDetail, /\.main-content[\s\S]*padding: 0 8px/);
+  assert.match(
+    homeworkDetail,
+    /\.main-content[\s\S]*max-width: calc\(100vw - 12px\) !important[\s\S]*padding: 0 6px[\s\S]*margin: 0 6px !important/
+  );
+  assert.match(
+    examDetail,
+    /\.main-content[\s\S]*max-width: calc\(100vw - 12px\) !important[\s\S]*padding: 0 6px[\s\S]*margin: 0 6px !important/
+  );
+});
+
+test("wrong exercise keeps phone content wide and reports unavailable APIs", () => {
+  assert.match(
+    wrongExercise,
+    /practice-container:not\(\[data-embedded="true"\]\) \.main-content[\s\S]*padding: 0 8px[\s\S]*margin: 0 !important/
+  );
+  assert.match(wrongExercise, /courseId\.value !== undefined/);
+  assert.match(
+    wrongExercise,
+    /:deep\(\.filter-date\)[\s\S]*width: 100% !important/
+  );
+  assert.match(wrongExercise, /错题记录暂不可用/);
+  assert.match(wrongExercise, /historyUnavailable/);
 });
 
 test("student detail controls preserve phone touch targets", () => {
@@ -153,6 +190,14 @@ test("course learning and discussion mobile controls stay touch sized", () => {
   assert.match(
     courseStudy,
     /\.header-btn[\s\S]*width: 44px[\s\S]*height: 44px/
+  );
+  assert.match(
+    courseStudy,
+    /@media \(width <= 479px\)[\s\S]*\.study-container \{[\s\S]*156px\) 8px/
+  );
+  assert.match(
+    courseStudy,
+    /\.card-body \{[\s\S]*\.el-scrollbar__wrap \{[\s\S]*padding: 6px/
   );
   assert.match(courseQa, /\.filter-tab[\s\S]*min-height: 44px/);
   assert.match(courseQa, /\.toolbar-btn[\s\S]*width: 44px[\s\S]*height: 44px/);

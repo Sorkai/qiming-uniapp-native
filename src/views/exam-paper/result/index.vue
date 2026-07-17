@@ -200,7 +200,11 @@ onMounted(() => {
 <style lang="scss" scoped>
 .exam-result-page {
   min-height: 100vh;
-  padding: 24px;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: calc(24px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    24px
+    calc(24px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
   background: linear-gradient(120deg, #f4f7fb 0%, #eaf1ff 100%);
 
   &.is-dark {
@@ -389,7 +393,12 @@ onMounted(() => {
 @media (width <= 768px) {
   .exam-result-page {
     min-width: 0;
-    padding: 8px;
+    width: 100%;
+    padding: calc(
+        8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      8px
+      calc(8px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
     margin: 0 !important;
     overflow-x: hidden;
   }
@@ -415,6 +424,11 @@ onMounted(() => {
     }
   }
 
+  .result-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
   .score-card,
   .summary-card {
     padding: 12px;
@@ -434,7 +448,11 @@ onMounted(() => {
 
 @media (width <= 380px) {
   .exam-result-page {
-    padding: 6px;
+    padding: calc(
+        6px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      6px
+      calc(6px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
   }
 
   .score-card,

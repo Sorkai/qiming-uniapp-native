@@ -51,9 +51,63 @@ function inspectBusinessEnvelope(body) {
   };
 }
 
+function environmentInterruption(message) {
+  const text = String(message || "");
+  const patterns = [
+    [
+      "device-unavailable",
+      /(?:no devices\/emulators found|device .* not found|device offline|device unauthorized|adb server.*(?:failed|not running)|cannot connect to daemon)/i
+    ],
+    [
+      "android-runtime-stopped",
+      /(?:Android runtime is not running|Command failed:.*\bpidof\b)/i
+    ],
+    [
+      "webview-devtools-unavailable",
+      /(?:Unable to list WebView targets|No WebView page matched|ECONNREFUSED|fetch failed)/i
+    ],
+    [
+      "cdp-connection-lost",
+      /(?:Timed out connecting to|Failed to connect to|CDP WebSocket (?:closed|failed)|WebSocket.*(?:closed|not open)|(?:Runtime|Network)\.(?:enable|evaluate|getResponseBody) timed out|Inspected target.*(?:closed|navigated)|Session closed)/i
+    ]
+  ];
+  const matched = patterns.find(([, pattern]) => pattern.test(text));
+  return matched ? { code: matched[0], message: text } : null;
+}
+
+function executionFailureReport(error) {
+  const message = [
+    error instanceof Error ? error.message : String(error || "Unknown error"),
+    error && typeof error === "object" ? error.stderr : "",
+    error && typeof error === "object" ? error.stdout : ""
+  ]
+    .filter(Boolean)
+    .map(value => String(value).trim())
+    .filter(Boolean)
+    .join("; ");
+  const environment = environmentInterruption(message);
+  return {
+    capturedAt: new Date().toISOString(),
+    auditStatus: environment ? "environment-interrupted" : "runner-error",
+    androidPackage: packageName,
+    requestedEntry: entry || null,
+    environment,
+    error: { message }
+  };
+}
+
 function printUsage() {
   process.stdout.write(
     `Usage: node scripts/android-webview-audit.mjs [options]\n\nOptions:\n  --strict                         Exit non-zero when an audit assertion fails\n  --role <student|teacher|admin>   Seed a real role session before auditing\n  --entry <route>                  Navigate to a hash route before auditing\n  --expect-text <text>             Require page/account body text\n  --ready-expect-text <text>       Require text before a configured action\n  --account-menu-text <text>       Require the active account menu and account body\n  --action-selector <selector>     Click a visible element matching selector/text\n  --action-text <text>             Text used with --action-selector\n  --required-request-path <path>   Require a successful API response and code 0/200\n  --expect-forbidden               Require the route to resolve to the 403 page\n  --serial <adb-serial>             Target one Android device\n  --port <port>                    Local CDP forwarding port (default: 9223)\n  --url-pattern <text>             WebView target URL pattern\n  --wait-ms <ms>                   Wait after navigation/session seed\n  --post-action-wait-ms <ms>       Wait after the configured action\n  --min-content-ratio <ratio>      Minimum main-content/viewport width ratio\n  --api-origin <url>               API origin used for real login\n  --out <path>                     Write the JSON report to a file\n  --self-test                      Run pure response-envelope checks and exit\n  -h, --help                       Show this help and exit\n`
+  );
+  process.stdout.write(
+    "  --package <application-id>        Android package owning the WebView\n"
+  );
+  process.stdout.write(
+    "  --expect-compact-digital-human   Require visible 2D and no mounted inline 3D iframe\n"
+  );
+  process.stdout.write(
+    "  --min-usable-content-ratio <n>  Minimum route content width after horizontal padding\n"
   );
 }
 
@@ -74,11 +128,32 @@ function runSelfTest() {
       ? []
       : [`${name}:${JSON.stringify(result)}`];
   });
+  const environmentCases = [
+    ["Runtime.enable timed out", "cdp-connection-lost"],
+    [
+      "Command failed: adb shell pidof io.dcloud.HBuilder",
+      "android-runtime-stopped"
+    ],
+    ["device 'R5CT31RDS6E' not found", "device-unavailable"],
+    [
+      'No WebView page matched "hybrid/html/index.html". Targets: www/index.html',
+      "webview-devtools-unavailable"
+    ]
+  ];
+  for (const [message, expectedCode] of environmentCases) {
+    const result = environmentInterruption(message);
+    if (result?.code !== expectedCode) {
+      failures.push(`${expectedCode}:${JSON.stringify(result)}`);
+    }
+  }
+  if (environmentInterruption("expected text not found: 课程")) {
+    failures.push("business failure misclassified as environment interruption");
+  }
   if (failures.length) {
     throw new Error(`Self-test failed: ${failures.join(", ")}`);
   }
   process.stdout.write(
-    `android-webview-audit self-test: ${cases.length} passed\n`
+    `android-webview-audit self-test: ${cases.length + environmentCases.length + 1} passed\n`
   );
 }
 
@@ -93,16 +168,24 @@ if (hasFlag("--self-test")) {
 
 const adb = process.env.ADB || "adb";
 const serial = readArg("--serial");
+const packageName = readArg(
+  "--package",
+  process.env.QIMING_ANDROID_PACKAGE || "io.dcloud.HBuilder"
+);
 const port = Number(readArg("--port", "9223"));
 const urlPattern = readArg("--url-pattern", "hybrid/html/index.html");
 const outputPath = readArg("--out");
 const minContentRatio = Number(readArg("--min-content-ratio", "0.88"));
+const minUsableContentRatio = Number(
+  readArg("--min-usable-content-ratio", "0.92")
+);
 const entry = readArg("--entry");
 const expectedText = readArg("--expect-text");
 const readyExpectedText = readArg("--ready-expect-text");
 const actionSelector = readArg("--action-selector");
 const actionText = readArg("--action-text");
 const accountMenuText = readArg("--account-menu-text");
+const expectCompactDigitalHuman = hasFlag("--expect-compact-digital-human");
 const expectForbidden = hasFlag("--expect-forbidden");
 const requiredRequestPath = readArg("--required-request-path");
 const postActionWaitMs = Number(readArg("--post-action-wait-ms", "2000"));
@@ -141,12 +224,26 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   throw new Error(`Invalid --port value: ${port}`);
 }
 
+if (!/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/.test(packageName)) {
+  throw new Error(`Invalid --package value: ${packageName}`);
+}
+
 if (
   !Number.isFinite(minContentRatio) ||
   minContentRatio <= 0 ||
   minContentRatio > 1
 ) {
   throw new Error(`Invalid --min-content-ratio value: ${minContentRatio}`);
+}
+
+if (
+  !Number.isFinite(minUsableContentRatio) ||
+  minUsableContentRatio <= 0 ||
+  minUsableContentRatio > 1
+) {
+  throw new Error(
+    `Invalid --min-usable-content-ratio value: ${minUsableContentRatio}`
+  );
 }
 
 if (!Number.isFinite(waitMs) || waitMs < 0 || waitMs > 120_000) {
@@ -220,6 +317,11 @@ function createCdpClient(socket) {
   let sequence = 0;
   const pending = new Map();
 
+  const rejectPending = error => {
+    for (const request of pending.values()) request.reject(error);
+    pending.clear();
+  };
+
   socket.addEventListener("message", event => {
     const message = JSON.parse(String(event.data));
     if (!message.id || !pending.has(message.id)) return;
@@ -234,9 +336,19 @@ function createCdpClient(socket) {
     }
     request.resolve(message.result);
   });
+  socket.addEventListener("close", () => {
+    rejectPending(new Error("CDP WebSocket closed"));
+  });
+  socket.addEventListener("error", () => {
+    rejectPending(new Error("CDP WebSocket failed"));
+  });
 
   return (method, params = {}) =>
     new Promise((resolveCommand, rejectCommand) => {
+      if (socket.readyState !== WebSocket.OPEN) {
+        rejectCommand(new Error("CDP WebSocket is not open"));
+        return;
+      }
       const id = ++sequence;
       const timer = setTimeout(() => {
         pending.delete(id);
@@ -373,6 +485,16 @@ const auditExpression = `(() => {
     ".app-main-nofixed-header",
     ".el-scrollbar__wrap",
     ".el-scrollbar__view",
+    ".course-detail-root .el-scrollbar__wrap",
+    ".course-detail-root",
+    ".layout-inner-content",
+    ".study-container",
+    ".rightTreeWarp",
+    ".out-ai-showbox-pro",
+    ".ai-draggable-dialog",
+    ".exam-do-container",
+    ".exam-main",
+    ".exam-result-page",
     ".main-content",
     ".account-main",
     ".ai-app-root",
@@ -383,7 +505,9 @@ const auditExpression = `(() => {
     ".welcome-header",
     ".stats-overview",
     ".chart-card",
-    ".chart-card canvas"
+    ".chart-card canvas",
+    ".ai-float-button",
+    ".nav-mobile-container"
   ];
   const measured = {};
   for (const selector of selectors) {
@@ -398,6 +522,13 @@ const auditExpression = `(() => {
     document.body?.scrollWidth || 0
   );
   const mainCandidates = [
+    ".course-detail-root .el-scrollbar__wrap",
+    ".course-detail-root",
+    ".exam-do-container",
+    ".exam-result-page",
+    ".exam-main",
+    ".study-container",
+    ".layout-inner-content",
     ".main-content",
     ".account-main",
     ".ai-app-root",
@@ -412,10 +543,34 @@ const auditExpression = `(() => {
   }) || "";
   const main = mainSelector ? document.querySelector(mainSelector) : null;
   const accountMain = document.querySelector(".account-main");
+  const appRoot = document.querySelector("#app");
+  const initialLoader = appRoot?.querySelector(":scope > .loader");
+  const appHasMountedContent = Boolean(
+    appRoot &&
+      Array.from(appRoot.children).some(
+        child => !child.matches("style, .loader")
+      )
+  );
   const activeAccountMenu = Array.from(
     document.querySelectorAll(".account-menu .el-menu-item.is-active")
   ).find(visible);
+  const textWithoutSvg = element => {
+    if (!element) return "";
+    const clone = element.cloneNode(true);
+    clone.querySelectorAll("svg").forEach(node => node.remove());
+    return String(clone.textContent || "").replace(/\\s+/g, " ").trim();
+  };
   const mainRect = main && visible(main) ? main.getBoundingClientRect() : null;
+  const mainStyle = mainRect && main ? getComputedStyle(main) : null;
+  const mainPaddingLeft = mainStyle
+    ? Number.parseFloat(mainStyle.paddingLeft) || 0
+    : 0;
+  const mainPaddingRight = mainStyle
+    ? Number.parseFloat(mainStyle.paddingRight) || 0
+    : 0;
+  const mainUsableWidth = mainRect
+    ? Math.max(0, mainRect.width - mainPaddingLeft - mainPaddingRight)
+    : null;
   const overflow = Array.from(document.querySelectorAll("body *"))
     .filter(visible)
     .map(describe)
@@ -451,6 +606,20 @@ const auditExpression = `(() => {
         widthRatio: parentRect?.width ? round(item.width / parentRect.width) : 0
       };
     });
+  const inlineDigitalHumanFrames = Array.from(
+    document.querySelectorAll("iframe[src*='virtual-people/index.html']")
+  );
+  const floatingDigitalHuman = document.querySelector(".floating-human-2d");
+  const aiFloatButton = Array.from(
+    document.querySelectorAll(".ai-float-button")
+  ).find(visible);
+  const mobileDock = Array.from(
+    document.querySelectorAll(".nav-mobile-container")
+  ).find(visible);
+  const floatRect = aiFloatButton?.getBoundingClientRect();
+  const dockRect = mobileDock?.getBoundingClientRect();
+  const floatDockClearance =
+    floatRect && dockRect ? round(dockRect.top - floatRect.bottom) : null;
 
   let storedUserInfo = {};
   try {
@@ -469,6 +638,11 @@ const auditExpression = `(() => {
       .replace(/\\s+/g, " ")
       .trim()
       .slice(0, 1200),
+    appState: {
+      initialLoaderVisible: Boolean(initialLoader && visible(initialLoader)),
+      hasMountedContent: appHasMountedContent,
+      textLength: String(appRoot?.innerText || "").trim().length
+    },
     viewport: {
       width: innerWidth,
       height: innerHeight,
@@ -489,9 +663,7 @@ const auditExpression = `(() => {
       userId: Number(storedUserInfo.userId || localStorage.getItem("userId") || 0)
     },
     account: {
-      activeMenuText: String(activeAccountMenu?.textContent || "")
-        .replace(/\\s+/g, " ")
-        .trim(),
+      activeMenuText: textWithoutSvg(activeAccountMenu),
       mainText: String(accountMain?.innerText || accountMain?.textContent || "")
         .replace(/\\s+/g, " ")
         .trim()
@@ -499,9 +671,34 @@ const auditExpression = `(() => {
     },
     mainContentSelector: mainSelector || null,
     mainContentWidthRatio: mainRect ? round(mainRect.width / innerWidth) : null,
+    mainContentUsableWidthRatio:
+      mainUsableWidth === null ? null : round(mainUsableWidth / innerWidth),
+    mainContentGutters: mainRect
+      ? {
+          left: round(mainRect.left + mainPaddingLeft),
+          right: round(innerWidth - mainRect.right + mainPaddingRight),
+          paddingLeft: round(mainPaddingLeft),
+          paddingRight: round(mainPaddingRight)
+        }
+      : null,
     measured,
     overflow,
     chartCanvases,
+    digitalHuman: {
+      inline3DIframeCount: inlineDigitalHumanFrames.length,
+      inline3DVisibleCount: inlineDigitalHumanFrames.filter(visible).length,
+      floating2DMounted: Boolean(floatingDigitalHuman),
+      floating2DVisible: Boolean(
+        floatingDigitalHuman && visible(floatingDigitalHuman)
+      )
+    },
+    floatingAssistantDock: {
+      floatButton: aiFloatButton ? describe(aiFloatButton) : null,
+      mobileDock: mobileDock ? describe(mobileDock) : null,
+      clearance: floatDockClearance,
+      overlaps:
+        floatDockClearance === null ? false : floatDockClearance < 8
+    },
     touchTargets: {
       total: touchTargets.length,
       smallCount: smallTouchTargets.length,
@@ -512,9 +709,9 @@ const auditExpression = `(() => {
 
 let socket;
 try {
-  const pid = runAdb(["shell", "pidof", "io.dcloud.HBuilder"]);
+  const pid = runAdb(["shell", "pidof", packageName]);
   if (!pid) {
-    throw new Error("HBuilder Android runtime is not running");
+    throw new Error(`${packageName} Android runtime is not running`);
   }
 
   runAdb([
@@ -604,14 +801,12 @@ try {
         localStorage.setItem("qimingRealAuditRole", ${JSON.stringify(role)});
         sessionStorage.setItem("qimingNativeWebView", "1");
       }
-      if (userInfo) {
+      if (userInfo || destination) {
         const nextHash = destination || location.hash.replace(/^#/, "") || "/home?qimingNative=1";
         setTimeout(() => {
           location.hash = "#" + nextHash;
           setTimeout(() => location.reload(), 50);
         }, 0);
-      } else if (destination) {
-        location.hash = "#" + destination;
       }
       return true;
     })()`;
@@ -716,6 +911,7 @@ try {
     }
   }
   report.action = actionResult;
+  report.androidPackage = packageName;
   report.networkRequests = networkRequests.slice(-160);
   report.networkResponses = networkResponses
     .slice(-160)
@@ -733,12 +929,26 @@ try {
       `document width ${report.document.scrollWidth}px exceeds ${report.document.clientWidth}px`
     );
   }
+  if (strict && report.appState?.initialLoaderVisible) {
+    failures.push("initial app loader is still visible");
+  }
+  if (strict && report.appState && !report.appState.hasMountedContent) {
+    failures.push("#app has no mounted application content");
+  }
   if (
     typeof report.mainContentWidthRatio === "number" &&
     report.mainContentWidthRatio < minContentRatio
   ) {
     failures.push(
       `main content ratio ${report.mainContentWidthRatio} is below ${minContentRatio}`
+    );
+  }
+  if (
+    typeof report.mainContentUsableWidthRatio === "number" &&
+    report.mainContentUsableWidthRatio < minUsableContentRatio
+  ) {
+    failures.push(
+      `usable content ratio ${report.mainContentUsableWidthRatio} is below ${minUsableContentRatio}`
     );
   }
   const zeroCharts = report.chartCanvases.filter(
@@ -751,6 +961,26 @@ try {
   if (zeroCharts.length > 0) {
     failures.push(
       `${zeroCharts.length} visible chart canvas element(s) are blank-sized`
+    );
+  }
+  if (
+    expectCompactDigitalHuman &&
+    Number(report.digitalHuman?.inline3DIframeCount || 0) !== 0
+  ) {
+    failures.push(
+      `compact digital human mounted ${report.digitalHuman.inline3DIframeCount} inline 3D iframe(s)`
+    );
+  }
+  if (
+    expectCompactDigitalHuman &&
+    (!report.digitalHuman?.floating2DMounted ||
+      !report.digitalHuman?.floating2DVisible)
+  ) {
+    failures.push("compact digital human 2D fallback is not visible");
+  }
+  if (report.floatingAssistantDock?.overlaps) {
+    failures.push(
+      `AI float button overlaps the mobile dock (clearance ${report.floatingAssistantDock.clearance}px)`
     );
   }
   const textScope = accountMenuText
@@ -845,6 +1075,7 @@ try {
   report.strict = {
     enabled: strict,
     minContentRatio,
+    minUsableContentRatio,
     role: role || null,
     entry: entry || null,
     expectedText: expectedText || null,
@@ -853,6 +1084,7 @@ try {
       ? { selector: actionSelector, text: actionText, postActionWaitMs }
       : null,
     accountMenuText: accountMenuText || null,
+    expectCompactDigitalHuman,
     expectForbidden,
     requiredRequestPath: requiredRequestPath || null,
     passed: failures.length === 0,
@@ -868,6 +1100,17 @@ try {
   process.stdout.write(serialized);
 
   if (strict && failures.length > 0) process.exitCode = 1;
+} catch (error) {
+  const report = executionFailureReport(error);
+  const serialized = `${JSON.stringify(report, null, 2)}\n`;
+  if (outputPath) {
+    const absoluteOutput = resolve(outputPath);
+    mkdirSync(dirname(absoluteOutput), { recursive: true });
+    writeFileSync(absoluteOutput, serialized, "utf8");
+  }
+  process.stdout.write(serialized);
+  process.stderr.write(`[${report.auditStatus}] ${report.error.message}\n`);
+  process.exitCode = report.auditStatus === "environment-interrupted" ? 2 : 3;
 } finally {
   socket?.close();
 }

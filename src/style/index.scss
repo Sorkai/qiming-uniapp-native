@@ -86,6 +86,33 @@ html.qiming-native-webview.ua-mobile {
   --pure-safe-area-top: var(--qiming-native-statusbar-offset);
 }
 
+html.qiming-native-webview.ua-mobile.qiming-native-android {
+  --qiming-native-statusbar-offset: clamp(
+    28px,
+    calc(var(--qiming-native-env-safe-top, 0px) + 6px),
+    34px
+  );
+}
+
+html.qiming-native-webview.ua-mobile.qiming-native-android .fixed-header {
+  box-sizing: border-box;
+  padding-top: var(--pure-safe-area-top, 0);
+}
+
+html.qiming-native-webview.ua-mobile.qiming-native-android .app-main {
+  padding-top: calc(64px + var(--pure-safe-area-top, 0px)) !important;
+}
+
+html.qiming-native-webview.ua-mobile.qiming-native-android
+  .qiming-route-content {
+  width: auto;
+  max-width: calc(100vw - 12px) !important;
+  margin: 6px 6px 0 !important;
+  padding-right: 6px !important;
+  padding-left: 6px !important;
+  box-sizing: border-box;
+}
+
 html.qiming-mini-program-webview.ua-mobile {
   --qiming-native-statusbar-offset: 0px;
   --pure-safe-area-top: 0px;

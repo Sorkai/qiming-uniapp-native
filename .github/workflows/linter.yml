@@ -7,10 +7,14 @@ on:
   push:
     branches:
       - main
+      - android-native
+      - ios-native
       - wechat-miniprogram
   pull_request:
     branches:
       - main
+      - android-native
+      - ios-native
       - wechat-miniprogram
 
 jobs:
@@ -65,6 +69,13 @@ jobs:
           pnpm typecheck
           pnpm test:contracts
           pnpm --dir native-app type-check
+
+      - name: Self-test device audit tooling
+        run: |
+          pnpm native:run:self-test
+          pnpm native:audit:android:self-test
+          pnpm mini:real-audit:self-test
+          pnpm ios-native:self-test
 
       - name: Build Android and iOS app resources
         run: |

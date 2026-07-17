@@ -23,8 +23,10 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
   const isEdgeOneWechatH5 = process.env.QIMING_EDGEONE_WECHAT_H5 === "1";
   const resolvedApiUrl =
     mode === "app" && !VITE_API_URL ? VITE_PROXY_TARGET : VITE_API_URL;
+  const resolvedPublicPath =
+    mode === "app" ? VITE_PUBLIC_PATH || "./" : VITE_PUBLIC_PATH;
   return {
-    base: VITE_PUBLIC_PATH,
+    base: resolvedPublicPath,
     root,
     publicDir: command === "serve" ? "public" : false,
     resolve: {

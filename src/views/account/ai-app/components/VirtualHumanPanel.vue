@@ -33,47 +33,78 @@ const emit = defineEmits<{
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
 const humanBaseUrl = computed(() => {
-  // 获取当前基础路径，动态兼容部署环境
-  const base = window.location.origin;
-  return `${base}/virtual-people/index.html`;
+  return new URL("virtual-people/index.html", window.location.href).href;
 });
 const humanUrl = computed(() => `${humanBaseUrl.value}?embed=ai-app`);
+const messageTargetOrigin = computed(() => {
+  const target = new URL(humanBaseUrl.value);
+  return target.origin === "null" || !/^https?:$/.test(target.protocol)
+    ? "*"
+    : target.origin;
+});
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
 const errored = ref(false);
 const reloadKey = ref(0);
 let probeTimer: ReturnType<typeof setTimeout> | null = null;
+let iframeReady = false;
 
 function postControlMessage(payload: Record<string, unknown>) {
   const iframe = iframeRef.value;
   if (!iframe || !iframe.contentWindow) return;
   try {
-    iframe.contentWindow.postMessage(payload, window.location.origin);
+    iframe.contentWindow.postMessage(payload, messageTargetOrigin.value);
   } catch (err) {
     console.warn("[VirtualHumanPanel] control postMessage failed", err);
   }
 }
 
 function handleLoad() {
-  loading.value = false;
-  errored.value = false;
-  if (probeTimer) {
-    clearTimeout(probeTimer);
-    probeTimer = null;
-  }
-  postControlMessage({ type: "resumeRender" });
-  postControlMessage({ type: "speechReset" });
+  iframeReady = false;
+  schedulePing();
 }
 
 function handleError() {
+  if (probeTimer) clearTimeout(probeTimer);
+  probeTimer = null;
   loading.value = false;
   errored.value = true;
+}
+
+function handleChildMessage(event: MessageEvent) {
+  const iframe = iframeRef.value;
+  if (!iframe || event.source !== iframe.contentWindow) return;
+
+  const target = new URL(humanBaseUrl.value);
+  if (/^https?:$/.test(target.protocol) && event.origin !== target.origin)
+    return;
+
+  const data = event.data;
+  if (!data || typeof data !== "object") return;
+  if (data.source !== "qiming-virtual-people") return;
+
+  if (data.type === "ready") {
+    iframeReady = true;
+    loading.value = false;
+    errored.value = false;
+    if (probeTimer) clearTimeout(probeTimer);
+    probeTimer = null;
+    postControlMessage({ type: "resumeRender" });
+    postControlMessage({ type: "speechReset" });
+  } else if (data.type === "error") {
+    iframeReady = false;
+    loading.value = false;
+    errored.value = true;
+    if (probeTimer) clearTimeout(probeTimer);
+    probeTimer = null;
+  }
 }
 
 function refresh() {
   loading.value = true;
   errored.value = false;
+  iframeReady = false;
   reloadKey.value++;
   schedulePing();
 }
@@ -89,21 +120,23 @@ function handleVoiceChange(event: Event) {
 
 function schedulePing() {
   if (probeTimer) clearTimeout(probeTimer);
-  // 如果 6 秒后 iframe 还没 onload，认为静态资源加载异常
+  // Wait for the child model-ready message, not only iframe document load.
   probeTimer = setTimeout(() => {
     if (loading.value) {
       errored.value = true;
       loading.value = false;
     }
-  }, 6000);
+  }, 30000);
 }
 
 onMounted(() => {
+  window.addEventListener("message", handleChildMessage);
   schedulePing();
 });
 
 onUnmounted(() => {
   if (probeTimer) clearTimeout(probeTimer);
+  window.removeEventListener("message", handleChildMessage);
 });
 
 function setSpeechState(state: string) {

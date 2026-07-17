@@ -174,7 +174,7 @@ const transitionMain = defineComponent({
                       :is="Comp"
                       :key="fullPath"
                       :frameInfo="frameInfo"
-                      class="main-content"
+                      class="main-content qiming-route-content"
                     />
                   </keep-alive>
                   <component
@@ -182,7 +182,7 @@ const transitionMain = defineComponent({
                     v-else
                     :key="fullPath"
                     :frameInfo="frameInfo"
-                    class="main-content"
+                    class="main-content qiming-route-content"
                   />
                 </transitionMain>
               </div>
@@ -198,7 +198,7 @@ const transitionMain = defineComponent({
                     :is="Comp"
                     :key="fullPath"
                     :frameInfo="frameInfo"
-                    class="main-content"
+                    class="main-content qiming-route-content"
                   />
                 </keep-alive>
                 <component
@@ -206,7 +206,7 @@ const transitionMain = defineComponent({
                   v-else
                   :key="fullPath"
                   :frameInfo="frameInfo"
-                  class="main-content"
+                  class="main-content qiming-route-content"
                 />
               </transitionMain>
             </div>

@@ -1475,7 +1475,7 @@ onUnmounted(() => {
     box-sizing: border-box;
     height: 100vh;
     min-height: 0;
-    padding: 88px 32px 28px;
+    padding: calc(88px + var(--pure-safe-area-top, 0px)) 32px 28px;
 
     .account-sidebar {
       position: fixed;
@@ -2517,9 +2517,12 @@ onUnmounted(() => {
     }
 
     .header {
-      height: 72px;
+      height: calc(72px + var(--pure-safe-area-top, 0px));
+      padding-top: var(--pure-safe-area-top, 0);
+      box-sizing: border-box;
 
       .header-content {
+        height: 72px;
         padding: 0 16px;
 
         .logo {
@@ -2560,7 +2563,7 @@ onUnmounted(() => {
       gap: 18px;
       height: auto;
       min-height: calc(100vh - 72px);
-      padding: 84px 14px 0;
+      padding: calc(84px + var(--pure-safe-area-top, 0px)) 14px 0;
 
       .account-sidebar {
         position: static;
@@ -2817,7 +2820,7 @@ onUnmounted(() => {
     }
 
     .account-content {
-      padding: 84px 10px 0;
+      padding: calc(84px + var(--pure-safe-area-top, 0px)) 10px 0;
 
       .account-sidebar {
         .user-info-card {

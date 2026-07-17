@@ -597,40 +597,17 @@ const iconMap = {
   DeskIcon: "desktop"
 };
 
-// 学习动态
-const learningActivities = ref([
-  {
-    id: 1,
-    content: "完成了《Python 基础入门》第三章的学习",
-    timestamp: "10分钟前",
-    type: "success",
-    icon: "check"
-  },
-  {
-    id: 2,
-    content: "提交了《Web 前端开发》的中期作业",
-    timestamp: "2小时前",
-    type: "primary",
-    icon: "mail"
-  },
-  {
-    id: 3,
-    content: "开始学习新课程《人工智能导论》",
-    timestamp: "昨天",
-    type: "warning",
-    icon: "play"
-  },
-  {
-    id: 4,
-    content: "《数据结构与算法》课程进度达到 60%",
-    timestamp: "2天前",
-    type: "info",
-    icon: "activity"
-  }
-]);
+// The activity endpoint is unavailable on native builds; keep the honest empty state.
+const learningActivities = ref([]);
 
 const fetchActivities = async () => {
+  const isNativeWebView =
+    document.documentElement.classList.contains("qiming-native-webview") ||
+    document.documentElement.dataset.qimingNative === "true" ||
+    window.location.protocol === "file:" ||
+    new URLSearchParams(window.location.search).has("qimingNative");
   if (
+    isNativeWebView ||
     document.documentElement.classList.contains(
       "qiming-mini-program-webview"
     ) ||

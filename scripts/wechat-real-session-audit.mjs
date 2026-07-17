@@ -87,7 +87,7 @@ const routes = [
     name: "student-account-home",
     entry: "/account?menu=home",
     accountMenuText: "首页",
-    expect: ["吴同学", "首页"]
+    expect: ["课程信息", "AI总结"]
   },
   {
     role: "student",
@@ -108,7 +108,7 @@ const routes = [
     name: "student-account-classroom",
     entry: "/account?menu=classroom",
     accountMenuText: "虚拟校园",
-    expect: ["虚拟校园"]
+    expect: ["启明智教 · 2D 校园导览"]
   },
   {
     role: "student",
@@ -238,7 +238,7 @@ const routes = [
     role: "student",
     name: "student-course-work",
     entry: "/course/1?section=homework-exam",
-    expect: [],
+    expect: ["作业考试"],
     requiresCourse: true,
     courseState: {
       section: "homework-exam",
@@ -1261,6 +1261,12 @@ const inspectExpression = `(() => {
   const navbar = document.querySelector('.navbar, .header');
   const accountMain = document.querySelector('.account-main');
   const activeAccountMenu = Array.from(document.querySelectorAll('.account-menu .el-menu-item.is-active')).find(isVisibleElement);
+  const textWithoutSvg = element => {
+    if (!element) return '';
+    const clone = element.cloneNode(true);
+    clone.querySelectorAll('svg').forEach(node => node.remove());
+    return String(clone.textContent || '').replace(/\\s+/g, ' ').trim();
+  };
   const aiRoot = document.querySelector('.ai-app-root');
   const aiLeftRail = document.querySelector('.ai-app-left-rail');
   const sidebarLogo = document.querySelector('.sidebar-logo-container');
@@ -1316,7 +1322,7 @@ const inspectExpression = `(() => {
       auditRole: localStorage.getItem('qimingRealAuditRole') || ''
     },
     account: {
-      activeMenuText: String(activeAccountMenu?.textContent || '').replace(/\s+/g, ' ').trim(),
+      activeMenuText: textWithoutSvg(activeAccountMenu),
       mainText: String(accountMain?.innerText || accountMain?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 4000)
     },
     course: {

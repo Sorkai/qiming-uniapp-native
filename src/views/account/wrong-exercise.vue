@@ -191,7 +191,20 @@
         <el-empty v-if="loading" description="加载中..." />
 
         <div v-else>
-          <el-empty v-if="!records.length" description="暂无错题记录" />
+          <el-alert
+            v-if="historyUnavailable && !listError"
+            class="history-alert"
+            type="warning"
+            :closable="false"
+            show-icon
+            title="错题分析历史暂不可用，当前仅显示错题列表"
+          />
+
+          <el-empty v-if="listError" :description="listError">
+            <el-button type="primary" @click="fetchList">重新加载</el-button>
+          </el-empty>
+
+          <el-empty v-else-if="!records.length" description="暂无错题记录" />
 
           <template v-else>
             <div class="list-stats">
@@ -293,7 +306,7 @@
     <!-- 详情（沿用现有错题弹窗） -->
     <WrongQuestionDetailWithAI
       v-model="detailVisible"
-      :course-id="courseId"
+      :course-id="detailCourseId"
       :current-theme="currentTheme"
       :wrong="normalizeWrong(itemForDetail)"
       :initial-analysis="findHistory(itemForDetail)"
@@ -345,6 +358,8 @@ const pageSize = ref(10);
 const total = ref(0);
 const loading = ref(false);
 const records = ref<WrongQuestionListResult["list"]>([] as any);
+const listError = ref("");
+const historyUnavailable = ref(false);
 // 筛选状态
 const filterSource = ref<number | undefined>();
 const filterType = ref<number | undefined>();
@@ -383,10 +398,14 @@ function resetFilters() {
   refreshList();
 }
 
-const courseId = computed(() => {
-  if (props.courseId) return props.courseId;
-  return Number(route.query.courseId || route.params.id);
+const courseId = computed<number | undefined>(() => {
+  const raw = props.courseId ?? route.query.courseId ?? route.params.id;
+  if (Array.isArray(raw)) return undefined;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 });
+
+const detailCourseId = computed(() => courseId.value ?? "");
 
 const analysisHistoryMap = ref<Record<string, WrongExerciseAnalyzeResponse>>(
   {}
@@ -433,32 +452,58 @@ async function batchAnalyzeSelected() {
   await batchAnalyze(subset);
 }
 
+function isSuccessfulResponse(code: unknown) {
+  return [0, 200].includes(Number(code));
+}
+
+function apiFailureMessage(error: any, fallback: string) {
+  if (Number(error?.response?.status) === 404) {
+    return `${fallback}接口暂未部署，请稍后重试`;
+  }
+  return (
+    error?.response?.data?.msg || error?.response?.data?.message || fallback
+  );
+}
+
 const fetchList = async () => {
   loading.value = true;
+  listError.value = "";
+  const params: Parameters<typeof getUserWrongQuestionList>[0] = {
+    pageNum: page.value,
+    pageSize: pageSize.value
+  };
+  if (courseId.value !== undefined) params.courseId = courseId.value;
+  if (filterSource.value !== undefined) params.sourceType = filterSource.value;
   try {
-    const { code, data } = await getUserWrongQuestionList({
-      pageNum: page.value,
-      pageSize: pageSize.value,
-      courseId: courseId.value,
-      sourceType: filterSource.value
-    } as any);
-    if (code === 200 && data) {
-      records.value = (data as any).list || [];
+    const { code, data, msg } = await getUserWrongQuestionList(params);
+    if (isSuccessfulResponse(code) && data && Array.isArray(data.list)) {
+      records.value = data.list;
       total.value = (data as any).total || 0;
+    } else {
+      records.value = [];
+      total.value = 0;
+      listError.value = msg || "错题记录暂不可用，请稍后重试";
     }
+  } catch (error) {
+    records.value = [];
+    total.value = 0;
+    listError.value = apiFailureMessage(error, "错题记录暂不可用，请稍后重试");
   } finally {
     loading.value = false;
   }
 };
 
 const fetchAnalyzedHistory = async () => {
+  historyUnavailable.value = false;
+  analysisHistoryMap.value = {};
+  const params: Parameters<typeof getWrongExerciseHistory>[0] = {
+    page: 1,
+    page_size: 100
+  };
+  if (courseId.value !== undefined) params.course_id = courseId.value;
   try {
-    const { data } = await getWrongExerciseHistory({
-      course_id: courseId.value,
-      page: 1,
-      page_size: 100
-    });
-    if (data && data.records) {
+    const { code, data } = await getWrongExerciseHistory(params);
+    if (isSuccessfulResponse(code) && data?.records) {
       const map: Record<string, WrongExerciseAnalyzeResponse> = {};
       for (const rec of data.records) {
         map[String(rec.original_exercise_id)] = {
@@ -467,8 +512,12 @@ const fetchAnalyzedHistory = async () => {
         } as WrongExerciseAnalyzeResponse;
       }
       analysisHistoryMap.value = map;
+    } else {
+      historyUnavailable.value = true;
     }
-  } catch {}
+  } catch {
+    historyUnavailable.value = true;
+  }
 };
 
 const handlePageChange = (p: number) => {
@@ -541,6 +590,10 @@ function cancelBatch() {
 
 async function batchAnalyze(customList?: any[]) {
   if (batchAnalyzing.value) return;
+  if (courseId.value === undefined) {
+    ElMessage.warning("当前错题缺少课程上下文，暂不能进行 AI 分析");
+    return;
+  }
   const toAnalyze =
     customList || filteredRecords.value.filter(r => !isAnalyzed(r));
   if (!toAnalyze.length) return;
@@ -663,7 +716,11 @@ onMounted(async () => {
 /* ============== 容器 ============== */
 .practice-container {
   min-height: 100vh;
-  padding: 70px 0 30px;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: calc(70px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    0
+    calc(30px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
   background-color: transparent;
 }
 
@@ -683,7 +740,10 @@ onMounted(async () => {
   top: 0;
   right: 0;
   left: 0;
-  height: 60px;
+  z-index: 1000;
+  height: calc(60px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)));
+  box-sizing: border-box;
+  padding-top: var(--pure-safe-area-top, env(safe-area-inset-top, 0));
   background: linear-gradient(135deg, #fff, #f8faff);
   border-bottom: 1px solid rgb(220 226 247 / 60%);
   box-shadow: 0 2px 12px rgb(151 180 247 / 12%);
@@ -700,7 +760,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   max-width: 1200px;
-  height: 100%;
+  height: 60px;
+  box-sizing: border-box;
   padding: 0 32px;
   margin: 0 auto;
 }
@@ -1396,6 +1457,71 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .practice-container {
+    width: 100%;
+    padding: calc(
+        68px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      0
+      calc(
+        30px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+      );
+    margin: 0 !important;
+  }
+
+  .practice-container[data-embedded="true"] {
+    padding: 8px 0 0;
+  }
+
+  .practice-container .header .header-content {
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .practice-container .header .back-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .practice-container .header .placeholder {
+    min-width: 44px;
+  }
+
+  .practice-container:not([data-embedded="true"]) .main-content {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    padding: 0 8px;
+    margin: 0 !important;
+  }
+
+  .practice-container .main-content :deep(.el-card) {
+    width: 100%;
+  }
+
+  .practice-container .main-content :deep(.el-card__header),
+  .practice-container .main-content :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .practice-container .date-group {
+    min-width: 0;
+  }
+
+  .practice-container :deep(.filter-date) {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .practice-container .filter-actions,
+  .practice-container .batch-left,
+  .practice-container .batch-right {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
   .filters-section {
     padding: 16px;
   }
@@ -1429,6 +1555,22 @@ onMounted(async () => {
     align-items: center;
     justify-content: space-between;
   }
+}
+
+@media (width <= 380px) {
+  .practice-container:not([data-embedded="true"]) .main-content {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .practice-container .main-content :deep(.el-card__header),
+  .practice-container .main-content :deep(.el-card__body) {
+    padding: 8px;
+  }
+}
+
+.history-alert {
+  margin: 0 0 12px;
 }
 </style>
 

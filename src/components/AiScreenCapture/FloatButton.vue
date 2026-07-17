@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { getToken } from "@/utils/auth";
 import { useAppStoreHook } from "@/store/modules/app";
 import AiHubIcon from "@/assets/new-release/ai-hub-svgrepo-com.svg?component";
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const appStore = useAppStoreHook();
+const route = useRoute();
 const isMobile = computed(() => appStore.getDevice === "mobile");
 const buttonRef = ref<HTMLElement | null>(null);
 const activePointerId = ref<number | null>(null);
@@ -33,6 +35,7 @@ const DESKTOP_BUTTON_SIZE = 56;
 const MOBILE_BUTTON_SIZE = 48;
 const POSITION_PADDING = 10;
 const DRAG_THRESHOLD = 6;
+const MOBILE_DOCK_GAP = 12;
 
 const isLoggedIn = computed(() => {
   const token = getToken();
@@ -54,15 +57,51 @@ const getButtonSize = () => {
   );
 };
 
+const getVisibleBottomDock = () => {
+  if (!isMobile.value) return null;
+
+  return (
+    Array.from(
+      document.querySelectorAll<HTMLElement>(".nav-mobile-container")
+    ).find(element => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return (
+        style.display !== "none" &&
+        style.visibility !== "hidden" &&
+        Number(style.opacity || 1) > 0.01 &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    }) || null
+  );
+};
+
+const getMobileBottomOffset = () => {
+  const dock = getVisibleBottomDock();
+  if (dock) {
+    const dockTop = dock.getBoundingClientRect().top;
+    return Math.max(
+      POSITION_PADDING,
+      window.innerHeight - dockTop + MOBILE_DOCK_GAP
+    );
+  }
+
+  return getCssPixelValue("--pure-safe-area-bottom") + POSITION_PADDING + 8;
+};
+
 const clampPosition = (left: number, top: number) => {
   const size = getButtonSize();
   const maxLeft = Math.max(
     POSITION_PADDING,
     window.innerWidth - size - POSITION_PADDING
   );
+  const bottomOffset = isMobile.value
+    ? getMobileBottomOffset()
+    : POSITION_PADDING;
   const maxTop = Math.max(
     POSITION_PADDING,
-    window.innerHeight - size - POSITION_PADDING
+    window.innerHeight - size - bottomOffset
   );
 
   return {
@@ -74,11 +113,7 @@ const clampPosition = (left: number, top: number) => {
 const getDefaultPosition = () => {
   const size = getButtonSize();
   const rightOffset = isMobile.value ? 12 : 30;
-  const bottomOffset = isMobile.value
-    ? getCssPixelValue("--pure-mobile-tab-height") +
-      getCssPixelValue("--pure-safe-area-bottom") +
-      12
-    : 100;
+  const bottomOffset = isMobile.value ? getMobileBottomOffset() : 100;
 
   return clampPosition(
     window.innerWidth - size - rightOffset,
@@ -187,6 +222,14 @@ const handleResize = () => {
   syncPosition();
 };
 
+let positionSyncFrame = 0;
+const schedulePositionSync = (reset = false) => {
+  window.cancelAnimationFrame(positionSyncFrame);
+  positionSyncFrame = window.requestAnimationFrame(() => {
+    syncPosition(reset);
+  });
+};
+
 const buttonStyle = computed(() => ({
   left: `${position.value.left}px`,
   top: `${position.value.top}px`
@@ -214,18 +257,26 @@ const getButtonCenterFromDom = () => {
 };
 
 onMounted(() => {
-  syncPosition(true);
+  void nextTick(() => schedulePositionSync(true));
   window.addEventListener("resize", handleResize, { passive: true });
 });
 
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
+  window.cancelAnimationFrame(positionSyncFrame);
   releasePointerCapture(activePointerId.value);
 });
 
 watch(isMobile, () => {
-  syncPosition(true);
+  schedulePositionSync(true);
 });
+
+watch(
+  () => route.fullPath,
+  () => {
+    void nextTick(() => schedulePositionSync());
+  }
+);
 
 defineExpose({
   getButtonCenter: getButtonCenterFromDom,
