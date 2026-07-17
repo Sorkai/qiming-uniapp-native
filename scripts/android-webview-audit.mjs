@@ -98,7 +98,7 @@ function executionFailureReport(error) {
 
 function printUsage() {
   process.stdout.write(
-    `Usage: node scripts/android-webview-audit.mjs [options]\n\nOptions:\n  --strict                         Exit non-zero when an audit assertion fails\n  --role <student|teacher|admin>   Seed a real role session before auditing\n  --entry <route>                  Navigate to a hash route before auditing\n  --expect-text <text>             Require page/account body text\n  --ready-expect-text <text>       Require text before a configured action\n  --account-menu-text <text>       Require the active account menu and account body\n  --action-selector <selector>     Click a visible element matching selector/text\n  --action-text <text>             Text used with --action-selector\n  --required-request-path <path>   Require a successful API response and code 0/200\n  --expect-forbidden               Require the route to resolve to the 403 page\n  --serial <adb-serial>             Target one Android device\n  --port <port>                    Local CDP forwarding port (default: 9223)\n  --url-pattern <text>             WebView target URL pattern\n  --wait-ms <ms>                   Wait after navigation/session seed\n  --post-action-wait-ms <ms>       Wait after the configured action\n  --min-content-ratio <ratio>      Minimum main-content/viewport width ratio\n  --api-origin <url>               API origin used for real login\n  --out <path>                     Write the JSON report to a file\n  --self-test                      Run pure response-envelope checks and exit\n  -h, --help                       Show this help and exit\n`
+    `Usage: node scripts/android-webview-audit.mjs [options]\n\nOptions:\n  --strict                         Exit non-zero when an audit assertion fails\n  --role <student|teacher|admin>   Seed a real role session before auditing\n  --entry <route>                  Navigate to a hash route before auditing\n  --expect-text <text>             Require page/account body text\n  --ready-expect-text <text>       Require text before a configured action\n  --account-menu-text <text>       Require the active account menu and account body\n  --action-selector <selector>     Click the first visible matching element\n  --action-text <text>             Optionally narrow --action-selector by text\n  --required-request-path <path>   Require a successful API response and code 0/200\n  --expect-forbidden               Require the route to resolve to the 403 page\n  --serial <adb-serial>             Target one Android device\n  --port <port>                    Local CDP forwarding port (default: 9223)\n  --url-pattern <text>             WebView target URL pattern\n  --wait-ms <ms>                   Wait after navigation/session seed\n  --post-action-wait-ms <ms>       Wait after the configured action\n  --min-content-ratio <ratio>      Minimum main-content/viewport width ratio\n  --api-origin <url>               API origin used for real login\n  --out <path>                     Write the JSON report to a file\n  --self-test                      Run pure response-envelope checks and exit\n  -h, --help                       Show this help and exit\n`
   );
   process.stdout.write(
     "  --package <application-id>        Android package owning the WebView\n"
@@ -266,10 +266,8 @@ if (entry && !entry.startsWith("/")) {
   throw new Error(`--entry must start with /: ${entry}`);
 }
 
-if ((actionSelector && !actionText) || (!actionSelector && actionText)) {
-  throw new Error(
-    "--action-selector and --action-text must be provided together"
-  );
+if (!actionSelector && actionText) {
+  throw new Error("--action-text requires --action-selector");
 }
 
 if (requiredRequestPath && !requiredRequestPath.startsWith("/")) {
