@@ -429,7 +429,9 @@ onMounted(() => {
           <div
             class="efficient-filter-panel flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
-            <div class="flex items-center gap-4 shrink-0">
+            <div
+              class="efficient-filter-brand flex items-center gap-4 shrink-0"
+            >
               <div
                 class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
               >
@@ -437,7 +439,7 @@ onMounted(() => {
               </div>
               <div class="flex flex-col">
                 <span
-                  class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                  class="text-xl font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider"
                   >筛选分析课程</span
                 >
                 <span
@@ -454,7 +456,7 @@ onMounted(() => {
             <div class="flex-1 w-full overflow-hidden">
               <el-checkbox-group
                 v-model="selectedCourses"
-                class="flex flex-wrap gap-x-10 gap-y-4"
+                class="efficient-course-options flex flex-wrap gap-x-10 gap-y-4"
                 @change="handleCoursesChange"
               >
                 <el-checkbox
@@ -670,7 +672,8 @@ onMounted(() => {
 }
 
 :deep(.el-checkbox) {
-  height: 32px;
+  min-height: 44px;
+  height: auto;
   margin-right: 0;
 }
 
@@ -698,20 +701,35 @@ onMounted(() => {
   justify-content: center;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 991px) {
   .efficient-filter-panel {
-    gap: 12px !important;
-    padding: 12px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 10px !important;
     border-radius: 16px !important;
   }
 
+  .efficient-filter-brand {
+    min-width: 0;
+  }
+
+  .efficient-course-options {
+    gap: 4px 16px !important;
+  }
+
   .efficient-chart-panel {
-    padding: 8px !important;
-    border-radius: 16px !important;
+    padding: 6px !important;
+    border-radius: 12px !important;
   }
 
   .chart-container {
     height: 360px !important;
+  }
+
+  :deep(.optimize-suggestions .el-button),
+  :deep(.suggestion-card-new .el-button) {
+    min-height: 44px;
   }
 
   :deep(.efficient-pagination) {
@@ -723,16 +741,23 @@ onMounted(() => {
   :deep(.efficient-pagination .btn-next),
   :deep(.efficient-pagination .number),
   :deep(.efficient-pagination .more) {
-    min-width: 24px;
-    height: 24px;
+    min-width: 44px;
+    height: 44px;
     margin: 0;
     font-size: 12px;
-    line-height: 24px;
+    line-height: 44px;
   }
 
   :deep(.efficient-pagination .btn-prev),
   :deep(.efficient-pagination .btn-next) {
-    padding: 0 6px;
+    padding: 0 10px;
+  }
+}
+
+@media screen and (max-width: 359px) {
+  :deep(.efficient-pagination .number:not(.is-active)),
+  :deep(.efficient-pagination .more) {
+    display: none;
   }
 }
 </style>

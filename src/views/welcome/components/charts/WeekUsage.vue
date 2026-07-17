@@ -2,6 +2,7 @@
 import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { getWeekUsage } from "@/api/statistics";
+import { useAppStoreHook } from "@/store/modules/app";
 
 defineOptions({
   name: "WeekUsage"
@@ -12,6 +13,8 @@ const weekData = ref({
   studentTotalNum: 0,
   teacherTotalNum: 0
 });
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
@@ -54,6 +57,7 @@ const renderChart = () => {
     legend: {
       orient: "horizontal",
       bottom: 0,
+      itemGap: isMobile.value ? 12 : 20,
       data: ["学生使用", "老师使用"],
       textStyle: {
         color: isDark.value ? "#ffffff" : "#4b5563"
@@ -73,7 +77,8 @@ const renderChart = () => {
       {
         name: "使用分析",
         type: "pie",
-        radius: ["50%", "75%"],
+        radius: isMobile.value ? ["42%", "66%"] : ["50%", "75%"],
+        center: isMobile.value ? ["50%", "44%"] : ["50%", "50%"],
         avoidLabelOverlap: true,
         itemStyle: {
           borderRadius: 12,
@@ -84,7 +89,7 @@ const renderChart = () => {
           show: true,
           formatter: "{b}\n{d}%",
           color: isDark.value ? "#ffffff" : "#4b5563",
-          fontSize: 12,
+          fontSize: isMobile.value ? 11 : 12,
           fontWeight: 500
         },
         labelLine: {
@@ -109,7 +114,7 @@ const renderChart = () => {
 
 // 监听主题变化，重新渲染图表
 watch(
-  () => isDark.value,
+  () => [isDark.value, isMobile.value],
   () => {
     if (!loading.value) {
       renderChart();
@@ -126,8 +131,21 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" style="width: 100%; height: 350px" />
+        <div
+          ref="chartRef"
+          class="usage-chart"
+          style="width: 100%; height: 350px"
+        />
       </template>
     </el-skeleton>
   </div>
 </template>
+
+<style scoped>
+@media screen and (max-width: 768px),
+  screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .usage-chart {
+    height: 320px !important;
+  }
+}
+</style>

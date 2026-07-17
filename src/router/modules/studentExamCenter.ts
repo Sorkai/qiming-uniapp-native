@@ -15,7 +15,8 @@ export default {
       component: () => import("@/views/exam-paper/student-center/index.vue"),
       meta: {
         title: "试卷列表",
-        showLink: false
+        showLink: false,
+        roles: ["student"]
       }
     },
     {
@@ -25,6 +26,7 @@ export default {
       meta: {
         title: "试卷详情",
         showLink: false,
+        roles: ["student"],
         activePath: "/student-exam-center"
       }
     }

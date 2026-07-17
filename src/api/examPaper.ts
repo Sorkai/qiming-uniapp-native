@@ -346,6 +346,9 @@ export interface Paper {
   questionGroups?: QuestionGroup[];
 }
 
+/** 教师阅卷使用的冻结试卷详情 */
+export type TeacherPaperDetail = Paper;
+
 /** 试卷列表项 */
 export interface PaperListItem {
   paperId: number;
@@ -465,6 +468,8 @@ export interface StudentSubmission {
   gradeTime?: string;
   /** 学生答案列表 */
   answers?: StudentAnswer[];
+  /** 本次答卷对应的冻结试卷快照（仅教师/管理员阅卷接口返回） */
+  paperSnapshot?: TeacherPaperDetail;
 }
 
 /** 批改数据 */

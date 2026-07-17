@@ -521,4 +521,129 @@ $primary-color: #739cf9;
     padding: 24px 0;
   }
 }
+
+@media (width <= 768px) {
+  .student-paper-detail {
+    min-width: 0;
+    padding: 8px;
+    margin: 0 !important;
+  }
+
+  .student-paper-detail .page-header {
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .student-paper-detail .page-header :deep(.el-button),
+  .student-paper-detail .bottom-actions :deep(.el-button) {
+    min-height: 44px;
+    margin: 0;
+  }
+
+  .student-paper-detail .paper-info-card,
+  .student-paper-detail .paper-structure-card {
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+  }
+
+  .student-paper-detail .paper-info-card .card-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .student-paper-detail .paper-info-card .card-header :deep(.el-tag) {
+    align-self: flex-start;
+    max-width: 100%;
+    height: auto;
+    white-space: normal;
+  }
+
+  .student-paper-detail .paper-info-card .paper-title {
+    min-width: 0;
+    font-size: 20px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .student-paper-detail .paper-info-card .paper-description {
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  .student-paper-detail .paper-info-card .info-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .student-paper-detail .paper-structure-card .card-title {
+    margin-bottom: 12px;
+    font-size: 17px;
+  }
+
+  .student-paper-detail .structure-list,
+  .student-paper-detail .questions-preview {
+    gap: 8px;
+  }
+
+  .student-paper-detail .structure-item,
+  .student-paper-detail .question-item {
+    min-width: 0;
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .student-paper-detail .structure-item .structure-header,
+  .student-paper-detail .question-item .question-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+
+  .student-paper-detail .structure-item .structure-info,
+  .student-paper-detail .structure-item .structure-stats,
+  .student-paper-detail .question-item .option-item,
+  .student-paper-detail .question-item .option-content {
+    min-width: 0;
+  }
+
+  .student-paper-detail .structure-item .structure-info,
+  .student-paper-detail .structure-item .structure-stats {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .student-paper-detail .structure-item .group-name,
+  .student-paper-detail .question-item .question-stem,
+  .student-paper-detail .question-item .option-content {
+    overflow-wrap: anywhere;
+  }
+
+  .student-paper-detail .bottom-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .student-paper-detail .bottom-actions :deep(.el-button) {
+    width: 100%;
+  }
+}
+
+@media (width <= 380px) {
+  .student-paper-detail {
+    padding: 6px;
+  }
+
+  .student-paper-detail .paper-info-card,
+  .student-paper-detail .paper-structure-card,
+  .student-paper-detail .structure-item,
+  .student-paper-detail .question-item {
+    padding: 6px;
+  }
+}
 </style>

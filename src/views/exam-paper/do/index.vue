@@ -6,12 +6,26 @@ import { useDark } from "@pureadmin/utils";
 import {
   startExam,
   saveAnswer,
+  saveAnswersBatch,
   saveDuration,
+  getExamSession,
+  examHeartbeat,
+  reportAntiCheatEvent,
   submitExam,
   normalizeQuestionType,
+  type ExamSessionSnapshot,
   type StudentAnswerValue
 } from "@/api/examPaper";
 import RichContent from "@/views/exam-paper/editor/components/RichContent.vue";
+import {
+  ExamAnswerRetryQueue,
+  createExamDeadlineClock,
+  getExamRemainingSeconds,
+  getAnswerRetryDelay,
+  updateExamServerOffset,
+  type ExamDeadlineClock,
+  type PendingExamAnswer
+} from "./examRuntime";
 
 defineOptions({
   name: "ExamPaperDo"
@@ -27,6 +41,9 @@ const paperId = computed(() => Number(route.params.id));
 // 加载状态
 const loading = ref(true);
 const submitting = ref(false);
+const activeSaveCount = ref(0);
+const pendingSaveCount = ref(0);
+const saveRetrying = ref(false);
 
 // 考试数据
 const examData = reactive({
@@ -46,6 +63,16 @@ interface AnswerRecord {
   enterTime: number; // 进入该题的时间戳（毫秒）
 }
 const answers = ref<Map<number, AnswerRecord>>(new Map());
+const answerRetryQueue = new ExamAnswerRetryQueue<StudentAnswerValue>();
+const directSaveChains = new Map<number, Promise<void>>();
+
+interface StoredExamRuntimeState {
+  version: 1;
+  paperId: number;
+  submissionId: number;
+  currentQuestionId?: number;
+  pendingAnswers: PendingExamAnswer<StudentAnswerValue>[];
+}
 
 const toQuestionTypeCode = (type: unknown) =>
   normalizeQuestionType(type as any) || 0;
@@ -119,6 +146,23 @@ let examTimer: ReturnType<typeof setInterval> | null = null;
 // 当前题目计时器（每秒更新当前题目的用时）
 let questionTimer: ReturnType<typeof setInterval> | null = null;
 
+// 考试在线心跳
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
+// 弱网答案批量重试
+let answerRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let automaticSubmitRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let batchFlushPromise: Promise<boolean> | null = null;
+let batchSaving = false;
+let answerRetryFailureCount = 0;
+let automaticSubmitFailureCount = 0;
+let retryWarningShown = false;
+let heartbeatSending = false;
+let automaticSubmitPending = false;
+let submitCompleted = false;
+let componentDisposed = false;
+let examClock: ExamDeadlineClock | null = null;
+
 // 用于强制刷新题目用时显示的响应式变量
 const questionTimerTick = ref(0);
 
@@ -171,6 +215,93 @@ const answeredCount = computed(() => {
   return count;
 });
 
+const answerSaveStatus = computed(() => {
+  if (saveRetrying.value) {
+    return { state: "warning", text: "网络波动，答案待补存" };
+  }
+  if (activeSaveCount.value > 0 || pendingSaveCount.value > 0) {
+    return { state: "saving", text: "答案保存中" };
+  }
+  return { state: "saved", text: "答案已保存" };
+});
+
+const getRuntimeStorageKey = () => `qiming:exam-runtime:${paperId.value}`;
+
+const readStoredRuntimeState = (): StoredExamRuntimeState | null => {
+  try {
+    const raw = window.sessionStorage.getItem(getRuntimeStorageKey());
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<StoredExamRuntimeState>;
+    if (
+      parsed.version !== 1 ||
+      parsed.paperId !== paperId.value ||
+      !Number.isInteger(parsed.submissionId) ||
+      Number(parsed.submissionId) <= 0 ||
+      !Array.isArray(parsed.pendingAnswers)
+    ) {
+      return null;
+    }
+
+    const pendingAnswers = parsed.pendingAnswers.filter(
+      item =>
+        item &&
+        Number.isInteger(item.questionId) &&
+        item.questionId > 0 &&
+        Number.isInteger(item.revision) &&
+        item.revision > 0 &&
+        Object.prototype.hasOwnProperty.call(item, "answer")
+    );
+
+    return {
+      version: 1,
+      paperId: parsed.paperId,
+      submissionId: parsed.submissionId,
+      currentQuestionId: Number.isInteger(parsed.currentQuestionId)
+        ? parsed.currentQuestionId
+        : undefined,
+      pendingAnswers
+    };
+  } catch (error) {
+    console.warn("读取本地考试恢复状态失败:", error);
+    return null;
+  }
+};
+
+const syncPendingSaveState = () => {
+  pendingSaveCount.value = answerRetryQueue.size;
+};
+
+const persistRuntimeState = () => {
+  if (!examData.submissionId) return;
+  const currentQuestionId = currentQuestion.value?.questionId;
+  const state: StoredExamRuntimeState = {
+    version: 1,
+    paperId: paperId.value,
+    submissionId: examData.submissionId,
+    currentQuestionId,
+    pendingAnswers: answerRetryQueue.snapshot()
+  };
+
+  try {
+    window.sessionStorage.setItem(
+      getRuntimeStorageKey(),
+      JSON.stringify(state)
+    );
+  } catch (error) {
+    console.warn("保存本地考试恢复状态失败:", error);
+  }
+};
+
+const clearRuntimeState = () => {
+  answerRetryQueue.clear();
+  syncPendingSaveState();
+  try {
+    window.sessionStorage.removeItem(getRuntimeStorageKey());
+  } catch (error) {
+    console.warn("清理本地考试恢复状态失败:", error);
+  }
+};
+
 // 初始化答案记录
 const initAnswerRecords = () => {
   allQuestions.value.forEach(q => {
@@ -196,20 +327,27 @@ const enterQuestion = (questionId: number) => {
 // 离开题目（发送时间戳给后端）
 const leaveQuestion = async (questionId: number) => {
   const record = answers.value.get(questionId);
-  if (record && record.enterTime > 0) {
-    const leaveTime = Date.now();
-    // 发送时间戳给后端，后端计算并累加时长
-    try {
-      await saveDuration({
-        submissionId: examData.submissionId,
-        questionId,
-        enterTime: record.enterTime,
-        leaveTime: leaveTime
-      });
-    } catch (error) {
-      console.error("保存答题时长失败:", error);
+  if (!record || record.enterTime <= 0 || !examData.submissionId) return;
+
+  const enterTime = record.enterTime;
+  const leaveTime = Date.now();
+  const elapsed = Math.max(0, Math.floor((leaveTime - enterTime) / 1000));
+  record.enterTime = 0;
+
+  try {
+    const res = await saveDuration({
+      submissionId: examData.submissionId,
+      questionId,
+      enterTime,
+      leaveTime
+    });
+    if (res.code !== 0) throw new Error(res.msg || "保存答题时长失败");
+    if (Number.isFinite(res.data?.duration)) {
+      record.duration = Math.max(0, Number(res.data.duration));
     }
-    record.enterTime = 0;
+  } catch (error) {
+    record.duration += elapsed;
+    console.error("保存答题时长失败:", error);
   }
 };
 
@@ -219,7 +357,7 @@ const switchQuestion = (index: number) => {
 
   // 离开当前题目
   if (currentQuestion.value) {
-    leaveQuestion(currentQuestion.value.questionId);
+    void leaveQuestion(currentQuestion.value.questionId);
   }
 
   // 切换到新题目
@@ -229,6 +367,7 @@ const switchQuestion = (index: number) => {
   if (allQuestions.value[index]) {
     enterQuestion(allQuestions.value[index].questionId);
   }
+  persistRuntimeState();
 };
 
 // 上一题
@@ -247,99 +386,338 @@ const nextQuestion = () => {
 
 // 更新答案
 const updateAnswer = (value: StudentAnswerValue) => {
-  if (!currentQuestion.value) return;
+  if (!currentQuestion.value || submitting.value) return;
   const record = answers.value.get(currentQuestion.value.questionId);
   if (record) {
     record.answer = value;
-    // 自动保存答案（不需要发送时长，只在离开题目时发送时间戳）
     autoSaveAnswer(currentQuestion.value.questionId, value);
   }
 };
 
-// 自动保存答案（仅保存答案内容）
-const autoSaveAnswer = async (
-  questionId: number,
-  answer: StudentAnswerValue
-) => {
-  if (!examData.submissionId) return;
-  try {
-    await saveAnswer({
-      submissionId: examData.submissionId,
-      questionId,
-      answer
-    });
-  } catch (error) {
-    console.error("自动保存失败:", error);
+const isRetryableSaveError = (error: any) => {
+  const status = Number(error?.response?.status || 0);
+  return (
+    !navigator.onLine ||
+    status === 0 ||
+    status === 408 ||
+    status === 429 ||
+    status >= 500
+  );
+};
+
+const clearAnswerRetryTimer = () => {
+  if (!answerRetryTimer) return;
+  clearTimeout(answerRetryTimer);
+  answerRetryTimer = null;
+};
+
+const handleAnswerQueueChanged = (notifyRecovery = false) => {
+  syncPendingSaveState();
+  persistRuntimeState();
+  if (answerRetryQueue.size > 0) return;
+
+  clearAnswerRetryTimer();
+  answerRetryFailureCount = 0;
+  saveRetrying.value = false;
+  if (notifyRecovery && retryWarningShown) {
+    ElMessage.success("网络已恢复，待保存答案已补存");
+  }
+  retryWarningShown = false;
+  if (automaticSubmitPending && !componentDisposed) {
+    window.setTimeout(() => void submitPaper(true), 0);
   }
 };
 
-// 提交试卷
-const handleSubmit = async () => {
-  // 先停止当前题目计时
-  if (currentQuestion.value) {
-    leaveQuestion(currentQuestion.value.questionId);
+const scheduleAnswerBatchRetry = (delay?: number) => {
+  if (
+    answerRetryTimer ||
+    answerRetryQueue.size === 0 ||
+    submitCompleted ||
+    componentDisposed
+  )
+    return;
+  const retryDelay = delay ?? getAnswerRetryDelay(answerRetryFailureCount++);
+  answerRetryTimer = setTimeout(() => {
+    answerRetryTimer = null;
+    void flushPendingAnswers();
+  }, retryDelay);
+};
+
+const markAnswerSaveForRetry = (error: unknown) => {
+  saveRetrying.value = true;
+  if (!retryWarningShown) {
+    retryWarningShown = true;
+    ElMessage.warning("网络不稳定，答案已暂存，将自动重试");
   }
+  console.error("自动保存失败，已进入批量重试:", error);
+  scheduleAnswerBatchRetry();
+};
 
-  const unansweredCount = allQuestions.value.length - answeredCount.value;
-
-  let confirmMessage = "确定要提交试卷吗？";
-  if (unansweredCount > 0) {
-    confirmMessage = `还有 ${unansweredCount} 道题未作答，确定要提交吗？`;
+const saveAnswerRevision = async (
+  item: PendingExamAnswer<StudentAnswerValue>
+) => {
+  if (!navigator.onLine) {
+    markAnswerSaveForRetry(new Error("浏览器处于离线状态"));
+    return;
   }
 
   try {
-    await ElMessageBox.confirm(confirmMessage, "提交确认", {
-      confirmButtonText: "确定提交",
-      cancelButtonText: "继续答题",
-      type: "warning"
+    const res = await saveAnswer({
+      submissionId: examData.submissionId,
+      questionId: item.questionId,
+      answer: item.answer
     });
+    if (res.code !== 0) throw new Error(res.msg || "自动保存失败");
+    answerRetryQueue.acknowledge(item.questionId, item.revision);
+    handleAnswerQueueChanged(true);
+  } catch (error) {
+    if (isRetryableSaveError(error)) {
+      markAnswerSaveForRetry(error);
+      return;
+    }
+    saveRetrying.value = true;
+    console.error("答案保存被服务端拒绝:", error);
+    ElMessage.error("答案保存失败，请检查后重试");
+  }
+};
 
-    submitting.value = true;
+// 自动保存仍走单题接口；失败的最新版本再由批量接口补偿。
+const autoSaveAnswer = (questionId: number, answer: StudentAnswerValue) => {
+  if (!examData.submissionId) return;
 
-    // 调用提交接口
+  const item = {
+    questionId,
+    answer,
+    revision: answerRetryQueue.nextRevision(questionId)
+  };
+  answerRetryQueue.enqueue(item);
+  handleAnswerQueueChanged();
+
+  if (batchSaving || !navigator.onLine) {
+    markAnswerSaveForRetry(new Error("等待批量保存"));
+    return;
+  }
+
+  activeSaveCount.value++;
+  const previous = directSaveChains.get(questionId) || Promise.resolve();
+  const task = previous
+    .then(() => saveAnswerRevision(item))
+    .finally(() => {
+      activeSaveCount.value = Math.max(0, activeSaveCount.value - 1);
+    });
+  directSaveChains.set(questionId, task);
+  void task.then(() => {
+    if (directSaveChains.get(questionId) === task) {
+      directSaveChains.delete(questionId);
+    }
+  });
+};
+
+const waitForDirectAnswerSaves = async () => {
+  const tasks = Array.from(directSaveChains.values());
+  if (tasks.length > 0) await Promise.all(tasks);
+};
+
+const flushPendingAnswers = (): Promise<boolean> => {
+  if (batchFlushPromise) return batchFlushPromise;
+  if (answerRetryQueue.size === 0) return Promise.resolve(true);
+
+  clearAnswerRetryTimer();
+  batchSaving = true;
+  const operation = (async () => {
+    await waitForDirectAnswerSaves();
+    const batch = answerRetryQueue.snapshot();
+    if (batch.length === 0) return true;
+    if (!navigator.onLine) {
+      markAnswerSaveForRetry(new Error("浏览器处于离线状态"));
+      return false;
+    }
+
+    try {
+      activeSaveCount.value++;
+      const res = await saveAnswersBatch({
+        submissionId: examData.submissionId,
+        answers: batch.map(({ questionId, answer }) => ({
+          questionId,
+          answer
+        }))
+      });
+      if (res.code !== 0) throw new Error(res.msg || "批量保存失败");
+      if (
+        Number.isFinite(res.data?.savedCount) &&
+        Number(res.data.savedCount) < batch.length
+      ) {
+        throw new Error("批量保存返回数量不完整");
+      }
+      answerRetryQueue.acknowledgeBatch(batch);
+      handleAnswerQueueChanged(true);
+      return true;
+    } catch (error) {
+      markAnswerSaveForRetry(error);
+      return false;
+    } finally {
+      activeSaveCount.value = Math.max(0, activeSaveCount.value - 1);
+    }
+  })();
+
+  batchFlushPromise = operation;
+  void operation.finally(() => {
+    batchSaving = false;
+    batchFlushPromise = null;
+    handleAnswerQueueChanged();
+    if (answerRetryQueue.size > 0) scheduleAnswerBatchRetry(0);
+    if (
+      answerRetryQueue.size === 0 &&
+      automaticSubmitPending &&
+      !componentDisposed
+    ) {
+      window.setTimeout(() => void submitPaper(true), 0);
+    }
+  });
+  return operation;
+};
+
+const prepareAnswersForSubmit = async () => {
+  await waitForDirectAnswerSaves();
+  if (answerRetryQueue.size === 0) return true;
+  const flushed = await flushPendingAnswers();
+  return flushed && answerRetryQueue.size === 0;
+};
+
+const clearAutomaticSubmitRetryTimer = () => {
+  if (!automaticSubmitRetryTimer) return;
+  clearTimeout(automaticSubmitRetryTimer);
+  automaticSubmitRetryTimer = null;
+};
+
+const scheduleAutomaticSubmitRetry = () => {
+  if (
+    automaticSubmitRetryTimer ||
+    submitCompleted ||
+    componentDisposed ||
+    !automaticSubmitPending
+  )
+    return;
+  const delay = Math.min(5000 * 2 ** automaticSubmitFailureCount++, 30000);
+  automaticSubmitRetryTimer = setTimeout(() => {
+    automaticSubmitRetryTimer = null;
+    void submitPaper(true);
+  }, delay);
+};
+
+const submitPaper = async (automatic: boolean) => {
+  if (submitting.value || submitCompleted || !examData.submissionId) return;
+
+  if (!automatic) {
+    const unansweredCount = allQuestions.value.length - answeredCount.value;
+    const confirmMessage =
+      unansweredCount > 0
+        ? `还有 ${unansweredCount} 道题未作答，确定要提交吗？`
+        : "确定要提交试卷吗？";
+
+    try {
+      await ElMessageBox.confirm(confirmMessage, "提交确认", {
+        confirmButtonText: "确定提交",
+        cancelButtonText: "继续答题",
+        type: "warning"
+      });
+    } catch {
+      return;
+    }
+  }
+
+  submitting.value = true;
+  clearAutomaticSubmitRetryTimer();
+  automaticSubmitPending = false;
+  const activeQuestionId = currentQuestion.value?.questionId;
+  if (activeQuestionId) {
+    await leaveQuestion(activeQuestionId);
+  }
+
+  let submitted = false;
+  try {
+    const answersSaved = await prepareAnswersForSubmit();
+    if (!answersSaved) {
+      automaticSubmitPending = automatic;
+      ElMessage.error(
+        automatic
+          ? "网络异常，答案补存后将继续自动交卷"
+          : "仍有答案未保存，请等待网络恢复后再交卷"
+      );
+      return;
+    }
+
     const res = await submitExam(examData.submissionId);
+    if (res.code !== 0) throw new Error(res.msg || "提交失败");
 
-    if (res.code === 0) {
-      ElMessage.success("试卷提交成功！");
-      // 停止计时器
-      stopTimers();
-      if (res.data?.showScore) {
-        router.push(`/exam-paper/result/${examData.submissionId}`);
-      } else {
-        router.push("/student-exam-center/list");
-      }
+    submitted = true;
+    submitCompleted = true;
+    automaticSubmitFailureCount = 0;
+    clearRuntimeState();
+    stopTimers();
+    ElMessage.success("试卷提交成功！");
+    if (res.data?.showScore) {
+      await router.push(`/exam-paper/result/${examData.submissionId}`);
     } else {
-      ElMessage.error(res.msg || "提交失败");
-      // 重新进入当前题目计时
-      if (currentQuestion.value) {
-        enterQuestion(currentQuestion.value.questionId);
-      }
+      await router.push("/student-exam-center/list");
     }
-  } catch {
-    // 用户取消提交，重新进入当前题目计时
-    if (currentQuestion.value) {
-      enterQuestion(currentQuestion.value.questionId);
-    }
+  } catch (error) {
+    automaticSubmitPending = automatic;
+    console.error("提交试卷失败:", error);
+    ElMessage.error(
+      automatic ? "自动交卷失败，网络恢复后将重试" : "提交失败，请稍后重试"
+    );
+    if (automatic) scheduleAutomaticSubmitRetry();
   } finally {
     submitting.value = false;
+    if (!submitted && activeQuestionId) enterQuestion(activeQuestionId);
   }
+};
+
+const handleSubmit = () => submitPaper(false);
+
+const resetExamClock = (remainingSeconds: number, serverTime?: number) => {
+  const localTime = Date.now();
+  const estimatedServerTime = Number.isFinite(serverTime)
+    ? Number(serverTime)
+    : localTime + (examClock?.serverOffset || 0);
+  examClock = createExamDeadlineClock(
+    remainingSeconds,
+    estimatedServerTime,
+    localTime
+  );
+  examData.remainingTime = getExamRemainingSeconds(examClock, localTime);
+};
+
+const syncExamRemainingTime = () => {
+  if (!examClock || submitCompleted) return;
+  examData.remainingTime = getExamRemainingSeconds(examClock, Date.now());
+  if (examData.remainingTime > 0 || submitting.value) return;
+
+  if (examTimer) clearInterval(examTimer);
+  examTimer = null;
+  ElMessage.warning("考试时间到，正在自动提交...");
+  void submitPaper(true);
+};
+
+const syncExamServerTime = (serverTime?: number) => {
+  if (!examClock || !Number.isFinite(serverTime)) return;
+  examClock = updateExamServerOffset(examClock, Number(serverTime), Date.now());
+  syncExamRemainingTime();
 };
 
 // 启动考试计时器
 const startExamTimer = () => {
-  examTimer = setInterval(() => {
-    if (examData.remainingTime > 0) {
-      examData.remainingTime--;
-    } else {
-      // 时间到，自动提交
-      ElMessage.warning("考试时间到，正在自动提交...");
-      handleSubmit();
-    }
-  }, 1000);
+  if (examTimer) clearInterval(examTimer);
+  syncExamRemainingTime();
+  if (examData.remainingTime > 0) {
+    examTimer = setInterval(syncExamRemainingTime, 1000);
+  }
 };
 
 // 启动题目计时器（实时更新当前题目用时显示）
 const startQuestionTimer = () => {
+  if (questionTimer) clearInterval(questionTimer);
   questionTimer = setInterval(() => {
     // 每秒更新计数器，触发 computed 重新计算
     questionTimerTick.value++;
@@ -356,6 +734,12 @@ const stopTimers = () => {
     clearInterval(questionTimer);
     questionTimer = null;
   }
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+  clearAnswerRetryTimer();
+  clearAutomaticSubmitRetryTimer();
 };
 
 // 获取当前题目实时用时（包含正在计时的部分）
@@ -478,54 +862,254 @@ const getCompositeSubAnswer = (subId: number | string): StudentAnswerValue => {
   return (answer as Record<string, any>)[String(subId)] ?? "";
 };
 
-// 加载考试数据
+const fetchExamSession = async (): Promise<ExamSessionSnapshot | null> => {
+  try {
+    const res = await getExamSession(examData.submissionId);
+    if (res.code !== 0 || !res.data) {
+      throw new Error(res.msg || "获取考试会话失败");
+    }
+    if (Number(res.data.submissionId) !== examData.submissionId) {
+      throw new Error("考试会话与当前答卷不一致");
+    }
+    return res.data;
+  } catch (error) {
+    // 会话快照是恢复能力；失败时保留 start 接口的现有作答链路。
+    console.warn("恢复考试会话失败:", error);
+    return null;
+  }
+};
+
+const applySessionSnapshot = (snapshot: ExamSessionSnapshot) => {
+  if (Number.isFinite(snapshot.remainingTime)) {
+    resetExamClock(snapshot.remainingTime);
+  }
+
+  snapshot.answers?.forEach(item => {
+    const record = answers.value.get(Number(item.questionId));
+    if (!record || !Object.prototype.hasOwnProperty.call(item, "answer"))
+      return;
+    record.answer = item.answer;
+    if (Number.isFinite(item.duration)) {
+      record.duration = Math.max(0, Math.floor(Number(item.duration)));
+    }
+  });
+};
+
+const sendExamHeartbeat = async () => {
+  if (
+    heartbeatSending ||
+    !examData.submissionId ||
+    submitCompleted ||
+    document.visibilityState === "hidden" ||
+    !navigator.onLine
+  )
+    return;
+
+  heartbeatSending = true;
+  try {
+    const res = await examHeartbeat({
+      submissionId: examData.submissionId,
+      clientTime: Date.now()
+    });
+    if (res.code !== 0) throw new Error(res.msg || "考试心跳失败");
+    syncExamServerTime(res.data?.serverTime);
+  } catch (error) {
+    console.warn("考试心跳失败:", error);
+  } finally {
+    heartbeatSending = false;
+  }
+};
+
+const startHeartbeat = () => {
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  void sendExamHeartbeat();
+  heartbeatTimer = setInterval(() => void sendExamHeartbeat(), 30000);
+};
+
+const lastAntiCheatEventAt = new Map<string, number>();
+const reportExamEvent = async (eventType: string, detail: string) => {
+  if (!examData.submissionId || submitCompleted) return;
+  const eventTime = Date.now();
+  const previousTime = lastAntiCheatEventAt.get(eventType) || 0;
+  if (eventTime - previousTime < 1000) return;
+  lastAntiCheatEventAt.set(eventType, eventTime);
+
+  try {
+    const res = await reportAntiCheatEvent({
+      submissionId: examData.submissionId,
+      eventType,
+      eventTime,
+      detail
+    });
+    if (res.code !== 0) throw new Error(res.msg || "防作弊事件上报失败");
+  } catch (error) {
+    console.warn(`防作弊事件 ${eventType} 上报失败:`, error);
+  }
+};
+
+const handleVisibilityChange = () => {
+  if (document.visibilityState === "hidden") {
+    persistRuntimeState();
+    void flushPendingAnswers();
+    void reportExamEvent("page_hidden", "visibilityState=hidden");
+    return;
+  }
+
+  syncExamRemainingTime();
+  void reportExamEvent("page_visible", "visibilityState=visible");
+  void sendExamHeartbeat();
+  if (answerRetryQueue.size > 0) void flushPendingAnswers();
+};
+
+const handleWindowBlur = () => {
+  if (document.visibilityState === "visible") {
+    void reportExamEvent("window_blur", "window lost focus while visible");
+  }
+};
+
+const handleOnline = () => {
+  void sendExamHeartbeat();
+  if (answerRetryQueue.size > 0) {
+    saveRetrying.value = true;
+    void flushPendingAnswers();
+    return;
+  }
+  if (automaticSubmitPending) {
+    clearAutomaticSubmitRetryTimer();
+    void submitPaper(true);
+  }
+};
+
+const handlePageHide = () => {
+  if (submitCompleted) return;
+  persistRuntimeState();
+  if (answerRetryQueue.size > 0) void flushPendingAnswers();
+};
+
+const restoreLocalPendingAnswers = (
+  storedState: StoredExamRuntimeState | null
+) => {
+  if (!storedState || storedState.submissionId !== examData.submissionId)
+    return;
+
+  answerRetryQueue.restore(storedState.pendingAnswers);
+  answerRetryQueue.snapshot().forEach(item => {
+    const record = answers.value.get(item.questionId);
+    if (record) record.answer = item.answer;
+  });
+  syncPendingSaveState();
+};
+
+const resolveInitialQuestionIndex = (
+  storedState: StoredExamRuntimeState | null
+) => {
+  if (
+    storedState?.submissionId === examData.submissionId &&
+    storedState.currentQuestionId
+  ) {
+    const restoredIndex = allQuestions.value.findIndex(
+      item => item.questionId === storedState.currentQuestionId
+    );
+    if (restoredIndex >= 0) return restoredIndex;
+  }
+
+  const firstUnanswered = allQuestions.value.findIndex(
+    item => !isQuestionAnswered(item.questionId)
+  );
+  return firstUnanswered >= 0 ? firstUnanswered : 0;
+};
+
+// start 保留为权威入口，随后用 session 恢复服务端答案，再叠加尚未补存的本地答案。
 const loadExamData = async () => {
   loading.value = true;
+  const storedState = readStoredRuntimeState();
   try {
+    if (!Number.isInteger(paperId.value) || paperId.value <= 0) {
+      throw new Error("试卷 ID 无效");
+    }
+
     const res = await startExam(paperId.value);
-    if (res.code === 0 && res.data) {
-      examData.submissionId = res.data.submissionId;
-      examData.paper = res.data.paper;
-      examData.remainingTime = res.data.remainingTime;
+    if (res.code !== 0 || !res.data) {
+      throw new Error(res.msg || "加载考试失败");
+    }
 
-      // 初始化答案记录
-      initAnswerRecords();
+    examData.submissionId = Number(res.data.submissionId);
+    examData.paper = res.data.paper;
+    resetExamClock(
+      Math.max(0, Math.floor(Number(res.data.remainingTime) || 0)),
+      res.data.serverTime
+    );
+    answers.value.clear();
+    answerRetryQueue.clear();
+    initAnswerRecords();
 
-      // 进入第一题
-      if (allQuestions.value.length > 0) {
-        enterQuestion(allQuestions.value[0].questionId);
-      }
+    const snapshot = await fetchExamSession();
+    if (snapshot?.status && snapshot.status !== "in_progress") {
+      clearRuntimeState();
+      ElMessage.info(
+        snapshot.status === "submitted" ? "该试卷已提交" : "该考试已结束"
+      );
+      await router.replace("/student-exam-center/list");
+      return;
+    }
+    if (snapshot) applySessionSnapshot(snapshot);
 
-      // 启动计时器
-      startExamTimer();
-      startQuestionTimer();
-    } else {
-      ElMessage.error(res.msg || "加载考试失败");
-      router.back();
+    restoreLocalPendingAnswers(storedState);
+    currentQuestionIndex.value = resolveInitialQuestionIndex(storedState);
+    const initialQuestion = allQuestions.value[currentQuestionIndex.value];
+    if (initialQuestion) enterQuestion(initialQuestion.questionId);
+    persistRuntimeState();
+
+    startExamTimer();
+    startQuestionTimer();
+    startHeartbeat();
+
+    if (answerRetryQueue.size > 0) {
+      saveRetrying.value = true;
+      retryWarningShown = true;
+      ElMessage.warning("已恢复尚未上传的答案，正在自动补存");
+      scheduleAnswerBatchRetry(0);
     }
   } catch (error) {
     console.error("加载考试失败:", error);
-    ElMessage.error("加载考试失败");
+    ElMessage.error(error instanceof Error ? error.message : "加载考试失败");
     router.back();
   } finally {
     loading.value = false;
   }
 };
 
-// 页面离开前确认
-const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-  e.preventDefault();
-  e.returnValue = "";
+const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  if (submitCompleted) return;
+  persistRuntimeState();
+  event.preventDefault();
+  event.returnValue = "";
 };
 
 onMounted(() => {
-  loadExamData();
+  componentDisposed = false;
   window.addEventListener("beforeunload", handleBeforeUnload);
+  window.addEventListener("pagehide", handlePageHide);
+  window.addEventListener("blur", handleWindowBlur);
+  window.addEventListener("online", handleOnline);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  void loadExamData();
 });
 
 onBeforeUnmount(() => {
+  componentDisposed = true;
+  if (!submitCompleted) {
+    const activeQuestionId = currentQuestion.value?.questionId;
+    if (activeQuestionId) void leaveQuestion(activeQuestionId);
+    persistRuntimeState();
+    if (answerRetryQueue.size > 0) void flushPendingAnswers();
+  }
   stopTimers();
   window.removeEventListener("beforeunload", handleBeforeUnload);
+  window.removeEventListener("pagehide", handlePageHide);
+  window.removeEventListener("blur", handleWindowBlur);
+  window.removeEventListener("online", handleOnline);
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
 
@@ -541,6 +1125,16 @@ onBeforeUnmount(() => {
         <h2 class="paper-title">{{ examData.paper?.title || "加载中..." }}</h2>
         <span class="paper-info">
           共 {{ allQuestions.length }} 题 | 已答 {{ answeredCount }} 题
+        </span>
+        <span
+          v-if="examData.submissionId && !loading"
+          class="save-status"
+          :class="`is-${answerSaveStatus.state}`"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="save-status-dot" />
+          {{ answerSaveStatus.text }}
         </span>
       </div>
       <div class="header-center">
@@ -570,9 +1164,10 @@ onBeforeUnmount(() => {
           <span>答题卡</span>
         </div>
         <div class="nav-grid">
-          <div
+          <button
             v-for="(q, index) in allQuestions"
             :key="q.questionId"
+            type="button"
             class="nav-item"
             :class="{
               active: index === currentQuestionIndex,
@@ -581,7 +1176,7 @@ onBeforeUnmount(() => {
             @click="switchQuestion(index)"
           >
             {{ index + 1 }}
-          </div>
+          </button>
         </div>
         <div class="nav-legend">
           <div class="legend-item">
@@ -1065,6 +1660,22 @@ onBeforeUnmount(() => {
     .question-stem {
       color: #f1f5f9;
     }
+
+    .header-left .save-status {
+      background: rgba(15, 23, 42, 0.72);
+
+      &.is-saved {
+        color: #86efac;
+      }
+
+      &.is-saving {
+        color: #93c5fd;
+      }
+
+      &.is-warning {
+        color: #fdba74;
+      }
+    }
   }
 }
 
@@ -1080,6 +1691,7 @@ onBeforeUnmount(() => {
   .header-left {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 16px;
 
     .paper-title {
@@ -1091,6 +1703,40 @@ onBeforeUnmount(() => {
     .paper-info {
       font-size: 14px;
       color: #6b7280;
+    }
+
+    .save-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+
+      &.is-saved {
+        color: #166534;
+        background: #f0fdf4;
+      }
+
+      &.is-saving {
+        color: #1d4ed8;
+        background: #eff6ff;
+      }
+
+      &.is-warning {
+        color: #9a3412;
+        background: #fff7ed;
+      }
+
+      .save-status-dot {
+        width: 7px;
+        height: 7px;
+        flex: 0 0 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
     }
   }
 
@@ -1158,6 +1804,8 @@ onBeforeUnmount(() => {
   }
 
   .nav-item {
+    padding: 0;
+    appearance: none;
     width: 32px;
     height: 32px;
     display: flex;
@@ -1487,6 +2135,226 @@ onBeforeUnmount(() => {
     &:hover {
       background: #4a7fc8;
     }
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .exam-do-container {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .exam-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 10px max(8px, env(safe-area-inset-right, 0px)) 10px
+      max(8px, env(safe-area-inset-left, 0px));
+
+    .header-left {
+      grid-column: 1 / -1;
+      min-width: 0;
+      gap: 6px 10px;
+
+      .paper-title {
+        width: 100%;
+        font-size: 16px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+
+      .paper-info {
+        font-size: 13px;
+      }
+
+      .save-status {
+        min-height: 28px;
+      }
+    }
+
+    .header-center {
+      min-width: 0;
+
+      .timer {
+        min-height: 44px;
+        padding: 0 10px;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+    }
+
+    .header-right .submit-btn {
+      min-height: 44px;
+    }
+  }
+
+  .exam-main {
+    flex-direction: column;
+    min-width: 0;
+    gap: 8px;
+    padding: 8px max(8px, env(safe-area-inset-right, 0px)) 16px
+      max(8px, env(safe-area-inset-left, 0px));
+  }
+
+  .question-nav {
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+    border-radius: 10px;
+
+    .nav-header {
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+
+    .nav-grid {
+      display: flex;
+      gap: 8px;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
+    }
+
+    .nav-item {
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      scroll-snap-align: start;
+      font-size: 14px;
+    }
+
+    .nav-legend {
+      flex-flow: row wrap;
+      gap: 8px 16px;
+      padding-top: 8px;
+    }
+  }
+
+  .question-content {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border-radius: 10px;
+
+    .question-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+
+      .question-info {
+        flex-wrap: wrap;
+        gap: 6px 8px;
+      }
+
+      .question-timer {
+        align-self: flex-start;
+        min-height: 44px;
+      }
+    }
+
+    .question-stem {
+      margin-bottom: 16px;
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }
+
+    .question-options {
+      min-width: 0;
+      margin-bottom: 16px;
+
+      .option-item {
+        :deep(.el-radio__label),
+        :deep(.el-checkbox__label) {
+          min-height: 44px;
+          padding: 11px 12px;
+        }
+      }
+
+      .fill-input,
+      .ordering-select,
+      .matching-select {
+        width: 100%;
+        max-width: none;
+      }
+
+      .matrix-wrapper {
+        max-width: 100%;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+
+        .matrix-header,
+        .matrix-row {
+          min-width: 520px;
+          grid-template-columns: 140px repeat(auto-fit, minmax(64px, 1fr));
+        }
+      }
+
+      .matching-wrapper .matching-row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .nps-item {
+        min-width: 44px;
+        min-height: 44px;
+
+        :deep(.el-radio__label) {
+          display: inline-flex;
+          align-items: center;
+          min-height: 44px;
+          padding-right: 10px;
+        }
+      }
+
+      .composite-material,
+      .composite-sub-question {
+        padding: 10px;
+      }
+    }
+
+    .question-footer {
+      gap: 8px;
+      padding-top: 12px;
+
+      .nav-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 44px;
+        height: 44px;
+        padding: 0 10px;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .exam-header,
+  .exam-main {
+    padding-right: max(6px, env(safe-area-inset-right, 0px));
+    padding-left: max(6px, env(safe-area-inset-left, 0px));
+  }
+
+  .exam-header .header-center .timer {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .question-content {
+    padding: 10px;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .question-nav .nav-item:hover,
+  .question-content .question-options .option-item:hover {
+    transform: none;
   }
 }
 </style>

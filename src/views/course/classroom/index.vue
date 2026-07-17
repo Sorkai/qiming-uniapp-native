@@ -448,6 +448,34 @@ function onZoneClick(zone: HotZone) {
         </div>
       </div>
     </div>
+
+    <nav class="mobile-campus-nav" aria-label="校园功能入口">
+      <button
+        type="button"
+        class="mobile-campus-action"
+        @click="onZoneClick(missionsZone)"
+      >
+        {{ missionsZone.label }}
+      </button>
+      <button
+        v-for="zone in buildingZones"
+        :key="`mobile-${zone.id}`"
+        type="button"
+        class="mobile-campus-action"
+        @click="onZoneClick(zone)"
+      >
+        {{ zone.label }}
+      </button>
+      <button
+        v-for="zone in actionZones"
+        :key="`mobile-${zone.id}`"
+        type="button"
+        class="mobile-campus-action mobile-campus-action--utility"
+        @click="onZoneClick(zone)"
+      >
+        {{ zone.label }}
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -627,5 +655,89 @@ function onZoneClick(zone: HotZone) {
 .missions-zone.hovered {
   background: rgba(255, 255, 255, 0.08);
   z-index: 10;
+}
+
+.mobile-campus-nav {
+  display: none;
+}
+
+@media (width <= 768px) {
+  .campus-root {
+    width: auto;
+    height: auto;
+    min-height: calc(100dvh - var(--pure-mobile-tab-height, 56px));
+    margin: 0 !important;
+    overflow: visible;
+    border-radius: 0;
+  }
+
+  .campus-toolbar {
+    gap: 8px;
+    min-height: 52px;
+    height: auto;
+    padding: 4px 8px;
+  }
+
+  .toolbar-title {
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .tb-btn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .campus-container {
+    height: clamp(220px, 44vh, 360px);
+    min-height: 220px;
+    flex: 0 0 auto;
+  }
+
+  .campus-container .hot-zone {
+    pointer-events: none;
+  }
+
+  .mobile-campus-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+    background: var(--el-bg-color);
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  .mobile-campus-action {
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px;
+    color: var(--el-text-color-primary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+  }
+
+  .mobile-campus-action--utility {
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary-light-7);
+  }
+}
+
+@media (width <= 380px) {
+  .campus-toolbar,
+  .mobile-campus-nav {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
 }
 </style>

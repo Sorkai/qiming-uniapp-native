@@ -81,10 +81,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <el-row v-loading="loading" :gutter="20">
+  <el-row v-loading="loading" :gutter="20" class="stats-overview-row">
     <el-col
       v-for="(item, index) in stats"
       :key="index"
+      class="stat-col"
       :xs="24"
       :sm="12"
       :md="6"
@@ -98,9 +99,11 @@ onMounted(async () => {
           :style="{ backgroundColor: item.color }"
         />
 
-        <div class="flex justify-between items-start mb-6 relative z-10">
+        <div
+          class="stat-icon-row flex justify-between items-start mb-6 relative z-10"
+        >
           <div
-            class="icon-wrapper w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-transparent group-hover:shadow-current"
+            class="stat-icon w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-transparent group-hover:shadow-current"
             :style="{
               backgroundColor: isDark
                 ? darkBgColors[stats.indexOf(item) % darkBgColors.length]
@@ -113,15 +116,15 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="relative z-10">
+        <div class="stat-copy relative z-10">
           <p
-            class="text-gray-500 dark:text-gray-300 text-sm mb-2 font-semibold tracking-wide uppercase"
+            class="stat-title text-gray-500 dark:text-gray-300 text-sm mb-2 font-semibold tracking-wide uppercase"
           >
             {{ item.title }}
           </p>
           <div class="flex items-baseline gap-2">
             <span
-              class="text-3xl font-black text-gray-900 dark:text-white tabular-nums"
+              class="stat-value text-3xl font-black text-gray-900 dark:text-white tabular-nums"
             >
               <ReNormalCountTo
                 :startVal="0"
@@ -131,7 +134,7 @@ onMounted(async () => {
               />
             </span>
             <span
-              class="text-gray-400 dark:text-gray-300 text-sm font-medium"
+              class="stat-unit text-gray-400 dark:text-gray-300 text-sm font-medium"
               >{{ item.unit }}</span
             >
           </div>
@@ -169,11 +172,59 @@ onMounted(async () => {
   );
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 768px),
+  screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .stats-overview-row {
+    margin-right: -4px !important;
+    margin-left: -4px !important;
+  }
+
+  .stat-col {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+  }
+
   .stat-card {
-    padding: 16px !important;
-    margin-bottom: 10px !important;
-    border-radius: 16px !important;
+    min-height: 132px;
+    padding: 12px !important;
+    margin-bottom: 8px !important;
+    border-radius: 12px !important;
+    transform: none !important;
+  }
+
+  .stat-icon-row {
+    margin-bottom: 12px !important;
+  }
+
+  .stat-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    font-size: 20px !important;
+    transform: none !important;
+  }
+
+  .stat-title {
+    margin-bottom: 4px !important;
+    font-size: 13px !important;
+    line-height: 1.35;
+    letter-spacing: 0 !important;
+  }
+
+  .stat-value {
+    font-size: 24px !important;
+    line-height: 1.15;
+  }
+
+  .stat-unit {
+    font-size: 12px !important;
+  }
+
+  .stat-card > :first-child,
+  .stat-card::before {
+    display: none;
   }
 }
 </style>
