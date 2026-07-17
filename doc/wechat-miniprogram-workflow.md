@@ -5,7 +5,7 @@
 
 ## 当前分支边界
 
-- 分支从 `main` 拉出：`codex/wechat-miniprogram`。
+- 分支从 `main` 拉出：`wechat-miniprogram`。
 - Android/iOS 仍走既有 `native-app` App-Plus 与 `ios-native` 线路。
 - 微信端改动优先放在 `MP-WEIXIN` 条件编译分支、`mini:*` 脚本和小程序文档里。
 - 共享业务层只在确认为三端共同问题时修改。
