@@ -4645,6 +4645,14 @@ onUnmounted(() => {
 }
 
 @media (max-width: 560px) {
+  .resource-workbench__body {
+    gap: 10px;
+    padding: 0;
+  }
+  .resource-preview,
+  .resource-tutor {
+    border-radius: 8px;
+  }
   .resource-workbench__heading h1 {
     font-size: 1rem;
   }
@@ -4653,10 +4661,14 @@ onUnmounted(() => {
   }
   .resource-preview__canvas {
     min-height: 430px;
-    padding: 150px 10px 10px;
+    padding: 146px 0 8px;
   }
   .resource-preview__header {
-    border-radius: 16px;
+    top: 6px;
+    right: 6px;
+    left: 6px;
+    padding: 8px;
+    border-radius: 12px;
   }
   .resource-preview__back {
     margin-left: 0;
@@ -4672,7 +4684,7 @@ onUnmounted(() => {
     font-size: 0.8125rem;
   }
   .markdown-preview__content {
-    padding: 150px 18px 40px;
+    padding: 146px 12px 32px;
     font-size: var(--preview-font-size, 1rem);
   }
   .resource-tutor__messages {

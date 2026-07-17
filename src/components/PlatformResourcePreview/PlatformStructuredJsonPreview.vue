@@ -1046,7 +1046,7 @@ function optionIsAnswer(option: StructuredExerciseOption) {
 
 @container (max-width: 560px) {
   .structured-preview {
-    padding: 22px 18px 40px;
+    padding: 18px 12px 32px;
   }
 
   .coding-specs,
@@ -1069,6 +1069,8 @@ function optionIsAnswer(option: StructuredExerciseOption) {
 
   .exercise-nav button {
     flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
   }
 
   .exercise-question__header {
