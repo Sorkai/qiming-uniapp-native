@@ -1154,7 +1154,12 @@
     }
     window.addEventListener('message', (event) => {
       if (isEmbeddedAiApp && event.source !== window.parent) return;
-      if (event.origin !== window.location.origin) return;
+      const isSameOrigin = event.origin === window.location.origin;
+      const isTrustedFileParent =
+        window.location.protocol === 'file:' &&
+        event.source === window.parent &&
+        (event.origin === 'null' || event.origin === 'file://');
+      if (!isSameOrigin && !isTrustedFileParent) return;
       const data = event && event.data;
       if (!data || typeof data !== 'object') return;
       if (data.type === 'speechState') {
