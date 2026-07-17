@@ -29,6 +29,9 @@ const homeworkManagement = readView(
 const examManagement = readView(
   "course/assessment/components/ExamManagement.vue"
 );
+const courseList = readView("course/list/index.vue");
+const teacherPlan = readView("course/teacherplan/index.vue");
+const assessment = readView("course/assessment/index.vue");
 const virtualLab = readView("account/components/VirtualLab.vue");
 const studentResources = readView("course/student-resource/index.vue");
 const structuredResourcePreview = readView(
@@ -49,6 +52,23 @@ test("Android route roots use compact gutters and audit usable width", () => {
   );
   assert.match(androidAudit, /mainContentUsableWidthRatio/);
   assert.match(androidAudit, /--min-usable-content-ratio/);
+});
+
+test("teacher mobile workflows do not stack route and page gutters", () => {
+  assert.match(
+    globalStyles,
+    /:is\([\s\S]*\.course-list-page,[\s\S]*\.teacher-plan-container,[\s\S]*\.assessment-management[\s\S]*\)\.qiming-route-content[\s\S]*padding-right: 0 !important[\s\S]*padding-left: 0 !important/
+  );
+  assert.match(courseList, /class="main course-list-page p-4"/);
+  assert.match(courseList, /class="course-hours-dialog"/);
+  assert.match(courseList, /v-if="isMobile" class="mobile-hour-list"/);
+  assert.match(courseList, /<el-table\s+v-else/);
+  assert.match(
+    globalStyles,
+    /qiming-mini-program-webview\.ua-mobile \.app-main[\s\S]*padding-top: 0 !important/
+  );
+  assert.match(teacherPlan, /teacher-plan-container/);
+  assert.match(assessment, /assessment-management/);
 });
 
 test("student detail flows remove layered mobile gutters", () => {
