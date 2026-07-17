@@ -64,6 +64,9 @@ test("account audit ignores SVG style text and expects rendered page content", (
 test("Android route runner enforces compact digital-human checks", () => {
   const androidRunner = read("../../scripts/android-real-device-audit.mjs");
   assert.match(androidRunner, /expect-compact-digital-human/);
-  assert.match(androidRunner, /routePath === "\/account\/ai-app"/);
-  assert.match(androidRunner, /routePath\.startsWith\("\/ai-app\/"\)/);
+  assert.match(androidRunner, /expectsCompactDigitalHuman/);
+  assert.match(androidRunner, /"\/account\/ai-app"/);
+  assert.match(androidRunner, /"\/ai-app\/chat"/);
+  assert.match(androidRunner, /"\/ai-app\/workspace"/);
+  assert.doesNotMatch(androidRunner, /routePath\.startsWith\("\/ai-app\/"\)/);
 });

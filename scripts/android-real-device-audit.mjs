@@ -241,6 +241,13 @@ function selectAuditRoutes(
   return limit > 0 ? selected.slice(0, limit) : selected;
 }
 
+function expectsCompactDigitalHuman(entry) {
+  const pathname = new URL(entry, "https://qiming.local").pathname;
+  return new Set(["/account/ai-app", "/ai-app/chat", "/ai-app/workspace"]).has(
+    pathname
+  );
+}
+
 const routeResult = runNode(routeSource, ["--list-json"]);
 if (routeResult.status !== 0) {
   throw new Error(
@@ -505,8 +512,7 @@ for (const [routeIndex, route] of routes.entries()) {
   if (route.requiredRequestPath) {
     commandArgs.push("--required-request-path", route.requiredRequestPath);
   }
-  const routePath = new URL(routeEntry, "https://qiming.local").pathname;
-  if (routePath === "/account/ai-app" || routePath.startsWith("/ai-app/")) {
+  if (expectsCompactDigitalHuman(routeEntry)) {
     commandArgs.push("--expect-compact-digital-human");
   }
   if (activeRole !== route.role) {
