@@ -20,11 +20,18 @@ import {
 import {
   getMyPaperStatistics,
   getPaperList,
+  getPaperDetail,
+  createPaper as createPaperApi,
+  deletePaper as deletePaperApi,
   getPaperFolders,
   createPaperFolder,
   updatePaperFolder,
   deletePaperFolder,
   movePapersToFolder,
+  getCourseList,
+  getPaperStatusText,
+  getPaperStatusType,
+  PAPER_STATUS_OPTIONS,
   type PaperStatus,
   type PaperFolder
 } from "@/api/examPaper";
@@ -64,11 +71,7 @@ const paperList = ref<any[]>([]);
 const loading = ref(false);
 
 // 课程列表
-const courseList = ref([
-  { id: 1, name: "高等数学" },
-  { id: 2, name: "线性代数" },
-  { id: 3, name: "概率论" }
-]);
+const courseList = ref<Array<{ id: number; name: string }>>([]);
 
 // 统计数据
 const statistics = ref({
@@ -179,7 +182,8 @@ const loadData = async () => {
         searchForm.status !== ""
           ? (Number(searchForm.status) as PaperStatus)
           : undefined,
-      courseId: searchForm.courseId ? Number(searchForm.courseId) : undefined
+      courseId: searchForm.courseId ? Number(searchForm.courseId) : undefined,
+      folderId: selectedFolderId.value ?? undefined
     });
     if (res.code === 0 && res.data) {
       paperList.value = res.data.list || [];
@@ -189,6 +193,17 @@ const loadData = async () => {
     console.error("获取试卷列表失败", e);
   } finally {
     loading.value = false;
+  }
+};
+
+const loadCourses = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0 && Array.isArray(res.data)) {
+      courseList.value = res.data;
+    }
+  } catch (error) {
+    console.error("获取课程列表失败", error);
   }
 };
 
@@ -308,26 +323,68 @@ const editPaper = (paper: any) => {
 };
 
 // 复制试卷
-const copyPaper = (paper: any) => {
-  ElMessageBox.confirm(`确定要复制试卷"${paper.title}"吗？`, "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "info"
-  }).then(() => {
+const copyPaper = async (paper: any) => {
+  try {
+    await ElMessageBox.confirm(`确定要复制试卷"${paper.title}"吗？`, "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "info"
+    });
+
+    const detailRes = await getPaperDetail(paper.paperId);
+    if (detailRes.code !== 0 || !detailRes.data) {
+      throw new Error(detailRes.msg || "读取原试卷失败");
+    }
+
+    const source = detailRes.data;
+    const createRes = await createPaperApi({
+      title: `${source.title}（副本）`,
+      description: source.description,
+      courseId: source.courseId,
+      timeLimit: source.timeLimit,
+      questionGroups: (source.questionGroups || []).map(group => ({
+        groupName: group.groupName,
+        questionType: group.questionType,
+        questions: group.questions.map(question => {
+          const copiedQuestion = { ...question } as any;
+          delete copiedQuestion.questionId;
+          delete copiedQuestion.sortOrder;
+          return copiedQuestion;
+        })
+      }))
+    });
+    if (createRes.code !== 0) {
+      throw new Error(createRes.msg || "复制试卷失败");
+    }
+
     ElMessage.success("复制成功");
-  });
+    await Promise.all([loadData(), loadStatistics(), fetchFolders()]);
+  } catch (error) {
+    if (error === "cancel" || error === "close") return;
+    console.error("复制试卷失败", error);
+    ElMessage.error(error instanceof Error ? error.message : "复制试卷失败");
+  }
 };
 
 // 删除试卷
-const deletePaper = (paper: any) => {
-  ElMessageBox.confirm(`确定要删除试卷"${paper.title}"吗？`, "警告", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
+const deletePaper = async (paper: any) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除试卷"${paper.title}"吗？`, "警告", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    });
+    const res = await deletePaperApi(paper.paperId);
+    if (res.code !== 0) {
+      throw new Error(res.msg || "删除试卷失败");
+    }
     ElMessage.success("删除成功");
-    loadData();
-  });
+    await Promise.all([loadData(), loadStatistics(), fetchFolders()]);
+  } catch (error) {
+    if (error === "cancel" || error === "close") return;
+    console.error("删除试卷失败", error);
+    ElMessage.error(error instanceof Error ? error.message : "删除试卷失败");
+  }
 };
 
 // 发布试卷
@@ -357,16 +414,6 @@ const handleMobileAction = (command: string, paper: any) => {
   }
 };
 
-// 获取状态标签类型
-const getStatusType = (status: number) => {
-  return status === 1 ? "success" : "info";
-};
-
-// 获取状态文本
-const getStatusText = (status: number) => {
-  return status === 1 ? "已发布" : "草稿";
-};
-
 // 分页变化
 const handlePageChange = () => {
   loadData();
@@ -376,6 +423,7 @@ onMounted(() => {
   loadStatistics();
   loadData();
   fetchFolders();
+  loadCourses();
 });
 </script>
 
@@ -496,8 +544,12 @@ onMounted(() => {
                 clearable
                 @change="handleSearch"
               >
-                <el-option label="草稿" value="0" />
-                <el-option label="已发布" value="1" />
+                <el-option
+                  v-for="option in PAPER_STATUS_OPTIONS"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="String(option.value)"
+                />
               </el-select>
               <el-select
                 v-model="searchForm.courseId"
@@ -545,11 +597,11 @@ onMounted(() => {
                     </div>
                   </div>
                   <el-tag
-                    :type="getStatusType(row.status)"
+                    :type="getPaperStatusType(row.status)"
                     size="small"
                     effect="light"
                   >
-                    {{ getStatusText(row.status) }}
+                    {{ getPaperStatusText(row.status) }}
                   </el-tag>
                 </div>
 
@@ -681,11 +733,11 @@ onMounted(() => {
             >
               <template #default="{ row }">
                 <el-tag
-                  :type="getStatusType(row.status)"
+                  :type="getPaperStatusType(row.status)"
                   size="small"
                   effect="light"
                 >
-                  {{ getStatusText(row.status) }}
+                  {{ getPaperStatusText(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -783,7 +835,7 @@ onMounted(() => {
     <el-dialog
       v-model="folderDialogVisible"
       :title="isNewFolder ? '新建文件夹' : '编辑文件夹'"
-      width="400px"
+      width="min(400px, calc(100vw - 24px))"
     >
       <el-form label-width="80px">
         <el-form-item label="文件夹名">
@@ -802,7 +854,11 @@ onMounted(() => {
     </el-dialog>
 
     <!-- 移动到文件夹对话框 -->
-    <el-dialog v-model="moveDialogVisible" title="移动到文件夹" width="400px">
+    <el-dialog
+      v-model="moveDialogVisible"
+      title="移动到文件夹"
+      width="min(400px, calc(100vw - 24px))"
+    >
       <el-form label-width="80px">
         <el-form-item label="目标文件夹">
           <el-select

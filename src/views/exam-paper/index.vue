@@ -6,7 +6,10 @@ import {
   getOverviewStatistics,
   getRecentPapers,
   getLearningAnalytics,
-  getSystemTemplateStats
+  getSystemTemplateStats,
+  getCourseList,
+  getPaperStatusText,
+  getPaperStatusType
 } from "@/api/examPaper";
 
 // 导入 SVG 图标组件
@@ -98,13 +101,24 @@ const learningStats = ref({
 });
 
 // 课程筛选器数据
-const selectedCourse = ref("all");
-const courseOptions = [
-  { value: "all", label: "全部课程" },
-  { value: "math", label: "高等数学" },
-  { value: "linear", label: "线性代数" },
-  { value: "prob", label: "概率论" }
-];
+const selectedCourse = ref<number | "all">("all");
+const courseOptions = ref<Array<{ value: number | "all"; label: string }>>([
+  { value: "all", label: "全部课程" }
+]);
+
+const loadCourses = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0 && Array.isArray(res.data)) {
+      courseOptions.value = [
+        { value: "all", label: "全部课程" },
+        ...res.data.map(course => ({ value: course.id, label: course.name }))
+      ];
+    }
+  } catch (error) {
+    console.error("获取课程列表失败", error);
+  }
+};
 
 // 加载学情概览数据
 const loadLearningStats = async (courseId?: number) => {
@@ -129,17 +143,11 @@ const loadLearningStats = async (courseId?: number) => {
 };
 
 // 处理课程切换
-const handleCourseChange = (val: string) => {
+const handleCourseChange = (val: number | "all") => {
   if (val === "all") {
     loadLearningStats();
   } else {
-    // 将课程value映射为courseId
-    const courseIdMap: Record<string, number> = {
-      math: 1,
-      linear: 2,
-      prob: 3
-    };
-    loadLearningStats(courseIdMap[val]);
+    loadLearningStats(val);
   }
 };
 
@@ -166,16 +174,6 @@ const viewMorePapers = () => {
 // 查看更多模板
 const viewMoreTemplates = () => {
   router.push("/exam-paper/templates");
-};
-
-// 获取状态标签类型
-const getStatusType = (status: number) => {
-  return status === 1 ? "success" : "info";
-};
-
-// 获取状态文本
-const getStatusText = (status: number) => {
-  return status === 1 ? "已发布" : "草稿";
 };
 
 // 加载统计数据
@@ -226,6 +224,7 @@ onMounted(() => {
   loadRecentPapers();
   loadLearningStats();
   loadTemplateStats();
+  loadCourses();
 });
 </script>
 
@@ -378,8 +377,8 @@ onMounted(() => {
                 <div class="paper-time">{{ paper.updateTime }}</div>
               </div>
               <div class="paper-status">
-                <el-tag :type="getStatusType(paper.status)" size="small">
-                  {{ getStatusText(paper.status) }}
+                <el-tag :type="getPaperStatusType(paper.status)" size="small">
+                  {{ getPaperStatusText(paper.status) }}
                 </el-tag>
               </div>
             </div>

@@ -827,7 +827,7 @@ watch(() => [props.courseId, props.targetStudentId], loadProfile);
 
     <el-dialog
       v-model="dimensionDetailVisible"
-      width="560px"
+      width="min(560px, calc(100vw - 24px))"
       class="profile-dimension-dialog"
       destroy-on-close
     >

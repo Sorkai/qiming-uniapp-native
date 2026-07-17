@@ -3062,6 +3062,22 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
+  .chat-toolbar-chip,
+  .chat-attachment-pill,
+  .assistant-action-button,
+  .speech-control__button,
+  .reasoning-summary summary {
+    height: auto;
+    min-height: 44px;
+  }
+
+  .chat-attachment-pill__remove {
+    width: 44px;
+    height: 44px;
+    margin-right: -7px;
+    margin-left: 2px;
+  }
+
   .thinking-status {
     gap: 10px;
     min-width: 0;

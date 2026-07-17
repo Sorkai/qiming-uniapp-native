@@ -59,9 +59,10 @@ jobs:
           pnpm lint
           git diff --exit-code
 
-      - name: Type-check web and uni-app
+      - name: Type-check and test contracts
         run: |
           pnpm typecheck
+          pnpm test:contracts
           pnpm --dir native-app type-check
 
       - name: Build Android and iOS app resources

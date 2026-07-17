@@ -1193,7 +1193,7 @@ watch(
 
     <el-dialog
       v-model="detailVisible"
-      width="820px"
+      width="min(820px, calc(100vw - 24px))"
       destroy-on-close
       class="assistant-resource-dialog"
       modal-class="assistant-resource-dialog-mask"

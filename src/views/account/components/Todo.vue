@@ -89,7 +89,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEditMode ? '编辑待办' : '添加待办'"
-      width="500px"
+      width="min(500px, calc(100vw - 24px))"
       @close="resetForm"
     >
       <el-form ref="formRef" :model="form" label-width="80px">
