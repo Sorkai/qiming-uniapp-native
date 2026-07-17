@@ -1184,8 +1184,29 @@ class CdpClient {
     });
   }
 
-  close() {
-    this.socket?.close();
+  async close() {
+    const socket = this.socket;
+    this.socket = undefined;
+    this.listeners = [];
+    for (const request of this.pending.values()) {
+      request.reject(new Error("CDP client closed"));
+    }
+    this.pending.clear();
+    if (!socket || socket.readyState === WebSocket.CLOSED) return;
+
+    await new Promise(resolveClose => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolveClose();
+      };
+      const timer = setTimeout(finish, 750);
+      socket.addEventListener("close", finish, { once: true });
+      socket.addEventListener("error", finish, { once: true });
+      socket.close();
+    });
   }
 }
 
@@ -2169,9 +2190,14 @@ async function main() {
       unsubscribe();
     }
   } finally {
-    client?.close();
-    browserProcess.kill();
-    await wait(250);
+    await client?.close();
+    const browserExit =
+      browserProcess.exitCode === null
+        ? new Promise(resolveExit => browserProcess.once("exit", resolveExit))
+        : Promise.resolve();
+    if (browserProcess.exitCode === null) browserProcess.kill();
+    await Promise.race([browserExit, wait(1000)]);
+    browserProcess.stderr.destroy();
     rmSync(profileDir, {
       recursive: true,
       force: true,
