@@ -252,6 +252,7 @@ const transitionMain = defineComponent({
               :view-style="fixedScrollViewStyle"
             >
               <el-backtop
+                v-if="!isMobile"
                 :title="t('buttons.pureBackTop')"
                 :right="10"
                 :bottom="10"
@@ -269,7 +270,7 @@ const transitionMain = defineComponent({
                       :is="Comp"
                       :key="fullPath"
                       :frameInfo="frameInfo"
-                      class="main-content"
+                      class="main-content qiming-route-content"
                     />
                   </keep-alive>
                   <component
@@ -277,7 +278,7 @@ const transitionMain = defineComponent({
                     v-else
                     :key="fullPath"
                     :frameInfo="frameInfo"
-                    class="main-content"
+                    class="main-content qiming-route-content"
                   />
                 </transitionMain>
               </div>
@@ -293,7 +294,7 @@ const transitionMain = defineComponent({
                     :is="Comp"
                     :key="fullPath"
                     :frameInfo="frameInfo"
-                    class="main-content"
+                    class="main-content qiming-route-content"
                   />
                 </keep-alive>
                 <component
@@ -301,7 +302,7 @@ const transitionMain = defineComponent({
                   v-else
                   :key="fullPath"
                   :frameInfo="frameInfo"
-                  class="main-content"
+                  class="main-content qiming-route-content"
                 />
               </transitionMain>
             </div>

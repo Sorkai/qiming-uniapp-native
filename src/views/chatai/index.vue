@@ -141,7 +141,7 @@ const swiperExample: any[] = [
   overflow: auto;
 }
 
-@media screen and (max-width: 750px) {
+@media screen and (width <= 750px) {
   :deep(.el-card__body) {
     padding: 12px;
   }

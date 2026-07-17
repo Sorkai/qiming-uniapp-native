@@ -6,20 +6,20 @@ import {
   responsiveStorageNameSpace
 } from "../utils";
 
-const defaultEpThemeColor = "#97b4f7";
-const getEpThemeColor = () => getConfig().EpThemeColor || defaultEpThemeColor;
-const getLayoutTheme = () => getConfig().Theme || "light";
-
 export const useEpThemeStore = defineStore("pure-epTheme", {
   state: () => ({
     epThemeColor:
       storageLocal().getItem<StorageConfigs>(
         `${responsiveStorageNameSpace()}layout`
-      )?.epThemeColor ?? getEpThemeColor(),
+      )?.epThemeColor ??
+      getConfig().EpThemeColor ??
+      "#97b4f7",
     epTheme:
       storageLocal().getItem<StorageConfigs>(
         `${responsiveStorageNameSpace()}layout`
-      )?.theme ?? getLayoutTheme()
+      )?.theme ??
+      getConfig().Theme ??
+      "light"
   }),
   getters: {
     getEpThemeColor(state) {
@@ -39,10 +39,10 @@ export const useEpThemeStore = defineStore("pure-epTheme", {
       const layout = storageLocal().getItem<StorageConfigs>(
         `${responsiveStorageNameSpace()}layout`
       );
-      this.epTheme = layout?.theme;
-      this.epThemeColor = newColor;
+      this.epTheme = layout?.theme ?? getConfig().Theme ?? "light";
+      this.epThemeColor = newColor || getConfig().EpThemeColor || "#97b4f7";
       if (!layout) return;
-      layout.epThemeColor = newColor;
+      layout.epThemeColor = this.epThemeColor;
       storageLocal().setItem(`${responsiveStorageNameSpace()}layout`, layout);
     }
   }

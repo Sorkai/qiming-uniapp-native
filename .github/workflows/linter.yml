@@ -1,18 +1,25 @@
-name: Lint Code
+name: Validate Three Clients
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_OPTIONS: --max-old-space-size=8192
 
 on:
   push:
     branches:
       - main
+      - android-native
+      - ios-native
+      - wechat-miniprogram
   pull_request:
     branches:
       - main
+      - android-native
+      - ios-native
+      - wechat-miniprogram
 
 jobs:
   build:
-    name: Lint Code
+    name: Web, App resources, and WeChat
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -44,11 +51,47 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Start Lint Code
+      - name: Install web dependencies
         run: |
-          pnpm install --no-frozen-lockfile
+          pnpm install --frozen-lockfile
+
+      - name: Install uni-app dependencies
+        run: |
+          pnpm --dir native-app --ignore-workspace install --frozen-lockfile
+
+      - name: Lint and verify formatting
+        run: |
           pnpm lint
+          git diff --exit-code
+
+      - name: Type-check web and uni-app
+        run: |
           pnpm typecheck
+          pnpm test:contracts
+          pnpm --dir native-app type-check
+
+      - name: Self-test device audit tooling
+        run: |
+          pnpm native:run:self-test
+          pnpm native:audit:android:self-test
+          pnpm mini:real-audit:self-test
+          pnpm ios-native:self-test
+
+      - name: Build Android and iOS app resources
+        run: |
+          pnpm build:app-h5
+          pnpm sync:app-h5
+          pnpm ios-native:check
+          pnpm --dir native-app build:app
+
+      - name: Build and inspect WeChat Mini Program
+        run: |
+          pnpm mini:build
+          pnpm mini:smoke
+
+      - name: Build EdgeOne WeChat H5
+        run: |
+          pnpm --ignore-workspace edgeone:build
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main

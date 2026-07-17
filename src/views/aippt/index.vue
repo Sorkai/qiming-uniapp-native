@@ -11,7 +11,17 @@ const container = ref<HTMLDivElement>();
 const docmeeUI = shallowRef<any>(null);
 const outlineReviewMode = ref(false);
 let outlineReviewTimer: ReturnType<typeof setTimeout> | null = null;
+let invalidTokenRetryUsed = false;
 const { isMobile } = usePageResponsive();
+
+function getAiPPTInitErrorMessage(error: unknown) {
+  const response = (error as any)?.response;
+  const data = response?.data;
+  const detail = data?.msg || data?.message;
+  return typeof detail === "string" && detail.trim()
+    ? `初始化AI PPT失败：${detail.trim()}`
+    : "初始化AI PPT失败，请稍后重试";
+}
 
 function clearOutlineReviewTimer() {
   if (outlineReviewTimer) {
@@ -60,7 +70,6 @@ async function initAiPPT() {
     loading.value = true;
     console.log("正在请求 PPT Token...");
     const res: any = await getPptToken();
-    console.log("PPT Token 响应结果:", res);
 
     // 兼容多种状态码：0 或 200 都视为成功
     if (res && (res.code === 0 || res.code === 200) && res.data?.token) {
@@ -423,11 +432,13 @@ async function initAiPPT() {
         onMessage: message => {
           console.log(message);
           if (message.type === "invalid-token") {
-            // 在token失效时触发
-            console.log("token 认证错误");
-            ElMessage.error("token认证失败，请刷新页面重试");
-            // 更换新的 token
-            initAiPPT();
+            if (invalidTokenRetryUsed) {
+              ElMessage.error("AIPPT token认证失败，请稍后重试");
+              return;
+            }
+            invalidTokenRetryUsed = true;
+            ElMessage.warning("AIPPT token已失效，正在重新获取");
+            void initAiPPT();
           } else if (message.type === "beforeGenerate") {
             const { subtype, fields } = message.data;
             if (subtype === "outline") {
@@ -487,8 +498,11 @@ async function initAiPPT() {
       ElMessage.error("获取token失败");
     }
   } catch (error) {
-    console.error("初始化AI PPT失败:", error);
-    ElMessage.error("初始化AI PPT失败，请刷新页面重试");
+    console.error("初始化AI PPT失败", {
+      status: (error as any)?.response?.status,
+      message: (error as Error)?.message
+    });
+    ElMessage.error(getAiPPTInitErrorMessage(error));
   } finally {
     loading.value = false;
   }
@@ -561,7 +575,7 @@ onBeforeUnmount(() => {
   opacity: inherit;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .aippt-page {
     padding: 4px;
   }

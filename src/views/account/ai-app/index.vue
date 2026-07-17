@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storageLocal } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
@@ -14,7 +14,7 @@ import {
   Box,
   Monitor,
   ArrowDown,
-  Top,
+  Microphone,
   Expand,
   Fold,
   Avatar,
@@ -32,33 +32,39 @@ import AiSidebar from "./components/AiSidebar.vue";
 import AiChatModule from "./components/AiChatModule.vue";
 import AiInspector from "./components/AiInspector.vue";
 import AgentPdfWorkbench from "./AgentPdfWorkbench.vue";
-import LottieAnimation from "@/components/LottieAnimation.vue";
+import AiAppEmptyState from "./components/AiAppEmptyState.vue";
 
 import AiResourceGeneration from "./components/AiResourceGeneration.vue";
+import AiDemoResourceManager from "./components/AiDemoResourceManager.vue";
+import AiStudentResourceLibrary from "./components/AiStudentResourceLibrary.vue";
 import AiLearningPath from "./components/AiLearningPath.vue";
 import AiLearningProfile from "./components/AiLearningProfile.vue";
 import AiAssessment from "./components/AiAssessment.vue";
+import AiGovernanceDashboard from "./components/AiGovernanceDashboard.vue";
 import VirtualHumanPanel from "./components/VirtualHumanPanel.vue";
 import FloatingDigitalHuman2D from "./components/FloatingDigitalHuman2D.vue";
-import NavMobile from "@/layout/components/NavMobile.vue";
-
-import emptyStateDevelopmentAnimation from "@/assets/aiapplottie/empty-state-development-animation.json";
-import onlineChartAnimation from "@/assets/aiapplottie/online-chart-animation.json";
-import saasAnimation from "@/assets/aiapplottie/saas-animation.json";
+import {
+  PlatformResourcePreviewDialog,
+  hasPlatformResourcePreview,
+  mapAssistantResourcePreview,
+  type PlatformPreviewResource
+} from "@/components/PlatformResourcePreview";
 
 import { useUserStore } from "@/store/modules/user";
 import { formatAvatar } from "@/utils/avatar";
 import { type DataInfo, userKey } from "@/utils/auth";
 import {
-  getResponsiveLayoutTheme,
-  getSavedCourseTheme
-} from "@/utils/courseTheme";
-import {
+  assistantApiErrorMessage,
+  assistantModelReasonText,
   createAssistantConversation,
   getAssistantBootstrap,
   getAssistantConversation,
   getAssistantConversationGroups,
+  getAssistantExplanationImage,
+  getAssistantResource,
+  getAssistantResourceTask,
   streamAssistantChat,
+  uploadAssistantDocumentAttachment,
   type AssistantBootstrapCourse,
   type AssistantBootstrapResp,
   type AssistantBootstrapStudent,
@@ -66,9 +72,23 @@ import {
   type AssistantChatStreamEvent,
   type AssistantChatTraceStep,
   type AssistantConversationItem,
+  type AssistantExplanationImage,
+  type AssistantInteractionScope,
   type AssistantOption,
-  type AssistantSkill
+  type AssistantResourceSummary,
+  type AssistantResourceTaskItem,
+  type AssistantSkill,
+  type AssistantSpeechSession,
+  type AssistantSpeechSessionSummary
 } from "@/api/frontend/assistant";
+import {
+  isSpeechArchiveRecovering,
+  mapSpeechSessionPlaybackState,
+  SpeechPlaybackController,
+  shouldPollSpeechSession,
+  type SpeechPlaybackDiagnostic,
+  type SpeechPlaybackState
+} from "./speech-playback-controller";
 
 defineOptions({ name: "AiAppWorkbench" });
 
@@ -96,6 +116,17 @@ type ConversationView = AssistantConversationItem & {
   status?: string;
 };
 
+type StreamProgressItem = {
+  sequence?: number;
+  stage: string;
+  status: string;
+  summary: string;
+  elapsedMs?: number;
+};
+
+type ResourceTaskView = NonNullable<AssistantChatStreamEvent["resource_task"]> &
+  Partial<AssistantResourceTaskItem>;
+
 type ChatMessageView = {
   id: string | number;
   role: string;
@@ -103,10 +134,43 @@ type ChatMessageView = {
   content: string;
   avatar?: string;
   resources?: AssistantChatResource[];
+  sourceRefs?: AssistantChatStreamEvent["source_refs"];
+  videoSegments?: AssistantChatStreamEvent["video_segments"];
+  followups?: AssistantChatStreamEvent["followups"];
+  resourceTask?: ResourceTaskView;
+  explanationImages?: AssistantExplanationImage[];
+  safetyStatus?: string;
+  safetySummary?: string;
+  safetyFlags?: string[];
   metadata?: Record<string, any>;
   profileEvent?: Record<string, any>;
+  requestId?: string;
+  progressTimeline?: StreamProgressItem[];
+  elapsedMs?: number;
+  streamStatus?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  retryable?: boolean;
+  partial?: boolean;
+  stopped?: boolean;
+  reasoningSummary?: string;
   streaming?: boolean;
   error?: boolean;
+  speech?: AssistantSpeechSession | AssistantSpeechSessionSummary | null;
+  speechPlaybackState?: SpeechPlaybackState;
+};
+
+type ChatSendPayload =
+  | string
+  | {
+      text: string;
+      files?: File[];
+    };
+
+const documentAttachmentContentTypes: Record<string, string> = {
+  pdf: "application/pdf",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  txt: "text/plain"
 };
 
 const assistantBootstrap = ref<AssistantBootstrapResp | null>(null);
@@ -115,6 +179,93 @@ const isChatStreaming = ref(false);
 const featureFlags = computed(
   () => assistantBootstrap.value?.feature_flags || {}
 );
+const selectedSpeechVoiceAlias = ref("");
+const speechTransportStatus = ref("语音能力检测中");
+const speechDiagnostic = ref<SpeechPlaybackDiagnostic>({});
+const speechDiagnosticText = computed(() => {
+  const diagnostic = speechDiagnostic.value;
+  const entries = [
+    ["pipeline_mode", diagnostic.pipelineMode],
+    ["text_tts_parallel", diagnostic.textTtsParallel],
+    ["command_protocol", diagnostic.commandProtocol],
+    ["timeline_clock", diagnostic.timelineClock],
+    ["recovery_enabled", diagnostic.recoveryEnabled],
+    ["durable_archive_enabled", diagnostic.durableArchiveEnabled],
+    ["phase", diagnostic.phase],
+    ["server_event", diagnostic.serverEvent],
+    ["client_event", diagnostic.clientEvent],
+    ["event_seq", diagnostic.eventSequence],
+    ["stream_id", diagnostic.streamId],
+    ["session_id", diagnostic.sessionId],
+    ["segment_seq", diagnostic.segmentSequence],
+    ["audio_seq", diagnostic.audioSequence],
+    ["audio_seq_gap_count", diagnostic.audioSequenceGapCount],
+    ["max_audio_frame_gap_ms", diagnostic.maxAudioFrameGapMs],
+    ["played_sample", diagnostic.playedSample],
+    ["buffered_ms", diagnostic.bufferedMs],
+    ["min_buffered_ms", diagnostic.minBufferedMs],
+    ["underrun_count", diagnostic.underrunCount],
+    ["rebuffering", diagnostic.rebuffering],
+    ["peak_rms", diagnostic.peakRms],
+    ["reservation_ms", diagnostic.reservationLatencyMs],
+    ["websocket_ready_ms", diagnostic.websocketReadyLatencyMs],
+    ["stream_bind_ms", diagnostic.streamBindLatencyMs],
+    ["bind_to_first_audio_ms", diagnostic.firstAudioLatencyMs],
+    ["first_audio_to_playback_ms", diagnostic.playbackBufferLatencyMs],
+    ["audio_context_state", diagnostic.audioContextState],
+    ["websocket_close_code", diagnostic.websocketCloseCode],
+    ["websocket_close_reason", diagnostic.websocketCloseReason],
+    ["websocket_was_clean", diagnostic.websocketWasClean],
+    ["session_status", diagnostic.sessionStatus],
+    ["live_delivery_status", diagnostic.liveDeliveryStatus],
+    ["archive_status", diagnostic.archiveStatus],
+    ["archive_failure_stage", diagnostic.archiveFailureStage],
+    ["archive_retry_after", diagnostic.archiveRetryAfter],
+    ["archive_retain_until", diagnostic.archiveRetainUntil],
+    ["archive_redrive_count", diagnostic.archiveRedriveCount],
+    ["terminal_event", diagnostic.terminalEvent],
+    ["archive_disposition", diagnostic.archiveDisposition],
+    ["last_audio_seq", diagnostic.lastAudioSequence],
+    ["audio_sample_count", diagnostic.audioSampleCount],
+    ["relayed_sample_count", diagnostic.relayedSampleCount],
+    ["last_played_sample", diagnostic.lastPlayedSample],
+    ["archive_resume_ms", diagnostic.archiveResumeMs],
+    ["poll_after_ms", diagnostic.pollAfterMs],
+    ["error_code", diagnostic.errorCode]
+  ].filter(([, value]) => value !== undefined && value !== "");
+  return entries.map(([key, value]) => `${key}=${String(value)}`).join("\n");
+});
+
+const copySpeechDiagnostics = async () => {
+  const text = speechDiagnosticText.value;
+  if (!text) {
+    ElMessage.warning("暂无语音诊断信息");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    ElMessage.success("语音诊断信息已复制");
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    copied
+      ? ElMessage.success("语音诊断信息已复制")
+      : ElMessage.error("复制失败，请打开浏览器控制台查看诊断信息");
+  }
+};
+
+const testSpeechOutput = async () => {
+  const started = await speechController.testAudioOutput();
+  started
+    ? ElMessage.info("正在播放测试音；听不到请检查标签页静音和系统输出设备")
+    : ElMessage.error("测试音启动失败，请检查浏览器音频权限");
+};
 
 const selectedAgentKey = ref("");
 const selectedModelKey = ref("");
@@ -182,7 +333,13 @@ const currentUserAvatar = computed(() => formatAvatar(userStore.avatar));
 
 const isNewTab = ref(false);
 
-const currentTheme = ref(getSavedCourseTheme(getResponsiveLayoutTheme()));
+const layoutStorage = storageLocal().getItem("responsive-layout") as
+  | { darkMode?: boolean }
+  | undefined;
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) ||
+    (layoutStorage?.darkMode ? "dark" : "light")
+);
 const pdfServiceUrl = "https://agentpdf.intelledu.cn";
 
 const resolveRailFromPath = (path: string) => {
@@ -194,6 +351,7 @@ const resolveRailFromPath = (path: string) => {
     "path",
     "profile",
     "assessment",
+    "governance",
     "automation"
   ];
   return knownRails.includes(key) ? key : "chat";
@@ -201,6 +359,8 @@ const resolveRailFromPath = (path: string) => {
 
 // 会话数据集
 const activeRail = ref(resolveRailFromPath(route.path));
+const resourceWorkspaceMode = ref<"demo" | "generated">("demo");
+const demoResourcePane = ref<"import" | "binding" | "publish">("import");
 watch(
   () => route.path,
   newPath => {
@@ -209,21 +369,121 @@ watch(
 );
 const activeCourse = ref<CourseView | null>(null);
 
-// 侧边栏收起状态
-const isMobileViewport = ref(false);
-const sidebarCollapsed = ref(
-  typeof window !== "undefined" &&
-    (window.innerWidth <= 768 ||
-      document.documentElement.classList.contains("qiming-native-webview") ||
-      new URLSearchParams(window.location.search).get("qimingNative") === "1" ||
-      new URLSearchParams(window.location.hash.split("?")[1] || "").get(
-        "qimingNative"
-      ) === "1")
+// 课程与会话侧栏状态
+const sidebarWidthStorageKey = "ai-app-course-sidebar-width";
+const sidebarDefaultWidth = 260;
+const sidebarMinWidth = 220;
+const sidebarAbsoluteMaxWidth = 420;
+const isCompactAiViewport = () =>
+  typeof window !== "undefined" && window.innerWidth <= 768;
+const getSidebarMaxWidth = () =>
+  typeof window === "undefined"
+    ? sidebarAbsoluteMaxWidth
+    : Math.max(
+        sidebarMinWidth,
+        Math.min(sidebarAbsoluteMaxWidth, Math.floor(window.innerWidth * 0.36))
+      );
+const sidebarMaxWidth = ref(getSidebarMaxWidth());
+const savedSidebarWidth = storageLocal().getItem<number>(
+  sidebarWidthStorageKey
 );
+const sidebarWidth = ref(
+  Math.min(
+    sidebarMaxWidth.value,
+    Math.max(
+      sidebarMinWidth,
+      typeof savedSidebarWidth === "number" &&
+        Number.isFinite(savedSidebarWidth)
+        ? savedSidebarWidth
+        : sidebarDefaultWidth
+    )
+  )
+);
+const sidebarCollapsed = ref(isCompactAiViewport());
+const sidebarResizing = ref(false);
 const humanCollapsed = ref(false);
+const canMountInline3D = ref(false);
+let sidebarWasCompact = isCompactAiViewport();
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
-const shouldShowFloatingHuman = computed(() => !isMobileViewport.value);
+const sidebarRenderedWidth = computed(() =>
+  sidebarCollapsed.value ? 34 : sidebarWidth.value
+);
+
+let sidebarResizePointerId: number | null = null;
+let sidebarResizeStartX = 0;
+let sidebarResizeStartWidth = sidebarDefaultWidth;
+
+const clampSidebarWidth = (width: number) =>
+  Math.min(sidebarMaxWidth.value, Math.max(sidebarMinWidth, Math.round(width)));
+
+const persistSidebarWidth = () => {
+  storageLocal().setItem(sidebarWidthStorageKey, sidebarWidth.value);
+};
+
+const setSidebarWidth = (width: number, persist = false) => {
+  sidebarWidth.value = clampSidebarWidth(width);
+  if (persist) persistSidebarWidth();
+};
+
+const beginSidebarResize = (event: PointerEvent) => {
+  if (sidebarCollapsed.value || event.button !== 0) return;
+  event.preventDefault();
+  sidebarResizePointerId = event.pointerId;
+  sidebarResizeStartX = event.clientX;
+  sidebarResizeStartWidth = sidebarWidth.value;
+  sidebarResizing.value = true;
+  (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  document.documentElement.classList.add("ai-app-sidebar-resizing");
+};
+
+const updateSidebarResize = (event: PointerEvent) => {
+  if (!sidebarResizing.value || sidebarResizePointerId !== event.pointerId)
+    return;
+  setSidebarWidth(
+    sidebarResizeStartWidth + event.clientX - sidebarResizeStartX
+  );
+};
+
+const endSidebarResize = (event: PointerEvent) => {
+  if (sidebarResizePointerId !== event.pointerId) return;
+  const target = event.currentTarget as HTMLElement;
+  sidebarResizePointerId = null;
+  if (target.hasPointerCapture(event.pointerId)) {
+    target.releasePointerCapture(event.pointerId);
+  }
+  sidebarResizing.value = false;
+  document.documentElement.classList.remove("ai-app-sidebar-resizing");
+  persistSidebarWidth();
+};
+
+const resetSidebarWidth = () => {
+  setSidebarWidth(sidebarDefaultWidth, true);
+};
+
+const handleSidebarResizeKeydown = (event: KeyboardEvent) => {
+  const step = event.shiftKey ? 32 : 12;
+  let nextWidth: number | undefined;
+  if (event.key === "ArrowLeft") nextWidth = sidebarWidth.value - step;
+  if (event.key === "ArrowRight") nextWidth = sidebarWidth.value + step;
+  if (event.key === "Home") nextWidth = sidebarMinWidth;
+  if (event.key === "End") nextWidth = sidebarMaxWidth.value;
+  if (nextWidth === undefined) return;
+  event.preventDefault();
+  setSidebarWidth(nextWidth, true);
+};
+
+const syncSidebarWidthLimit = () => {
+  const compact = isCompactAiViewport();
+  if (compact && !sidebarWasCompact) sidebarCollapsed.value = true;
+  sidebarWasCompact = compact;
+  sidebarMaxWidth.value = getSidebarMaxWidth();
+  setSidebarWidth(sidebarWidth.value);
+  canMountInline3D.value =
+    typeof window !== "undefined" &&
+    window.innerWidth > 1280 &&
+    /^https?:$/.test(window.location.protocol);
+};
 
 type DigitalHumanState = "standby" | "listening" | "thinking" | "saying";
 
@@ -301,27 +561,116 @@ const applyDigitalHumanDirective = (event: AssistantChatStreamEvent) => {
 // 数字人引用：右侧 VRM 面板负责原有展示，小圆圈负责轻量状态检查。
 const virtualHumanRef = ref<{
   speak?: (text: string) => void;
+  setSpeechState?: (state: string) => void;
+  setAmplitude?: (value: number) => void;
+  applyViseme?: (id: string, weight: number) => void;
+  triggerMotion?: (key: string, durationMs: number, targetRef?: string) => void;
+  resetSpeech?: () => void;
   pauseRender?: () => void;
   resumeRender?: () => void;
 } | null>(null);
 const floatingHumanRef = ref<{
   speak?: (text: string) => void;
+  setSpeechState?: (state: string) => void;
+  setAmplitude?: (value: number) => void;
+  applyViseme?: (id: string, weight: number) => void;
+  triggerMotion?: (key: string, durationMs: number, targetRef?: string) => void;
+  resetSpeech?: () => void;
   pauseRender?: () => void;
   resumeRender?: () => void;
 } | null>(null);
 
-const speakDigitalHumans = (text: string) => {
-  const speakText = text || "";
-  if (!speakText) return;
-  virtualHumanRef.value?.speak?.(speakText);
-  floatingHumanRef.value?.speak?.(speakText);
+const speechRenderTargets = () => [
+  virtualHumanRef.value,
+  floatingHumanRef.value
+];
+
+let localDigitalHumanSpeechTimer: ReturnType<typeof setTimeout> | null = null;
+
+const localDigitalHumanSpeech = (content: string) => {
+  const text = content
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[#*_>`~\[\]()/]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 900);
+  if (!text) return;
+
+  digitalHumanStreamState.value = "saying";
+  if (localDigitalHumanSpeechTimer) clearTimeout(localDigitalHumanSpeechTimer);
+
+  if (virtualHumanRef.value?.speak) {
+    virtualHumanRef.value.triggerMotion?.("explain", 4200);
+    virtualHumanRef.value.speak(text);
+  }
+  floatingHumanRef.value?.speak?.(text);
+  localDigitalHumanSpeechTimer = setTimeout(
+    () => {
+      digitalHumanStreamState.value = null;
+      localDigitalHumanSpeechTimer = null;
+    },
+    Math.min(Math.max(text.length * 80, 1600), 5200)
+  );
 };
+
+const updateMessageSpeech = (
+  clientMessageId: string | number,
+  speech: AssistantSpeechSession,
+  playbackState: SpeechPlaybackState
+) => {
+  const message = messages.value.find(item => item.id === clientMessageId);
+  if (!message) return;
+  message.speech = speech;
+  message.speechPlaybackState = playbackState;
+};
+
+const speechController = new SpeechPlaybackController({
+  renderer: {
+    setState(state) {
+      digitalHumanStreamState.value =
+        state === "speaking"
+          ? "saying"
+          : state === "thinking"
+            ? "thinking"
+            : state === "listening"
+              ? "listening"
+              : null;
+      speechRenderTargets().forEach(target => target?.setSpeechState?.(state));
+    },
+    setAmplitude(value) {
+      speechRenderTargets().forEach(target => target?.setAmplitude?.(value));
+    },
+    applyViseme(id, weight) {
+      speechRenderTargets().forEach(target =>
+        target?.applyViseme?.(id, weight)
+      );
+    },
+    triggerMotion(key, durationMs, targetRef) {
+      speechRenderTargets().forEach(target =>
+        target?.triggerMotion?.(key, durationMs, targetRef)
+      );
+    },
+    reset() {
+      digitalHumanStreamState.value = null;
+      speechRenderTargets().forEach(target => target?.resetSpeech?.());
+    }
+  },
+  onStatus(_state, message) {
+    if (message) speechTransportStatus.value = message;
+  },
+  onDiagnostic(diagnostic) {
+    speechDiagnostic.value = diagnostic;
+  },
+  onSession: updateMessageSpeech
+});
 
 const myCourses = ref<CourseView[]>([]);
 const myStudents = ref<StudentView[]>([]);
 const selectedStudentId = ref<number | undefined>();
+const interactionScope = ref<AssistantInteractionScope>("personal_learning");
 const conversations = ref<ConversationView[]>([]);
 const activeConversationId = ref("");
+const manuallySelectedCourseId = ref<number | undefined>();
 
 const routeCourseId = computed(() => {
   const raw = route.query.courseId || route.query.course_id;
@@ -343,8 +692,153 @@ const effectiveCourse = computed(
 const selectedCourseId = computed(() => effectiveCourse.value?.id);
 const selectedCourseName = computed(() => effectiveCourse.value?.name || "");
 const selectedTargetStudentId = computed(() =>
+  interactionScope.value === "student_analysis"
+    ? selectedStudentId.value
+    : undefined
+);
+// Student-scoped workspaces keep their existing data context. It is separate
+// from the chat subject, which must remain empty for course_general.
+const selectedStudentContextId = computed(() =>
   isStaffMode.value ? selectedStudentId.value : undefined
 );
+const courseScopedRails = [
+  "chat",
+  "generation",
+  "path",
+  "profile",
+  "assessment",
+  "governance"
+];
+const studentScopedRails = ["generation", "path", "profile", "assessment"];
+const ensureStudentContextForActiveRail = () => {
+  if (
+    !isStaffMode.value ||
+    !studentScopedRails.includes(activeRail.value) ||
+    selectedStudentId.value ||
+    !myStudents.value.length
+  ) {
+    return;
+  }
+  selectedStudentId.value = myStudents.value[0].id;
+};
+const isDemoResourceWorkspace = computed(
+  () =>
+    activeRail.value === "generation" &&
+    isStaffMode.value &&
+    resourceWorkspaceMode.value === "demo"
+);
+const showCourseContext = computed(
+  () =>
+    courseScopedRails.includes(activeRail.value) &&
+    !isDemoResourceWorkspace.value
+);
+const showStudentContext = computed(
+  () =>
+    isStaffMode.value &&
+    (studentScopedRails.includes(activeRail.value) ||
+      (activeRail.value === "chat" &&
+        interactionScope.value === "student_analysis")) &&
+    !(
+      activeRail.value === "generation" &&
+      resourceWorkspaceMode.value === "demo"
+    )
+);
+const supportedInteractionScopes = computed<AssistantInteractionScope[]>(() => {
+  const supported =
+    assistantBootstrap.value?.supported_interaction_scopes || [];
+  if (supported.length) return supported;
+  return isStaffMode.value
+    ? ["course_general", "student_analysis"]
+    : ["personal_learning"];
+});
+const interactionScopeLabel = computed(() => {
+  const labels: Record<AssistantInteractionScope, string> = {
+    personal_learning: "个人学习",
+    course_general: "课程通用问答",
+    student_analysis: "学生学情分析"
+  };
+  return labels[interactionScope.value];
+});
+const currentConversation = computed(() =>
+  conversations.value.find(
+    conversation => conversation.conversation_id === activeConversationId.value
+  )
+);
+
+const buildAssistantIdentity = (courseId?: number) => {
+  const scope = interactionScope.value;
+  if (scope === "student_analysis") {
+    if (!selectedStudentId.value) {
+      throw new Error("请选择要分析的学生");
+    }
+    return {
+      ...(courseId ? { course_id: courseId } : {}),
+      interaction_scope: scope,
+      target_student_id: selectedStudentId.value
+    };
+  }
+  return {
+    ...(courseId ? { course_id: courseId } : {}),
+    interaction_scope: scope
+  };
+};
+const courseContextLabel = computed(() => "课程:");
+const isCourseSwitching = ref(false);
+const isInteractionScopeSwitching = ref(false);
+const selectedCoursePickerId = computed({
+  get: () => selectedCourseId.value,
+  set: courseId => {
+    void handleCourseContextChange(Number(courseId));
+  }
+});
+
+async function handleCourseContextChange(courseId?: number) {
+  const normalizedCourseId = Number(courseId);
+  if (!Number.isFinite(normalizedCourseId) || normalizedCourseId <= 0) return;
+  const targetCourse = myCourses.value.find(
+    course => course.id === normalizedCourseId
+  );
+  if (!targetCourse) return;
+  if (targetCourse.id === selectedCourseId.value) {
+    activeCourse.value = targetCourse;
+    manuallySelectedCourseId.value = targetCourse.id;
+    return;
+  }
+
+  isCourseSwitching.value = true;
+  manuallySelectedCourseId.value = targetCourse.id;
+  activeCourse.value = targetCourse;
+  activeConversationId.value = "";
+  if (isStaffMode.value) {
+    selectedStudentId.value = undefined;
+    myStudents.value = [];
+  }
+  resetChatGreeting();
+  try {
+    await loadAssistantBootstrap();
+  } finally {
+    isCourseSwitching.value = false;
+  }
+}
+
+const handleInteractionScopeChange = async (
+  scope: AssistantInteractionScope
+) => {
+  if (!supportedInteractionScopes.value.includes(scope)) return;
+  if (scope === interactionScope.value) return;
+  isInteractionScopeSwitching.value = true;
+  try {
+    interactionScope.value = scope;
+    // A subject must always be explicitly chosen for a new analysis context.
+    selectedStudentId.value = undefined;
+    activeConversationId.value = "";
+    conversations.value = [];
+    resetChatGreeting();
+    await loadAssistantBootstrap();
+  } finally {
+    isInteractionScopeSwitching.value = false;
+  }
+};
 
 // 【请求还原】：保留原版所有的侧边功能项
 const railItems = ref([
@@ -354,6 +848,7 @@ const railItems = ref([
   { key: "path", label: "学习计划", icon: "Guide" },
   { key: "profile", label: "学情分析", icon: "User" },
   { key: "assessment", label: "测验评估", icon: "DataAnalysis" },
+  { key: "governance", label: "治理看板", icon: "DataBoard" },
   { key: "automation", label: "常规任务", icon: "Check" }
 ]);
 
@@ -367,7 +862,7 @@ const routineTasks = ref([
     role: "student",
     status: "active",
     lastRun: "上周五 18:00",
-    icon: "Calendar"
+    icon: Calendar
   },
   {
     id: "r2",
@@ -376,7 +871,7 @@ const routineTasks = ref([
     role: "student",
     status: "active",
     lastRun: "昨天 20:00",
-    icon: "Bell"
+    icon: Bell
   },
   {
     id: "r3",
@@ -385,7 +880,7 @@ const routineTasks = ref([
     role: "student",
     status: "paused",
     lastRun: "-",
-    icon: "Document"
+    icon: Document
   },
   {
     id: "r4",
@@ -394,7 +889,7 @@ const routineTasks = ref([
     role: "teacher",
     status: "active",
     lastRun: "昨天 22:00",
-    icon: "DataBoard"
+    icon: DataBoard
   },
   {
     id: "r5",
@@ -403,7 +898,7 @@ const routineTasks = ref([
     role: "teacher",
     status: "active",
     lastRun: "上周日 12:00",
-    icon: "ChatLineRound"
+    icon: ChatLineRound
   }
 ]);
 const routineTaskRole = computed(() =>
@@ -426,14 +921,51 @@ const profileDimensions = ref([
 const agentTrace = ref<AssistantChatTraceStep[]>([]);
 const generatedResources = ref<AssistantChatResource[]>([]);
 const streamCancel = ref<null | (() => void)>(null);
+const activeStreamMessageId = ref<string | number | null>(null);
+const activeStreamRunId = ref(0);
+const activeRequestId = ref("");
+const lastStreamSequence = ref(0);
+const resourceTaskTimers = new Map<string, number>();
+const resourceTaskPollingStartedAt = new Map<string, number>();
+const resourceTaskPollingInFlight = new Set<string>();
+const explanationImageTimers = new Map<string, number>();
+const explanationImagePollingStartedAt = new Map<string, number>();
+const explanationImagePollingInFlight = new Set<string>();
 const messages = ref<ChatMessageView[]>([]);
+
+const streamStageTextMap: Record<string, string> = {
+  request_started: "已开始处理请求",
+  request_validating: "正在校验请求",
+  request_preparing: "正在读取课程与会话上下文",
+  context_loading: "正在加载课程上下文",
+  knowledge_retrieval: "正在检索课程资料",
+  answer_generating: "正在生成回答",
+  safety_checking: "正在进行安全检查",
+  persisting: "正在保存回答",
+  postprocess_queued: "后台处理已入队",
+  profile_refresh: "画像与评估正在后台刷新",
+  stream: "连接状态"
+};
+
+const resourceTaskTerminalStatuses = new Set([
+  "completed",
+  "completed_with_warnings",
+  "partial",
+  "failed",
+  "degraded",
+  "cancelled",
+  "blocked"
+]);
 
 const agentItems = computed(() => {
   if (agentTrace.value.length) {
     return agentTrace.value.map((step, index) => ({
       id: `${step.agent}-${step.stage}-${index}`,
       name: step.agent || step.stage || "学习助手",
-      desc: step.summary || step.stage || "处理中",
+      desc:
+        step.status === "degraded" || step.status === "blocked"
+          ? step.degraded_reason || step.summary || step.stage || "降级处理中"
+          : step.summary || step.stage || "处理中",
       status:
         step.status === "done" || step.status === "completed"
           ? "done"
@@ -460,15 +992,29 @@ const inspectorResources = computed(() =>
 );
 
 const resetChatGreeting = () => {
+  streamCancel.value?.();
+  speechController.reset();
+  streamCancel.value = null;
+  clearAllExplanationImagePolling();
+  activeStreamRunId.value += 1;
+  activeStreamMessageId.value = null;
+  activeRequestId.value = "";
+  lastStreamSequence.value = 0;
+  isChatStreaming.value = false;
+  digitalHumanStreamState.value = null;
   const courseName = selectedCourseName.value || "当前课程";
+  const greeting =
+    interactionScope.value === "course_general"
+      ? `你好，${courseName} 的课程助手已就绪。你可以直接提出课程教学、知识结构或资料相关问题。`
+      : interactionScope.value === "student_analysis"
+        ? `已进入学生学情分析。请提出关于该学生学习情况的问题，我会以第三人称给出分析。`
+        : `你好，${courseName} 的学习助手已就绪。你可以直接提出学习问题，我会结合课程、画像和学习路径给出建议。`;
   messages.value = [
     {
       id: "assistant-greeting",
       role: "智能助教",
       type: "system",
-      content:
-        assistantBootstrap.value?.message ||
-        `你好，${courseName} 的学习助手已就绪。你可以直接提出学习问题，我会结合课程、画像和学习路径给出建议。`
+      content: assistantBootstrap.value?.message || greeting
     }
   ];
 };
@@ -481,23 +1027,333 @@ const updateAssistantMessage = (
   if (target) Object.assign(target, patch);
 };
 
-const handleAssistantStreamEvent = (
-  event: AssistantChatStreamEvent,
+const streamProgressSummary = (event: AssistantChatStreamEvent) => {
+  const stage = event.stage || "request_started";
+  return event.summary || streamStageTextMap[stage] || "正在处理请求";
+};
+
+const appendStreamProgress = (
+  assistantMessageId: string | number,
+  event: AssistantChatStreamEvent
+) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message) return;
+
+  const stage = event.stage || "request_started";
+  const next: StreamProgressItem = {
+    sequence: event.sequence,
+    stage,
+    status: event.status || "running",
+    summary: streamProgressSummary(event),
+    elapsedMs: event.elapsed_ms
+  };
+  const timeline = [...(message.progressTimeline || [])];
+  const previous = timeline[timeline.length - 1];
+  if (previous?.stage === next.stage) {
+    timeline[timeline.length - 1] = { ...previous, ...next };
+  } else {
+    timeline.push(next);
+  }
+
+  updateAssistantMessage(assistantMessageId, {
+    requestId: event.request_id || message.requestId,
+    progressTimeline: timeline.slice(-8),
+    elapsedMs: event.elapsed_ms ?? message.elapsedMs,
+    streamStatus: event.status || message.streamStatus
+  });
+};
+
+const clearResourceTaskPolling = (taskId: string) => {
+  const timer = resourceTaskTimers.get(taskId);
+  if (timer) window.clearTimeout(timer);
+  resourceTaskTimers.delete(taskId);
+  resourceTaskPollingStartedAt.delete(taskId);
+  resourceTaskPollingInFlight.delete(taskId);
+};
+
+const clearAllResourceTaskPolling = () => {
+  [...resourceTaskTimers.keys()].forEach(clearResourceTaskPolling);
+};
+
+const explanationImageTerminalStatuses = new Set([
+  "succeeded",
+  "failed",
+  "blocked",
+  "unknown_outcome",
+  "cancelled"
+]);
+const explanationImageStatusRank: Record<string, number> = {
+  queued: 1,
+  generating: 2,
+  retrying: 3,
+  succeeded: 4,
+  failed: 4,
+  blocked: 4,
+  unknown_outcome: 4,
+  cancelled: 4
+};
+
+const clearExplanationImagePolling = (imageId: string) => {
+  const timer = explanationImageTimers.get(imageId);
+  if (timer) window.clearTimeout(timer);
+  explanationImageTimers.delete(imageId);
+  explanationImagePollingStartedAt.delete(imageId);
+  explanationImagePollingInFlight.delete(imageId);
+};
+
+const clearAllExplanationImagePolling = () => {
+  const imageIds = new Set([
+    ...explanationImageTimers.keys(),
+    ...explanationImagePollingStartedAt.keys(),
+    ...explanationImagePollingInFlight
+  ]);
+  imageIds.forEach(clearExplanationImagePolling);
+};
+
+const updateMessageExplanationImage = (
+  assistantMessageId: string | number,
+  image: AssistantExplanationImage
+) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message || !image.image_id) return;
+  const images = [...(message.explanationImages || [])];
+  const index = images.findIndex(item => item.image_id === image.image_id);
+  if (index === -1) images.push(image);
+  else {
+    const current = images[index];
+    const currentRank = explanationImageStatusRank[current.status] || 0;
+    const incomingRank = explanationImageStatusRank[image.status] || 0;
+    images[index] =
+      currentRank > incomingRank
+        ? { ...image, ...current }
+        : { ...current, ...image };
+  }
+  updateAssistantMessage(assistantMessageId, { explanationImages: images });
+};
+
+const pollExplanationImage = async (
+  imageId: string,
   assistantMessageId: string | number
 ) => {
+  if (explanationImagePollingInFlight.has(imageId)) return;
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (
+    !message ||
+    !message.explanationImages?.some(item => item.image_id === imageId)
+  ) {
+    clearExplanationImagePolling(imageId);
+    return;
+  }
+
+  explanationImagePollingInFlight.add(imageId);
+  try {
+    const response = await getAssistantExplanationImage(imageId);
+    const image = response.image;
+    if (image) {
+      updateMessageExplanationImage(assistantMessageId, image);
+      if (explanationImageTerminalStatuses.has(image.status)) {
+        clearExplanationImagePolling(imageId);
+        return;
+      }
+    }
+  } catch (error) {
+    console.warn("[AiApp] 讲解图片状态刷新失败:", error);
+  } finally {
+    explanationImagePollingInFlight.delete(imageId);
+  }
+
+  const currentMessage = messages.value.find(
+    item => item.id === assistantMessageId
+  );
+  const currentImage = currentMessage?.explanationImages?.find(
+    item => item.image_id === imageId
+  );
+  if (
+    !currentImage ||
+    explanationImageTerminalStatuses.has(currentImage.status)
+  ) {
+    clearExplanationImagePolling(imageId);
+    return;
+  }
+
+  const startedAt = explanationImagePollingStartedAt.get(imageId) || Date.now();
+  const elapsed = Date.now() - startedAt;
+  const delay = document.hidden ? 10000 : elapsed < 30000 ? 2000 : 5000;
+  explanationImageTimers.set(
+    imageId,
+    window.setTimeout(() => {
+      explanationImageTimers.delete(imageId);
+      void pollExplanationImage(imageId, assistantMessageId);
+    }, delay)
+  );
+};
+
+const startExplanationImagePolling = (
+  image: AssistantExplanationImage,
+  assistantMessageId: string | number
+) => {
+  updateMessageExplanationImage(assistantMessageId, image);
+  if (!image.image_id || explanationImageTerminalStatuses.has(image.status)) {
+    if (image.image_id) clearExplanationImagePolling(image.image_id);
+    return;
+  }
+  if (!explanationImagePollingStartedAt.has(image.image_id)) {
+    explanationImagePollingStartedAt.set(image.image_id, Date.now());
+  }
+  if (!explanationImageTimers.has(image.image_id)) {
+    void pollExplanationImage(image.image_id, assistantMessageId);
+  }
+};
+
+const updateMessageResourceTask = (
+  assistantMessageId: string | number,
+  task: ResourceTaskView | AssistantResourceTaskItem
+) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message || message.resourceTask?.task_id !== task.task_id) return;
+  updateAssistantMessage(assistantMessageId, {
+    resourceTask: { ...message.resourceTask, ...task }
+  });
+};
+
+const isTerminalResourceTask = (status?: string) =>
+  resourceTaskTerminalStatuses.has(String(status || "").toLowerCase());
+
+const pollResourceTask = async (
+  taskId: string,
+  assistantMessageId: string | number
+) => {
+  if (resourceTaskPollingInFlight.has(taskId)) return;
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message || message.resourceTask?.task_id !== taskId) {
+    clearResourceTaskPolling(taskId);
+    return;
+  }
+
+  resourceTaskPollingInFlight.add(taskId);
+  try {
+    const { data } = await getAssistantResourceTask(taskId);
+    if (data.task) {
+      updateMessageResourceTask(assistantMessageId, data.task);
+      if (isTerminalResourceTask(data.task.status)) {
+        clearResourceTaskPolling(taskId);
+        return;
+      }
+    }
+  } catch (error) {
+    console.warn("[AiApp] 资源任务状态刷新失败:", error);
+  } finally {
+    resourceTaskPollingInFlight.delete(taskId);
+  }
+
+  const startedAt = resourceTaskPollingStartedAt.get(taskId) || Date.now();
+  const elapsed = Date.now() - startedAt;
+  const delay = document.hidden ? 10000 : elapsed < 30000 ? 2000 : 5000;
+  resourceTaskTimers.set(
+    taskId,
+    window.setTimeout(() => {
+      resourceTaskTimers.delete(taskId);
+      void pollResourceTask(taskId, assistantMessageId);
+    }, delay)
+  );
+};
+
+const startResourceTaskPolling = (
+  task: ResourceTaskView,
+  assistantMessageId: string | number
+) => {
+  updateMessageResourceTask(assistantMessageId, task);
+  if (!task.task_id || isTerminalResourceTask(task.status)) {
+    if (task.task_id) clearResourceTaskPolling(task.task_id);
+    return;
+  }
+  if (!resourceTaskPollingStartedAt.has(task.task_id)) {
+    resourceTaskPollingStartedAt.set(task.task_id, Date.now());
+  }
+  if (!resourceTaskTimers.has(task.task_id)) {
+    void pollResourceTask(task.task_id, assistantMessageId);
+  }
+};
+
+const acceptStreamEvent = (
+  event: AssistantChatStreamEvent,
+  assistantMessageId: string | number,
+  streamRunId: number
+) => {
+  if (
+    streamRunId !== activeStreamRunId.value ||
+    activeStreamMessageId.value !== assistantMessageId
+  ) {
+    return false;
+  }
+  if (event.request_id) {
+    if (activeRequestId.value && activeRequestId.value !== event.request_id) {
+      return false;
+    }
+    activeRequestId.value = event.request_id;
+  }
+  if (typeof event.sequence === "number") {
+    if (event.sequence <= lastStreamSequence.value) return false;
+    lastStreamSequence.value = event.sequence;
+  }
+  return true;
+};
+
+const releaseActiveStream = (assistantMessageId: string | number) => {
+  if (activeStreamMessageId.value !== assistantMessageId) return;
+  streamCancel.value = null;
+  activeStreamMessageId.value = null;
+  activeRequestId.value = "";
+  lastStreamSequence.value = 0;
+  isChatStreaming.value = false;
+};
+
+const handleAssistantStreamEvent = (
+  event: AssistantChatStreamEvent,
+  assistantMessageId: string | number,
+  streamRunId: number
+) => {
+  if (!acceptStreamEvent(event, assistantMessageId, streamRunId)) return;
   const hasBackendHumanState = applyDigitalHumanDirective(event);
-  const directiveText =
-    event.digital_human?.speech_text ||
-    event.digital_human?.highlight_text ||
-    "";
 
   if (event.conversation_id) {
     activeConversationId.value = event.conversation_id;
   }
+  if (event.request_id) {
+    updateAssistantMessage(assistantMessageId, { requestId: event.request_id });
+  }
+
+  if (event.speech || event.event.startsWith("speech.")) {
+    speechController.handleChatEvent(event, assistantMessageId);
+  }
 
   if (event.event === "digital_human.directive") {
-    if (event.digital_human?.speak && directiveText) {
-      speakDigitalHumans(directiveText);
+    return;
+  }
+
+  if (
+    event.event === "speech.stream.bound" ||
+    event.event === "speech.stream.degraded"
+  ) {
+    return;
+  }
+
+  if (
+    ["assistant.started", "assistant.progress", "postprocess.queued"].includes(
+      event.event
+    )
+  ) {
+    appendStreamProgress(assistantMessageId, event);
+    if (!hasBackendHumanState) digitalHumanStreamState.value = "thinking";
+    return;
+  }
+
+  if (event.event === "heartbeat") {
+    const message = messages.value.find(item => item.id === assistantMessageId);
+    if (message) {
+      updateAssistantMessage(assistantMessageId, {
+        elapsedMs: event.elapsed_ms ?? message.elapsedMs
+      });
     }
     return;
   }
@@ -505,6 +1361,32 @@ const handleAssistantStreamEvent = (
   if (event.event === "conversation.created") {
     if (!hasBackendHumanState) digitalHumanStreamState.value = "thinking";
     void loadConversationGroups();
+    return;
+  }
+
+  if (event.event === "resource.task.created" && event.resource_task) {
+    updateAssistantMessage(assistantMessageId, {
+      resourceTask: event.resource_task
+    });
+    startResourceTaskPolling(event.resource_task, assistantMessageId);
+    return;
+  }
+
+  if (event.event === "explanation_image.queued" && event.explanation_image) {
+    startExplanationImagePolling(event.explanation_image, assistantMessageId);
+    return;
+  }
+
+  if (
+    event.event === "assistant.reasoning_summary.delta" &&
+    featureFlags.value.reasoning_summary_stream
+  ) {
+    const target = messages.value.find(item => item.id === assistantMessageId);
+    if (target && event.delta) {
+      updateAssistantMessage(assistantMessageId, {
+        reasoningSummary: `${target.reasoningSummary || ""}${event.delta}`
+      });
+    }
     return;
   }
 
@@ -516,49 +1398,139 @@ const handleAssistantStreamEvent = (
   }
 
   if (event.event === "assistant.completed") {
-    const content = event.content_text || "";
+    const currentMessage = messages.value.find(
+      item => item.id === assistantMessageId
+    );
+    const streamedContent = currentMessage?.content || "";
+    const content = event.content_text || streamedContent;
+    const resourceTask = event.resource_task || currentMessage?.resourceTask;
     updateAssistantMessage(assistantMessageId, {
-      content:
-        content ||
-        messages.value.find(item => item.id === assistantMessageId)?.content ||
-        "学习助手已完成回复。",
+      content: content || "学习助手已完成回复。",
       resources: event.resources || [],
+      sourceRefs: event.source_refs || [],
+      videoSegments: event.video_segments || [],
+      followups: event.followups || [],
+      resourceTask,
+      explanationImages: currentMessage?.explanationImages,
+      safetyStatus: event.safety_status,
+      safetySummary: event.safety_summary,
+      safetyFlags: event.safety_flags || [],
       profileEvent: event.profile_event,
-      streaming: false
+      streaming: false,
+      streamStatus: event.status || "completed",
+      elapsedMs: event.elapsed_ms ?? currentMessage?.elapsedMs,
+      partial: false,
+      error: false,
+      errorMessage: ""
     });
+    if (resourceTask)
+      startResourceTaskPolling(resourceTask, assistantMessageId);
+    if (event.explanation_image) {
+      startExplanationImagePolling(event.explanation_image, assistantMessageId);
+    }
     agentTrace.value = event.trace || [];
     generatedResources.value = event.resources || [];
-    if (event.profile_event) {
-      ElMessage.success("学习画像已同步更新");
+    if (event.conversation_title) {
+      const active = conversations.value.find(
+        item => item.conversation_id === event.conversation_id
+      );
+      if (active) active.title = event.conversation_title;
     }
-    if (!hasBackendHumanState) digitalHumanStreamState.value = "saying";
-    speakDigitalHumans(directiveText || content || "");
-    isChatStreaming.value = false;
-    window.setTimeout(() => {
-      if (
-        !isChatStreaming.value &&
-        digitalHumanStreamState.value === "saying"
-      ) {
-        digitalHumanStreamState.value = null;
-      }
-    }, 2400);
+    if (event.speech) {
+      speechController.trackSession(
+        event.speech,
+        assistantMessageId,
+        true,
+        "event"
+      );
+    } else if (
+      !assistantBootstrap.value?.speech?.enabled &&
+      !currentMessage?.speech?.session_id
+    ) {
+      localDigitalHumanSpeech(content || "学习助手已完成回复。");
+    } else if (!hasBackendHumanState) {
+      digitalHumanStreamState.value = null;
+    }
+    releaseActiveStream(assistantMessageId);
     void loadConversationGroups();
     return;
   }
 
   if (event.event === "error") {
-    updateAssistantMessage(assistantMessageId, {
-      content: event.error_message || "学习助手响应失败，请稍后重试。",
-      streaming: false,
-      error: true
+    const currentMessage = messages.value.find(
+      item => item.id === assistantMessageId
+    );
+    const hasPartialContent = !!currentMessage?.content.trim();
+    const keepPartial = Boolean(event.partial && hasPartialContent);
+    appendStreamProgress(assistantMessageId, {
+      ...event,
+      status: event.status || (keepPartial ? "partial" : "failed"),
+      summary: event.error_message || event.summary
     });
-    isChatStreaming.value = false;
+    updateAssistantMessage(assistantMessageId, {
+      content: keepPartial
+        ? currentMessage?.content || ""
+        : event.error_message || "学习助手响应失败，请稍后重试。",
+      streaming: false,
+      error: !keepPartial,
+      partial: keepPartial,
+      retryable: Boolean(event.retryable),
+      streamStatus: event.status || (keepPartial ? "partial" : "failed"),
+      errorCode: event.error_code,
+      errorMessage: event.error_message || "学习助手响应失败，请稍后重试。",
+      elapsedMs: event.elapsed_ms ?? currentMessage?.elapsedMs,
+      speechPlaybackState: "failed"
+    });
+    void speechController.stopPlayback(false);
     digitalHumanStreamState.value = null;
-    ElMessage.error(event.error_message || "学习助手响应失败");
+    releaseActiveStream(assistantMessageId);
+    if (keepPartial) {
+      ElMessage.warning(event.error_message || "回答未完整生成");
+    } else {
+      ElMessage.error(event.error_message || "学习助手响应失败");
+    }
   }
 };
 
-const handleSendMessage = (text: string) => {
+const getDocumentAttachmentExtension = (file: File) =>
+  (file.name.split(".").pop()?.trim() || "").toLowerCase();
+
+const resolveDocumentAttachmentContentType = (file: File) => {
+  const extension = getDocumentAttachmentExtension(file);
+  return documentAttachmentContentTypes[extension] || file.type || "";
+};
+
+const uploadDocumentAttachmentsForMessage = async (files: File[]) => {
+  if (!files.length) return [];
+  const allowedFiles = files.slice(0, 3);
+  const unsupported = allowedFiles.find(
+    file =>
+      !documentAttachmentContentTypes[getDocumentAttachmentExtension(file)]
+  );
+  if (unsupported) {
+    throw new Error(`${unsupported.name} 暂不支持，请上传 PDF、DOCX 或 TXT`);
+  }
+  const oversize = allowedFiles.find(file => file.size > 20 * 1024 * 1024);
+  if (oversize) {
+    throw new Error(`${oversize.name} 超过 20MB`);
+  }
+
+  const uploaded = await Promise.all(
+    allowedFiles.map(file =>
+      uploadAssistantDocumentAttachment(file, {
+        scene: "assistant",
+        course_id: selectedCourseId.value,
+        conversation_id: activeConversationId.value || undefined,
+        content_type: resolveDocumentAttachmentContentType(file)
+      })
+    )
+  );
+  return uploaded.map(item => item.attachment_id).filter(Boolean);
+};
+
+const handleSendMessage = async (payload: ChatSendPayload) => {
+  const text = typeof payload === "string" ? payload : payload.text;
+  const files = typeof payload === "string" ? [] : payload.files || [];
   const trimmed = text.trim();
   if (!trimmed || isChatStreaming.value) return;
   if (featureFlags.value.chat_stream === false) {
@@ -569,8 +1541,42 @@ const handleSendMessage = (text: string) => {
     ElMessage.warning("请先选择课程");
     return;
   }
-  if (isStaffMode.value && !selectedTargetStudentId.value) {
-    ElMessage.warning("教师/管理员模式下请先选择学生");
+  if (
+    interactionScope.value === "student_analysis" &&
+    !selectedTargetStudentId.value
+  ) {
+    ElMessage.warning("请选择要分析的学生");
+    return;
+  }
+  if (currentConversation.value?.legacy_read_only) {
+    ElMessage.warning("历史会话仅供查看，请新建会话后继续讨论");
+    return;
+  }
+  if (!selectedModelReady.value) {
+    ElMessage.warning(selectedModelDisabledReason.value || "当前没有可用模型");
+    return;
+  }
+  speechController.primeRealtimeAudio();
+
+  let attachmentIds: string[] = [];
+  let uploadMessage: ReturnType<typeof ElMessage> | undefined;
+  try {
+    if (files.length) {
+      uploadMessage = ElMessage({
+        message: "正在上传并解析文档附件...",
+        type: "info",
+        duration: 0,
+        showClose: true
+      });
+      attachmentIds = await uploadDocumentAttachmentsForMessage(files);
+      uploadMessage.close();
+      ElMessage.success("文档解析完成，已加入本轮问答");
+    }
+  } catch (error: any) {
+    uploadMessage?.close();
+    ElMessage.error(
+      assistantApiErrorMessage(error, error?.message || "文档附件上传失败")
+    );
     return;
   }
 
@@ -588,43 +1594,144 @@ const handleSendMessage = (text: string) => {
     role: "智能助教",
     type: "system",
     content: "",
-    streaming: true
+    streaming: true,
+    speechPlaybackState: assistantBootstrap.value?.speech?.enabled
+      ? "preparing"
+      : "disabled"
   });
 
   isChatStreaming.value = true;
   digitalHumanStreamState.value = "thinking";
   agentTrace.value = [];
   streamCancel.value?.();
+  const streamRunId = activeStreamRunId.value + 1;
+  activeStreamRunId.value = streamRunId;
+  activeStreamMessageId.value = assistantMessageId;
+  activeRequestId.value = "";
+  lastStreamSequence.value = 0;
+  const speechRequest = await speechController.prepareSpeech({
+    conversationId: activeConversationId.value || undefined,
+    courseId: selectedCourseId.value,
+    targetStudentId: selectedTargetStudentId.value,
+    interactionScope: interactionScope.value,
+    voiceAlias: selectedSpeechVoiceAlias.value || undefined
+  });
+  if (!speechRequest) {
+    updateAssistantMessage(assistantMessageId, {
+      speechPlaybackState: "disabled"
+    });
+  }
+  if (
+    activeStreamMessageId.value !== assistantMessageId ||
+    streamRunId !== activeStreamRunId.value
+  ) {
+    return;
+  }
+  const explanationImageMode =
+    featureFlags.value.explanation_image_generation &&
+    apiMode.value === "student" &&
+    attachmentIds.length === 0
+      ? "auto_wide"
+      : undefined;
+  const conversationId = activeConversationId.value || undefined;
+  const identity = conversationId
+    ? {}
+    : buildAssistantIdentity(selectedCourseId.value);
   streamCancel.value = streamAssistantChat(
     {
-      conversation_id: activeConversationId.value || undefined,
-      course_id: selectedCourseId.value,
-      target_student_id: selectedTargetStudentId.value,
+      conversation_id: conversationId,
+      ...identity,
       mode: apiMode.value,
       selected_agent: selectedAgentKey.value || undefined,
       skill_keys: selectedSkillKeys.value,
       selected_model: selectedModelKey.value || undefined,
       thinking_mode: thinkingModeKey.value || undefined,
       message: trimmed,
-      attachment_ids: [],
+      attachment_ids: attachmentIds,
+      enable_realtime_resource:
+        selectedSkillKeys.value.includes("resource_hint"),
+      preferred_explanation_mode: selectedSkillKeys.value.includes("visual")
+        ? "visual"
+        : undefined,
+      explanation_image_mode: explanationImageMode,
+      speech: speechRequest,
       metadata: { ui_entry: "ai_app_workbench" }
     },
-    event => handleAssistantStreamEvent(event, assistantMessageId)
+    event => handleAssistantStreamEvent(event, assistantMessageId, streamRunId)
   );
 };
 
-const sendQuickMessageWithResolvedContext = (text: string, course?: CourseView | null) => {
-  const trimmed = text.trim();
-  if (!trimmed) return;
-  if (course) activeCourse.value = course;
-  activeRail.value = "chat";
-  nextTick(() => {
-    handleSendMessage(trimmed);
+const handleStopStreaming = () => {
+  const assistantMessageId = activeStreamMessageId.value;
+  if (!assistantMessageId || !isChatStreaming.value) return;
+
+  const currentMessage = messages.value.find(
+    item => item.id === assistantMessageId
+  );
+  const hasPartialContent = !!currentMessage?.content.trim();
+  streamCancel.value?.();
+  void speechController.stopPlayback(true);
+  appendStreamProgress(assistantMessageId, {
+    event: "assistant.progress",
+    stage: "answer_generating",
+    status: "cancelled",
+    summary: "已停止生成，已保留当前内容。",
+    partial: hasPartialContent,
+    finished: true
   });
+  updateAssistantMessage(assistantMessageId, {
+    streaming: false,
+    stopped: true,
+    partial: hasPartialContent,
+    retryable: true,
+    streamStatus: "cancelled",
+    error: false,
+    errorMessage: "已停止生成，已保留当前内容。"
+  });
+  digitalHumanStreamState.value = null;
+  releaseActiveStream(assistantMessageId);
+};
+
+const handleRegenerateMessage = (assistantMessageId: string | number) => {
+  const assistantIndex = messages.value.findIndex(
+    item => item.id === assistantMessageId
+  );
+  const searchEnd =
+    assistantIndex >= 0 ? assistantIndex : messages.value.length - 1;
+  const lastUserMessage = messages.value
+    .slice(0, searchEnd + 1)
+    .reverse()
+    .find(item => item.type === "user" && item.content.trim());
+
+  if (!lastUserMessage) {
+    ElMessage.warning("没有找到可重新生成的问题");
+    return;
+  }
+
+  handleSendMessage(lastUserMessage.content);
+};
+
+const handlePlaySpeech = (assistantMessageId: string | number) => {
+  const message = messages.value.find(item => item.id === assistantMessageId);
+  if (!message?.speech?.session_id) return;
+  void speechController.playSession(
+    { session_id: message.speech.session_id },
+    assistantMessageId
+  );
+};
+
+const handleStopSpeech = (assistantMessageId: string | number) => {
+  updateAssistantMessage(assistantMessageId, {
+    speechPlaybackState: "paused"
+  });
+  void speechController.stopPlayback(false);
 };
 
 // === 栈操作预览弹窗 ===
 const stackPreviewVisible = ref(false);
+const platformPreviewVisible = ref(false);
+const platformPreviewResource = ref<PlatformPreviewResource | null>(null);
+let platformPreviewRequestVersion = 0;
 const stackItems = ref<{ key: number; value: string }[]>([
   { key: 1, value: "A" },
   { key: 2, value: "B" },
@@ -663,13 +1770,61 @@ function stackReset() {
   ];
   stackLog.value = ["重置：栈顶 -> C, B, A"];
 }
-function handlePreview(res: any) {
+function toPlatformPreviewResource(
+  resource: Partial<AssistantResourceSummary> & {
+    type?: string;
+    desc?: string;
+  }
+): PlatformPreviewResource {
+  return mapAssistantResourcePreview({
+    ...resource,
+    resource_type: resource.resource_type || resource.type,
+    description: resource.description || resource.desc
+  });
+}
+
+function hasPlatformPreviewSource(resource: PlatformPreviewResource) {
+  return hasPlatformResourcePreview(resource);
+}
+
+async function handlePreview(res: AssistantChatResource) {
   if (res?.type === "animation") {
     stackPreviewVisible.value = true;
     return;
   }
-  if (res?.preview_url) {
-    window.open(res.preview_url, "_blank");
+
+  const requestVersion = ++platformPreviewRequestVersion;
+  const initialResource = toPlatformPreviewResource(res || {});
+  platformPreviewResource.value = initialResource;
+  if (hasPlatformPreviewSource(initialResource)) {
+    platformPreviewVisible.value = true;
+  }
+
+  if (!res?.resource_id) {
+    if (!hasPlatformPreviewSource(initialResource)) {
+      ElMessage.warning("该资源暂未提供可预览内容");
+    }
+    return;
+  }
+
+  try {
+    const { data } = await getAssistantResource(res.resource_id, {
+      course_id: selectedCourseId.value,
+      target_student_id: selectedTargetStudentId.value
+    });
+    if (requestVersion !== platformPreviewRequestVersion) return;
+    const detail = data.resource;
+    if (!detail) throw new Error(data.message || "资源详情为空");
+    platformPreviewResource.value = toPlatformPreviewResource({
+      ...res,
+      ...detail
+    });
+    platformPreviewVisible.value = true;
+  } catch (error) {
+    if (requestVersion !== platformPreviewRequestVersion) return;
+    if (!hasPlatformPreviewSource(initialResource)) {
+      ElMessage.error(assistantApiErrorMessage(error, "资源详情加载失败"));
+    }
   }
 }
 
@@ -698,12 +1853,80 @@ const normalizeConversation = (
 
 const optionLabel = (options: AssistantOption[], key: string) =>
   options.find(item => item.key === key)?.label || key;
+const modelSelectableStatuses = new Set(["available", "deprecated"]);
+const normalizedModelStatus = (model?: AssistantOption) =>
+  model?.status || "available";
+const isAssistantModelSelectable = (model?: AssistantOption) =>
+  !!model && modelSelectableStatuses.has(normalizedModelStatus(model));
+const modelStatusText = (status?: string) => {
+  const map: Record<string, string> = {
+    available: "可用",
+    unavailable: "不可用",
+    degraded: "降级",
+    deprecated: "兼容"
+  };
+  return map[status || ""] || status || "";
+};
+const selectableModels = computed(() =>
+  (assistantBootstrap.value?.models || []).filter(isAssistantModelSelectable)
+);
+const selectedModelOption = computed(() =>
+  (assistantBootstrap.value?.models || []).find(
+    item => item.key === selectedModelKey.value
+  )
+);
+const selectedModelReady = computed(() =>
+  isAssistantModelSelectable(selectedModelOption.value)
+);
+const selectedModelDisabledReason = computed(() => {
+  const models = assistantBootstrap.value?.models || [];
+  if (!models.length) return "模型列表为空";
+  if (!selectableModels.value.length) return "当前没有可用模型";
+  const model = selectedModelOption.value;
+  if (!model) return "请选择可用模型";
+  if (isAssistantModelSelectable(model)) return "";
+  return model.reason
+    ? assistantModelReasonText(model.reason)
+    : "该模型当前不可用";
+});
+const selectDefaultModelKey = (models: AssistantOption[], current?: string) => {
+  const currentModel = models.find(model => model.key === current);
+  if (isAssistantModelSelectable(currentModel)) return currentModel?.key || "";
+  return (
+    models.find(
+      model =>
+        isAssistantModelSelectable(model) &&
+        model.default_for?.includes("a3_chat")
+    )?.key ||
+    models.find(isAssistantModelSelectable)?.key ||
+    ""
+  );
+};
+const handleModelSelect = (modelKey: string) => {
+  const model = (assistantBootstrap.value?.models || []).find(
+    item => item.key === modelKey
+  );
+  if (!isAssistantModelSelectable(model)) {
+    ElMessage.warning(
+      model?.reason
+        ? assistantModelReasonText(model.reason)
+        : "该模型当前不可用"
+    );
+    return;
+  }
+  selectedModelKey.value = modelKey;
+};
 
 const selectedAgentLabel = computed(() =>
   optionLabel(assistantBootstrap.value?.agents || [], selectedAgentKey.value)
 );
 const selectedModelLabel = computed(() =>
-  optionLabel(assistantBootstrap.value?.models || [], selectedModelKey.value)
+  selectedModelKey.value
+    ? optionLabel(
+        assistantBootstrap.value?.models || [],
+        selectedModelKey.value
+      )
+    : "暂无可用模型"
 );
 const thinkingModeLabel = computed(() =>
   optionLabel(
@@ -713,6 +1936,12 @@ const thinkingModeLabel = computed(() =>
 );
 
 const applyBootstrap = (data: AssistantBootstrapResp) => {
+  const previousStudentId = selectedStudentId.value;
+  const resolvedScope =
+    data.interaction_scope ||
+    data.default_interaction_scope ||
+    (isStaffMode.value ? "course_general" : "personal_learning");
+  interactionScope.value = resolvedScope;
   assistantBootstrap.value = data;
   myCourses.value = (data.courses || []).map(course => ({
     ...course,
@@ -728,21 +1957,52 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${student.student_id}`
   }));
 
-  selectedStudentId.value = data.selected_student_id || myStudents.value[0]?.id;
+  selectedStudentId.value =
+    resolvedScope === "student_analysis"
+      ? data.selected_student_id ||
+        myStudents.value.find(student => student.id === previousStudentId)?.id
+      : undefined;
+  ensureStudentContextForActiveRail();
   const previousCourseId = activeCourse.value?.id;
+  const manuallySelectedCourse = manuallySelectedCourseId.value
+    ? myCourses.value.find(
+        course => course.id === manuallySelectedCourseId.value
+      )
+    : null;
   const routeSelectedCourse = routeCourseId.value
     ? myCourses.value.find(course => course.id === routeCourseId.value)
     : null;
   const preservedCourse = previousCourseId
     ? myCourses.value.find(course => course.id === previousCourseId)
     : null;
-  activeCourse.value = routeSelectedCourse || preservedCourse || null;
+  activeCourse.value =
+    manuallySelectedCourse || routeSelectedCourse || preservedCourse || null;
   selectedAgentKey.value = data.agents?.[0]?.key || "";
-  selectedModelKey.value = data.models?.[0]?.key || "";
+  selectedModelKey.value = selectDefaultModelKey(
+    data.models || [],
+    selectedModelKey.value
+  );
   thinkingModeKey.value = data.thinking_modes?.[0]?.key || "";
   selectedSkillKeys.value = (data.skills || [])
     .filter((skill: AssistantSkill) => skill.default_on)
     .map(skill => skill.key);
+  selectedSpeechVoiceAlias.value =
+    (selectedSpeechVoiceAlias.value &&
+    data.speech?.voices?.some(
+      voice => voice.alias === selectedSpeechVoiceAlias.value
+    )
+      ? selectedSpeechVoiceAlias.value
+      : data.speech?.default_voice_alias || data.speech?.voices?.[0]?.alias) ||
+    "";
+  speechController.configure(data.speech);
+  speechTransportStatus.value = data.speech?.enabled
+    ? data.speech.realtime?.enabled
+      ? data.speech.realtime.pipeline_mode === "incremental_rules" &&
+        data.speech.realtime.text_tts_parallel
+        ? "真实时语音已就绪"
+        : "实时语音已就绪（终态模式）"
+      : "完整录音模式"
+    : "语音能力未开放";
 
   if (activeCourse.value) {
     resetChatGreeting();
@@ -755,15 +2015,21 @@ const applyBootstrap = (data: AssistantBootstrapResp) => {
 const loadAssistantBootstrap = async () => {
   isBootstrapping.value = true;
   try {
-    const { data } = await getAssistantBootstrap({
-      course_id: selectedCourseId.value,
-      target_student_id: selectedTargetStudentId.value
-    });
+    if (!assistantBootstrap.value) {
+      interactionScope.value = isStaffMode.value
+        ? "course_general"
+        : "personal_learning";
+    }
+    const { data } = await getAssistantBootstrap(
+      buildAssistantIdentity(selectedCourseId.value)
+    );
     applyBootstrap(data);
     await loadConversationGroups();
   } catch (error: any) {
     console.error("[AiApp] 学习助手启动上下文加载失败:", error);
-    ElMessage.error(error?.message || "学习助手启动上下文加载失败");
+    ElMessage.error(
+      assistantApiErrorMessage(error, "学习助手启动上下文加载失败")
+    );
   } finally {
     isBootstrapping.value = false;
   }
@@ -771,9 +2037,9 @@ const loadAssistantBootstrap = async () => {
 
 const loadConversationGroups = async () => {
   try {
-    const { data } = await getAssistantConversationGroups({
-      target_student_id: selectedTargetStudentId.value
-    });
+    const { data } = await getAssistantConversationGroups(
+      buildAssistantIdentity()
+    );
     conversations.value = (data.list || []).flatMap(group =>
       (group.conversations || []).map(item =>
         normalizeConversation(item, group.course_name)
@@ -792,6 +2058,16 @@ const loadConversationMessages = async (conversation: ConversationView) => {
     );
     activeConversationId.value = conversation.conversation_id;
     const detailConversation = data.conversation || conversation;
+    const existingIndex = conversations.value.findIndex(
+      item => item.conversation_id === detailConversation.conversation_id
+    );
+    const normalizedConversation = normalizeConversation(
+      detailConversation,
+      conversation.course
+    );
+    if (existingIndex >= 0)
+      conversations.value[existingIndex] = normalizedConversation;
+    else conversations.value.unshift(normalizedConversation);
     if (detailConversation.metadata)
       conversation.metadata = detailConversation.metadata;
     const course =
@@ -806,18 +2082,41 @@ const loadConversationMessages = async (conversation: ConversationView) => {
       type: item.role === "user" ? "user" : "system",
       content: item.content_text || "",
       avatar: item.role === "user" ? currentUserAvatar.value : undefined,
-      metadata: item.metadata
+      metadata: item.metadata,
+      explanationImages:
+        item.explanation_images || item.metadata?.explanation_images || [],
+      speech: item.speech || null,
+      speechPlaybackState: item.speech
+        ? mapSpeechSessionPlaybackState(item.speech)
+        : "disabled"
     }));
+    messages.value.forEach(message => {
+      if (message.type !== "system") return;
+      if (
+        message.speech?.session_id &&
+        (shouldPollSpeechSession(message.speech) ||
+          isSpeechArchiveRecovering(message.speech))
+      ) {
+        speechController.resumeSession(message.speech.session_id, message.id);
+      }
+      (message.explanationImages || []).forEach(image => {
+        startExplanationImagePolling(image, message.id);
+      });
+    });
     if (!messages.value.length) resetChatGreeting();
   } catch (error: any) {
     console.error("[AiApp] 学习助手会话消息加载失败:", error);
-    ElMessage.error(error?.message || "会话消息加载失败");
+    ElMessage.error(assistantApiErrorMessage(error, "会话消息加载失败"));
   }
 };
 
 const handleSwitchCourse = (courseName: string) => {
   const target = myCourses.value.find(course => course.name === courseName);
   if (!target) return;
+  if (target.id !== selectedCourseId.value) {
+    void handleCourseContextChange(target.id);
+    return;
+  }
   activeCourse.value = target;
   activeConversationId.value = "";
   resetChatGreeting();
@@ -826,6 +2125,24 @@ const handleSwitchCourse = (courseName: string) => {
 const handleProfileLoaded = (payload: { dimensions?: any[] }) => {
   if (payload.dimensions?.length) {
     profileDimensions.value = payload.dimensions;
+  }
+};
+
+const handleGovernanceSelectStudent = (payload: {
+  studentId: number;
+  rail: "profile" | "path" | "assessment";
+}) => {
+  selectedStudentId.value = payload.studentId;
+  activeRail.value = payload.rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${payload.rail}`);
+  }
+};
+
+const handleGovernanceNavigate = (rail: "generation") => {
+  activeRail.value = rail;
+  if (route.path.startsWith("/ai-app/")) {
+    void router.push(`/ai-app/${rail}`);
   }
 };
 
@@ -847,6 +2164,19 @@ onMounted(() => {
 
 const quickMessage = ref("");
 const quickCourse = ref("");
+const quickVoiceListening = ref(false);
+const quickUploadInputRef = ref<HTMLInputElement | null>(null);
+let quickSpeechRecognition: any = null;
+type QuickAttachmentPreview = {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+  extension: string;
+  previewUrl?: string;
+};
+const quickAttachments = ref<QuickAttachmentPreview[]>([]);
 const quickInteractionMessages = [
   "老师好",
   "这一段没听懂",
@@ -855,42 +2185,218 @@ const quickInteractionMessages = [
 ];
 
 const handleQuickInteraction = (text: string) => {
-  speakDigitalHumans(text);
+  void handleSendMessage(text);
 };
 
-const resolveQuickCourseName = () =>
-  quickCourse.value ||
-  selectedCourseName.value ||
-  myCourses.value[0]?.name ||
-  "";
+const handleQuickUploadClick = () => {
+  quickUploadInputRef.value?.click();
+};
 
-const submitQuickMessage = () => {
-  const pendingMessage = quickMessage.value.trim();
-  const courseName = resolveQuickCourseName();
-  if (!pendingMessage) return;
-  if (!courseName) {
-    ElMessage.warning("请先选择课程");
+const getQuickFileExtension = (file: File) => {
+  const nameExtension = file.name.split(".").pop()?.trim();
+  const typeExtension = file.type.split("/").pop()?.trim();
+  return (nameExtension || typeExtension || "file").slice(0, 8).toUpperCase();
+};
+
+const formatQuickFileSize = (size: number) => {
+  if (size < 1024) return `${size} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = size / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex++;
+  }
+  return `${value >= 10 ? value.toFixed(1) : value.toFixed(2)} ${
+    units[unitIndex]
+  }`;
+};
+
+const getQuickAttachmentKind = (attachment: QuickAttachmentPreview) => {
+  const type = attachment.type.toLowerCase();
+  const extension = attachment.extension.toUpperCase();
+  if (type.startsWith("image/")) return "图片";
+  if (type.includes("pdf") || extension === "PDF") return "PDF";
+  if (type.includes("word") || ["DOC", "DOCX"].includes(extension)) {
+    return "Word";
+  }
+  if (
+    type.includes("spreadsheet") ||
+    ["XLS", "XLSX", "CSV"].includes(extension)
+  ) {
+    return "表格";
+  }
+  if (type.includes("presentation") || ["PPT", "PPTX"].includes(extension)) {
+    return "PPT";
+  }
+  return extension || "文件";
+};
+
+const revokeQuickAttachmentUrl = (attachment: QuickAttachmentPreview) => {
+  if (attachment.previewUrl) {
+    URL.revokeObjectURL(attachment.previewUrl);
+  }
+};
+
+const clearQuickAttachments = () => {
+  quickAttachments.value.forEach(revokeQuickAttachmentUrl);
+  quickAttachments.value = [];
+};
+
+const removeQuickAttachment = (id: string) => {
+  const attachment = quickAttachments.value.find(item => item.id === id);
+  if (attachment) revokeQuickAttachmentUrl(attachment);
+  quickAttachments.value = quickAttachments.value.filter(
+    item => item.id !== id
+  );
+};
+
+const handleQuickAttachmentChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const createdAt = Date.now();
+  const nextAttachments: QuickAttachmentPreview[] = [];
+  const rejected: string[] = [];
+  files.forEach((file, index) => {
+    const extension = getQuickFileExtension(file).toLowerCase();
+    if (!documentAttachmentContentTypes[extension]) {
+      rejected.push(`${file.name} 格式不支持`);
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      rejected.push(`${file.name} 超过 20MB`);
+      return;
+    }
+    nextAttachments.push({
+      id: `${file.name}-${file.size}-${file.lastModified}-${createdAt}-${index}`,
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type || "",
+      extension: getQuickFileExtension(file),
+      previewUrl: undefined
+    });
+  });
+  if (nextAttachments.length) {
+    quickAttachments.value = [
+      ...quickAttachments.value,
+      ...nextAttachments
+    ].slice(0, 3);
+    ElMessage.success(`已选择 ${nextAttachments.length} 个文档附件`);
+  }
+  if (rejected.length) {
+    ElMessage.warning(rejected.slice(0, 2).join("；"));
+  }
+  input.value = "";
+};
+
+const handleQuickVoiceInput = () => {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    ElMessage.warning("当前浏览器暂不支持系统语音输入");
     return;
   }
-  quickCourse.value = courseName;
-  handleNewChat({ course: courseName });
+
+  if (quickVoiceListening.value && quickSpeechRecognition) {
+    quickSpeechRecognition.stop?.();
+    return;
+  }
+
+  const initialText = quickMessage.value.trim();
+  const recognition = new SpeechRecognition();
+  quickSpeechRecognition = recognition;
+  recognition.lang = "zh-CN";
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  let committedSpeechText = "";
+
+  recognition.onresult = (event: any) => {
+    let interimText = "";
+    for (let index = event.resultIndex; index < event.results.length; index++) {
+      const transcript = event.results[index][0]?.transcript || "";
+      if (event.results[index].isFinal) {
+        committedSpeechText += transcript;
+      } else {
+        interimText += transcript;
+      }
+    }
+    const spokenText = `${committedSpeechText}${interimText}`.trim();
+    const separator = initialText && spokenText ? " " : "";
+    quickMessage.value = `${initialText}${separator}${spokenText}`.trim();
+  };
+
+  recognition.onerror = (event: any) => {
+    quickVoiceListening.value = false;
+    if (event?.error === "not-allowed") {
+      ElMessage.warning("请允许浏览器使用麦克风");
+    } else if (!["aborted", "no-speech"].includes(event?.error)) {
+      ElMessage.warning("语音输入暂时不可用");
+    }
+  };
+
+  recognition.onend = () => {
+    quickVoiceListening.value = false;
+    quickSpeechRecognition = null;
+  };
+
+  try {
+    quickVoiceListening.value = true;
+    recognition.start();
+  } catch {
+    quickVoiceListening.value = false;
+    quickSpeechRecognition = null;
+  }
 };
 
 const handleNewChat = async (payload: { course: string }) => {
   const course = myCourses.value.find(item => item.name === payload.course);
-  if (course) activeCourse.value = course;
+  if (course && course.id !== selectedCourseId.value) {
+    await handleCourseContextChange(course.id);
+  } else if (course) {
+    activeCourse.value = course;
+  }
+  const courseId = course?.id || selectedCourseId.value;
+  const courseName = course?.name || payload.course;
+  if (!courseId) {
+    ElMessage.warning("请先选择课程");
+    return;
+  }
+  if (
+    interactionScope.value === "student_analysis" &&
+    !selectedTargetStudentId.value
+  ) {
+    ElMessage.warning("请选择要分析的学生");
+    return;
+  }
+  if (!selectedModelReady.value) {
+    ElMessage.warning(selectedModelDisabledReason.value || "当前没有可用模型");
+    return;
+  }
   resetChatGreeting();
   try {
+    const identity = buildAssistantIdentity(courseId);
     const { data } = await createAssistantConversation({
-      course_id: course?.id || selectedCourseId.value,
-      target_student_id: selectedTargetStudentId.value,
-      title: payload.course ? `${payload.course} 学习辅导` : "学习辅导",
+      ...identity,
+      course_id: courseId,
+      title:
+        interactionScope.value === "course_general"
+          ? `${courseName} 课程通用问答`
+          : interactionScope.value === "student_analysis"
+            ? `${courseName} 学情分析`
+            : courseName
+              ? `${courseName} 学习辅导`
+              : "学习辅导",
       metadata: {
         ui_entry: "ai_app_sidebar",
         selected_agent: selectedAgentKey.value,
         selected_model: selectedModelKey.value,
         thinking_mode: thinkingModeKey.value,
-        skill_keys: selectedSkillKeys.value
+        skill_keys: selectedSkillKeys.value.join(",")
       }
     });
     const conversationId =
@@ -900,12 +2406,15 @@ const handleNewChat = async (payload: { course: string }) => {
     }
     const conversation: AssistantConversationItem = data.conversation || {
       conversation_id: conversationId,
-      title:
-        data.title ||
-        (payload.course ? `${payload.course} 学习辅导` : "学习辅导"),
+      title: data.title || (courseName ? `${courseName} 学习辅导` : "学习辅导"),
       message_count: 0,
-      course_id: course?.id || selectedCourseId.value,
-      target_student_id: selectedTargetStudentId.value
+      course_id: courseId,
+      target_student_id: selectedTargetStudentId.value,
+      subject_student_id: selectedTargetStudentId.value,
+      interaction_scope: interactionScope.value,
+      visibility_scope: isStaffMode.value ? "staff_private" : "student_private",
+      identity_version: 2,
+      legacy_read_only: false
     };
     activeConversationId.value = conversation.conversation_id;
     conversations.value = [
@@ -916,45 +2425,57 @@ const handleNewChat = async (payload: { course: string }) => {
     ];
   } catch (error: any) {
     console.error("[AiApp] 创建学习助手会话失败:", error);
-    ElMessage.error(error?.message || "创建会话失败");
+    ElMessage.error(assistantApiErrorMessage(error, "创建会话失败"));
     return;
   }
 
   const pendingMessage = quickMessage.value.trim();
   if (pendingMessage) {
-    quickMessage.value = "";
-    sendQuickMessageWithResolvedContext(pendingMessage, course || activeCourse.value);
+    const pendingFiles = quickAttachments.value.map(item => item.file);
+    // 切换到聊天栏目，确保数字人状态与课程上下文同步。
+    activeRail.value = "chat";
+    // 微延时等待课程上下文切换完成。
+    setTimeout(() => {
+      void handleSendMessage({ text: pendingMessage, files: pendingFiles });
+      quickMessage.value = "";
+      clearQuickAttachments();
+    }, 100);
   }
 };
 
 const syncHumanRenderState = () => {
-  if (!virtualHumanRef.value) return;
-  const shouldPause =
-    document.hidden || activeRail.value !== "chat" || humanCollapsed.value;
-  if (shouldPause) {
-    virtualHumanRef.value.pauseRender?.();
+  const shouldPauseAll = document.hidden || activeRail.value !== "chat";
+  if (shouldPauseAll) {
+    virtualHumanRef.value?.pauseRender?.();
+    floatingHumanRef.value?.pauseRender?.();
+    return;
+  }
+
+  floatingHumanRef.value?.resumeRender?.();
+  if (!canMountInline3D.value || humanCollapsed.value) {
+    virtualHumanRef.value?.pauseRender?.();
   } else {
-    virtualHumanRef.value.resumeRender?.();
+    virtualHumanRef.value?.resumeRender?.();
   }
 };
 
-watch([activeRail, humanCollapsed], () => {
+watch([activeRail, humanCollapsed, canMountInline3D], () => {
   syncHumanRenderState();
 });
 
-const updateMobileViewportState = () => {
-  isMobileViewport.value =
-    window.innerWidth <= 768 ||
-    document.documentElement.classList.contains("qiming-native-webview");
-  if (isMobileViewport.value) {
-    sidebarCollapsed.value = true;
-    humanCollapsed.value = false;
-  }
-  syncHumanRenderState();
-};
+watch(activeRail, () => {
+  ensureStudentContextForActiveRail();
+});
 
 watch(selectedStudentId, () => {
-  if (isBootstrapping.value || !assistantBootstrap.value || !isStaffMode.value)
+  if (
+    isCourseSwitching.value ||
+    isInteractionScopeSwitching.value ||
+    isBootstrapping.value ||
+    !assistantBootstrap.value ||
+    !isStaffMode.value ||
+    interactionScope.value !== "student_analysis"
+  )
     return;
   activeConversationId.value = "";
   resetChatGreeting();
@@ -966,11 +2487,9 @@ const handleVisibilityChange = () => {
 };
 
 onMounted(() => {
-  updateMobileViewportState();
-  window.addEventListener("resize", updateMobileViewportState, {
-    passive: true
-  });
   document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("resize", syncSidebarWidthLimit);
+  syncSidebarWidthLimit();
   setTimeout(() => {
     syncHumanRenderState();
   }, 0);
@@ -978,27 +2497,36 @@ onMounted(() => {
 
 onUnmounted(() => {
   streamCancel.value?.();
-  window.removeEventListener("resize", updateMobileViewportState);
+  speechController.dispose();
+  clearAllResourceTaskPolling();
+  clearAllExplanationImagePolling();
+  quickSpeechRecognition?.stop?.();
+  quickSpeechRecognition = null;
+  if (localDigitalHumanSpeechTimer) clearTimeout(localDigitalHumanSpeechTimer);
+  clearQuickAttachments();
   document.removeEventListener("visibilitychange", handleVisibilityChange);
+  window.removeEventListener("resize", syncSidebarWidthLimit);
+  document.documentElement.classList.remove("ai-app-sidebar-resizing");
 });
 </script>
 
 <template>
   <div
-    class="ai-app-root h-[100dvh] w-full flex flex-col overflow-hidden bg-white"
-    :class="[
-      activeRail === 'chat'
-        ? 'bg-gradient-to-br from-[rgb(253,229,250)] via-[rgb(233,231,255)] to-[rgb(254,214,233)]'
-        : '',
-      currentTheme
-    ]"
+    class="ai-app-root h-[100dvh] flex flex-col overflow-hidden"
+    :class="[currentTheme, { 'is-chat': activeRail === 'chat' }]"
   >
     <div class="flex-1 min-h-0 flex overflow-hidden">
       <!-- 极简左侧边栏 (第一块) -->
       <aside
         v-if="activeRail === 'chat'"
-        class="ai-app-left-rail flex-shrink-0 z-20 bg-white border-r border-gray-100 flex flex-col transition-all duration-300 relative"
-        :class="sidebarCollapsed ? 'is-collapsed w-[34px]' : 'w-[260px]'"
+        id="ai-app-course-sidebar"
+        class="ai-app-left-rail flex-shrink-0 z-20 flex flex-col relative"
+        :class="{
+          'is-collapsed': sidebarCollapsed,
+          'is-resizing': sidebarResizing
+        }"
+        :style="{ width: `${sidebarRenderedWidth}px` }"
+        aria-label="课程与会话侧栏"
       >
         <div v-show="!sidebarCollapsed" class="flex-1 overflow-hidden">
           <AiSidebar
@@ -1010,10 +2538,10 @@ onUnmounted(() => {
           />
         </div>
 
-        <!-- 收起态：桌面保留竖向标识，移动端仅保留独立按钮 -->
+        <!-- 收起态：竖向标识 -->
         <div
-          v-show="sidebarCollapsed && !isMobileViewport"
-          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer collapsed-rail-label"
+          v-show="sidebarCollapsed"
+          class="flex-1 flex flex-col items-center justify-center text-gray-400 select-none cursor-pointer"
           @click="toggleSidebar"
         >
           <el-icon :size="14" class="rotate-90 mb-2"><FolderOpened /></el-icon>
@@ -1024,12 +2552,33 @@ onUnmounted(() => {
           >
         </div>
 
+        <button
+          v-if="!sidebarCollapsed"
+          type="button"
+          class="ai-app-left-rail__resize-handle"
+          role="separator"
+          aria-label="调整课程侧栏宽度"
+          aria-controls="ai-app-course-sidebar"
+          aria-orientation="vertical"
+          :aria-valuemin="sidebarMinWidth"
+          :aria-valuemax="sidebarMaxWidth"
+          :aria-valuenow="sidebarWidth"
+          tabindex="0"
+          title="拖动调整宽度，双击恢复默认"
+          @pointerdown="beginSidebarResize"
+          @pointermove="updateSidebarResize"
+          @pointerup="endSidebarResize"
+          @pointercancel="endSidebarResize"
+          @lostpointercapture="endSidebarResize"
+          @dblclick="resetSidebarWidth"
+          @keydown="handleSidebarResizeKeydown"
+        >
+          <span aria-hidden="true" />
+        </button>
+
         <!-- 收起 / 展开 把手 -->
         <button
-          class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-30"
-          :class="{
-            'is-mobile-collapsed-trigger': sidebarCollapsed && isMobileViewport
-          }"
+          class="absolute top-3 -right-3 w-6 h-6 rounded-md bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 transition-colors z-30"
           :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
           @click="toggleSidebar"
         >
@@ -1042,55 +2591,103 @@ onUnmounted(() => {
 
       <!-- 右边总体容器 (主体) -->
       <div class="flex-1 flex flex-col min-w-0">
-        <!-- 教师专属：顶部学生选择器工具栏 -->
+        <!-- 课程 / 学生上下文工具栏 -->
         <div
-          v-if="
-            isStaffMode &&
-            ['path', 'profile', 'assessment'].includes(activeRail)
-          "
-          class="flex-none flex items-center justify-end gap-3 bg-white px-6 py-3 border-b border-gray-100 z-10 relative shadow-sm"
+          v-if="showCourseContext"
+          class="ai-course-context-bar flex-none flex items-center justify-end gap-3 bg-white mb-5 px-6 py-3 border border-gray-100 rounded-lg z-10 relative overflow-hidden"
         >
-          <span class="text-xs text-gray-500 font-medium">分析对象:</span>
+          <span class="text-xs text-gray-500 font-medium">{{
+            courseContextLabel
+          }}</span>
           <el-select
-            v-model="selectedStudentId"
-            placeholder="请选择学生"
+            v-model="selectedCoursePickerId"
+            placeholder="请选择课程"
             size="small"
-            style="width: 160px"
-            class="student-select"
+            style="width: 220px"
+            class="course-select"
+            :disabled="isBootstrapping || !myCourses.length"
           >
             <template #prefix>
-              <el-icon><User /></el-icon>
+              <el-icon><FolderOpened /></el-icon>
             </template>
             <el-option
-              v-for="item in myStudents"
+              v-for="item in myCourses"
               :key="item.id"
               :label="item.name"
               :value="item.id"
             >
-              <div class="flex items-center gap-2">
-                <el-avatar :size="18" :src="item.avatar" />
-                <span class="text-sm">{{ item.name }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm truncate">{{ item.name }}</span>
+                <span
+                  v-if="item.subtitle"
+                  class="text-xs text-gray-400 truncate max-w-[110px]"
+                >
+                  {{ item.subtitle }}
+                </span>
               </div>
             </el-option>
           </el-select>
+          <template v-if="isStaffMode && activeRail === 'chat'">
+            <span class="text-xs text-gray-500 font-medium">问答范围:</span>
+            <el-select
+              :model-value="interactionScope"
+              :title="interactionScopeLabel"
+              size="small"
+              style="width: 180px"
+              class="interaction-scope-select"
+              :disabled="isBootstrapping || isChatStreaming"
+              @update:model-value="handleInteractionScopeChange"
+            >
+              <el-option
+                v-for="scope in supportedInteractionScopes"
+                :key="scope"
+                :label="
+                  scope === 'course_general' ? '课程通用问答' : '学生学情分析'
+                "
+                :value="scope"
+              />
+            </el-select>
+          </template>
+          <template v-if="showStudentContext">
+            <span class="text-xs text-gray-500 font-medium">分析对象:</span>
+            <el-select
+              v-model="selectedStudentId"
+              placeholder="请选择学生"
+              size="small"
+              style="width: 160px"
+              class="student-select"
+              :disabled="isBootstrapping || isCourseSwitching"
+            >
+              <template #prefix>
+                <el-icon><User /></el-icon>
+              </template>
+              <el-option
+                v-for="item in myStudents"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
+              >
+                <div class="flex items-center gap-2">
+                  <el-avatar :size="18" :src="item.avatar" />
+                  <span class="text-sm">{{ item.name }}</span>
+                </div>
+              </el-option>
+            </el-select>
+          </template>
         </div>
 
         <!-- 主体内容 (第三块) -->
-        <main class="flex-1 overflow-hidden relative">
+        <main class="ai-app-content flex-1 min-w-0 overflow-hidden relative">
           <!-- 【场景 A1】 智能辅导对谈框 (已选课) -->
           <div
             v-if="activeRail === `chat` && activeCourse"
-            class="ai-chat-scene h-full w-full min-w-0 flex stretch p-4 gap-4 overflow-hidden"
+            class="ai-chat-workbench h-full w-full min-w-0 flex items-stretch p-4 gap-4 overflow-hidden"
           >
             <!-- 对话流核心面板 -->
             <transition appear name="panel-slide">
               <div
-                class="ai-chat-card flex-1 h-full bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(94,127,248,0.1)]"
+                class="ai-chat-dialog-panel ai-workbench-panel flex-1 min-w-0 h-full overflow-hidden relative"
               >
-                <!-- 柔和的顶部遮罩渐变 -->
-                <div
-                  class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-white/80 to-transparent pointer-events-none z-10"
-                />
                 <AiChatModule
                   :messages="messages"
                   :activeCourse="activeCourse.name"
@@ -1103,12 +2700,18 @@ onUnmounted(() => {
                   :selectedAgent="selectedAgentLabel"
                   :selectedModel="selectedModelLabel"
                   :thinkingMode="thinkingModeLabel"
+                  :model-ready="selectedModelReady"
+                  :model-disabled-reason="selectedModelDisabledReason"
                   :loading="isChatStreaming"
                   @send="handleSendMessage"
+                  @stop="handleStopStreaming"
                   @preview="handlePreview"
+                  @regenerate="handleRegenerateMessage"
+                  @play-speech="handlePlaySpeech"
+                  @stop-speech="handleStopSpeech"
                   @switch-course="handleSwitchCourse"
                   @update:selectedAgent="selectedAgentKey = $event"
-                  @update:selectedModel="selectedModelKey = $event"
+                  @update:selectedModel="handleModelSelect"
                   @update:thinkingMode="thinkingModeKey = $event"
                 />
               </div>
@@ -1117,12 +2720,13 @@ onUnmounted(() => {
             <!-- 数字人面板：保留原右侧 VRM 数字人模块 -->
             <transition appear name="panel-reveal">
               <div
-                class="ai-app-human-panel flex-shrink-0 h-full flex flex-col gap-4 transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) relative"
-                :class="humanCollapsed ? 'w-16' : 'w-[420px]'"
+                v-if="canMountInline3D"
+                class="ai-human-column h-full min-w-0 flex flex-col gap-4 transition-all duration-200 ease-out relative"
+                :class="{ 'is-collapsed': humanCollapsed }"
               >
                 <!-- 收起 / 展开把手：挂在外层，避免被圆角容器裁切 -->
                 <button
-                  class="absolute top-4 left-0 -translate-x-1/2 w-7 h-7 rounded-full bg-white/95 backdrop-blur border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 hover:scale-110 transition-all z-[140]"
+                  class="absolute top-4 left-0 -translate-x-1/2 w-7 h-7 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary/40 transition-colors z-[140]"
                   :title="humanCollapsed ? '展开数字人' : '收起数字人'"
                   @click="toggleHuman"
                 >
@@ -1133,11 +2737,21 @@ onUnmounted(() => {
                 </button>
 
                 <div
-                  class="flex-1 bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.04)] border border-white/50 overflow-hidden relative"
+                  class="ai-workbench-panel flex-1 min-w-0 overflow-hidden relative"
                 >
                   <VirtualHumanPanel
-                    v-show="!humanCollapsed"
+                    v-show="activeRail === 'chat' && !humanCollapsed"
                     ref="virtualHumanRef"
+                    :speech-enabled="
+                      Boolean(assistantBootstrap?.speech?.enabled)
+                    "
+                    :voices="assistantBootstrap?.speech?.voices || []"
+                    :voice-alias="selectedSpeechVoiceAlias"
+                    :speech-status="speechTransportStatus"
+                    :speech-detail="speechDiagnosticText"
+                    @update:voice-alias="selectedSpeechVoiceAlias = $event"
+                    @test-speech-output="testSpeechOutput"
+                    @copy-speech-diagnostics="copySpeechDiagnostics"
                   />
 
                   <div
@@ -1146,12 +2760,12 @@ onUnmounted(() => {
                     @click="toggleHuman"
                   >
                     <div
-                      class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover/btn:scale-125 transition-transform duration-500"
+                      class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-colors duration-200"
                     >
                       <el-icon :size="20"><Avatar /></el-icon>
                     </div>
                     <span
-                      class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 group-hover/btn:text-primary transition-colors"
+                      class="text-[11px] font-semibold tracking-normal text-gray-500 group-hover/btn:text-primary transition-colors"
                       style="writing-mode: vertical-rl"
                     >
                       专属助教
@@ -1162,11 +2776,11 @@ onUnmounted(() => {
                 <transition name="el-zoom-in-bottom">
                   <div
                     v-show="!humanCollapsed"
-                    class="ai-human-actions flex-none bg-white/80 backdrop-blur-md rounded-2xl border border-white/60 p-3 shadow-md flex flex-col gap-2 overflow-hidden z-[100]"
+                    class="ai-workbench-panel flex-none min-w-0 p-3 flex flex-col gap-2 overflow-hidden z-[100]"
                     style="min-height: 180px"
                   >
                     <div
-                      class="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center border-b border-gray-100 pb-1.5 mb-1"
+                      class="text-[12px] font-semibold text-gray-600 text-center border-b border-gray-100 pb-1.5 mb-1"
                     >
                       快速互动
                     </div>
@@ -1177,7 +2791,7 @@ onUnmounted(() => {
                         type="primary"
                         plain
                         size="default"
-                        class="!w-full !m-0 !text-[12px] !rounded-xl !border-blue-100 !bg-blue-50/50 hover:!bg-blue-500 hover:!text-white transition-all duration-300"
+                        class="!w-full !m-0 !text-[12px] !rounded-lg !border-blue-100 !bg-blue-50/50 hover:!bg-blue-100 hover:!text-primary transition-colors duration-200"
                         @click="handleQuickInteraction(msg)"
                       >
                         {{ msg }}
@@ -1192,52 +2806,71 @@ onUnmounted(() => {
           <!-- 【场景 A2】 智能辅导欢迎中心 (未选课) -->
           <div
             v-else-if="activeRail === `chat` && !activeCourse"
-            class="ai-chat-welcome h-full w-full p-4 flex items-center justify-center relative"
+            class="h-full w-full p-4 flex items-center justify-center relative"
           >
-            <!-- 背景装饰 -->
-            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-              <div
-                class="absolute -top-[10%] -right-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
-              />
-              <div
-                class="absolute -bottom-[10%] -left-[5%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-3xl opacity-60"
-              />
-            </div>
-
             <div
-              class="ai-chat-welcome-card w-full max-w-3xl px-6 space-y-10 relative z-10 transform -translate-y-8"
+              class="w-full max-w-5xl px-6 space-y-8 relative z-10 transform -translate-y-8"
             >
-              <div class="ai-chat-welcome-human">
-                <VirtualHumanPanel ref="virtualHumanRef" />
-                <div class="ai-chat-welcome-actions">
-                  <button
-                    v-for="msg in quickInteractionMessages"
-                    :key="`welcome-${msg}`"
-                    type="button"
-                    @click="handleQuickInteraction(msg)"
-                  >
-                    {{ msg }}
-                  </button>
-                </div>
-              </div>
-
               <div class="text-center space-y-4">
                 <h1
-                  class="text-3xl sm:text-[38px] font-bold tracking-tight gradient-text-animate"
+                  class="text-3xl sm:text-[38px] font-bold tracking-tight text-primary"
                 >
                   今天想学习什么？
                 </h1>
-                <p
-                  class="text-[15px] font-medium tracking-wide"
-                  style="color: rgba(140, 80, 159, 0.7)"
-                >
+                <p class="text-[15px] font-medium tracking-wide text-gray-500">
                   请先选择一门课程，然后随时寻求学习辅导
                 </p>
               </div>
 
-              <div
-                class="quick-chat-box bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 focus-within:shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-primary/20 transition-all duration-500 overflow-hidden"
-              >
+              <div class="quick-chat-card">
+                <input
+                  ref="quickUploadInputRef"
+                  type="file"
+                  multiple
+                  accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                  class="quick-chat-file-input"
+                  @change="handleQuickAttachmentChange"
+                />
+                <div
+                  v-if="quickAttachments.length"
+                  class="quick-attachment-shelf"
+                >
+                  <div
+                    v-for="attachment in quickAttachments"
+                    :key="attachment.id"
+                    class="quick-attachment-card"
+                    :title="`${attachment.name} · ${formatQuickFileSize(
+                      attachment.size
+                    )} · ${getQuickAttachmentKind(attachment)}`"
+                  >
+                    <div class="quick-attachment-preview">
+                      <img
+                        v-if="attachment.previewUrl"
+                        :src="attachment.previewUrl"
+                        :alt="attachment.name"
+                      />
+                      <span v-else>{{ attachment.extension }}</span>
+                    </div>
+                    <div class="quick-attachment-info">
+                      <span class="quick-attachment-name">
+                        {{ attachment.name }}
+                      </span>
+                      <span class="quick-attachment-meta">
+                        {{ formatQuickFileSize(attachment.size) }} ·
+                        {{ getQuickAttachmentKind(attachment) }}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      class="quick-attachment-remove"
+                      title="删除附件"
+                      aria-label="删除附件"
+                      @click="removeQuickAttachment(attachment.id)"
+                    >
+                      <el-icon><Close /></el-icon>
+                    </button>
+                  </div>
+                </div>
                 <el-input
                   v-model="quickMessage"
                   type="textarea"
@@ -1245,32 +2878,42 @@ onUnmounted(() => {
                   placeholder="可以输入想要了解的知识点。输入 @ 提及课程或文件..."
                   class="quick-chat-input"
                   resize="none"
-                  @keyup.enter.prevent="submitQuickMessage"
+                  @keyup.enter.prevent="
+                    quickCourse ? handleNewChat({ course: quickCourse }) : null
+                  "
                 />
 
-                <div
-                  class="flex items-center justify-between px-4 py-3 bg-gray-50/50 border-t border-gray-50"
-                >
-                  <div class="flex flex-wrap items-center gap-1.5">
+                <div class="quick-chat-toolbar">
+                  <div class="quick-chat-tools-left">
+                    <button
+                      type="button"
+                      class="quick-chat-icon-button quick-chat-upload-button"
+                      title="上传资料"
+                      @click="handleQuickUploadClick"
+                    >
+                      <span class="quick-chat-upload-plus" aria-hidden="true">
+                        +
+                      </span>
+                    </button>
+
                     <el-dropdown
                       trigger="click"
+                      popper-class="quick-chat-dropdown"
                       @command="c => (quickCourse = c)"
                     >
                       <span
-                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors"
-                        :class="
-                          quickCourse
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
-                        "
+                        class="quick-chat-chip quick-chat-chip--interactive"
+                        :class="{ 'is-selected': quickCourse }"
                       >
-                        <el-icon class="mr-1.5 text-[14px]"
-                          ><FolderOpened
-                        /></el-icon>
-                        {{ quickCourse || selectedCourseName || "选择课程" }}
-                        <el-icon class="ml-1 text-[12px]"
-                          ><ArrowDown
-                        /></el-icon>
+                        <el-icon class="quick-chat-chip__icon">
+                          <FolderOpened />
+                        </el-icon>
+                        <span class="quick-chat-chip__text">
+                          {{ quickCourse || "选择课程" }}
+                        </span>
+                        <el-icon class="quick-chat-chip__arrow">
+                          <ArrowDown />
+                        </el-icon>
                       </span>
                       <template #dropdown>
                         <el-dropdown-menu>
@@ -1285,25 +2928,30 @@ onUnmounted(() => {
                       </template>
                     </el-dropdown>
 
-                    <span
-                      class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 bg-gray-100"
-                    >
-                      <el-icon class="mr-1.5 text-[14px]"><Monitor /></el-icon>
-                      {{ mode }}
+                    <span class="quick-chat-chip quick-chat-chip--static">
+                      <el-icon class="quick-chat-chip__icon">
+                        <Monitor />
+                      </el-icon>
+                      <span class="quick-chat-chip__text">{{ mode }}</span>
                     </span>
 
                     <el-dropdown
                       trigger="click"
+                      popper-class="quick-chat-dropdown"
                       @command="a => (selectedAgentKey = a)"
                     >
                       <span
-                        class="inline-flex items-center px-3 py-1.5 rounded-xl text-[13px] font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors"
+                        class="quick-chat-chip quick-chat-chip--interactive"
                       >
-                        <el-icon class="mr-1.5 text-[14px]"><Cpu /></el-icon>
-                        {{ selectedAgentLabel || "选择助手" }}
-                        <el-icon class="ml-1 text-[12px]"
-                          ><ArrowDown
-                        /></el-icon>
+                        <el-icon class="quick-chat-chip__icon">
+                          <Cpu />
+                        </el-icon>
+                        <span class="quick-chat-chip__text">
+                          {{ selectedAgentLabel || "选择助手" }}
+                        </span>
+                        <el-icon class="quick-chat-chip__arrow">
+                          <ArrowDown />
+                        </el-icon>
                       </span>
                       <template #dropdown>
                         <el-dropdown-menu>
@@ -1319,31 +2967,94 @@ onUnmounted(() => {
                     </el-dropdown>
                   </div>
 
-                  <div class="flex items-center gap-3">
-                    <span
-                      class="text-[12px] text-gray-400 font-medium tracking-wide flex items-center pr-2 cursor-pointer hover:text-gray-600 transition-colors"
+                  <div class="quick-chat-tools-right">
+                    <el-dropdown
+                      trigger="click"
+                      popper-class="quick-chat-dropdown"
+                      @command="handleModelSelect"
                     >
-                      {{ selectedModelLabel || "选择模型" }}
-                      <el-icon class="ml-1"><ArrowDown /></el-icon>
-                    </span>
+                      <span class="quick-chat-model-trigger">
+                        <span>{{ selectedModelLabel || "选择模型" }}</span>
+                        <el-icon class="quick-chat-chip__arrow">
+                          <ArrowDown />
+                        </el-icon>
+                      </span>
+                      <template #dropdown>
+                        <el-dropdown-menu>
+                          <el-dropdown-item
+                            v-for="model in assistantBootstrap?.models || []"
+                            :key="model.key"
+                            :command="model.key"
+                            :disabled="!isAssistantModelSelectable(model)"
+                            :title="
+                              [
+                                model.description,
+                                model.reason
+                                  ? assistantModelReasonText(model.reason)
+                                  : ''
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')
+                            "
+                          >
+                            <span class="quick-model-option">
+                              <span>{{ model.label }}</span>
+                              <span
+                                v-if="
+                                  model.status && model.status !== 'available'
+                                "
+                                class="quick-model-option__status"
+                              >
+                                {{ modelStatusText(model.status) }}
+                              </span>
+                            </span>
+                          </el-dropdown-item>
+                        </el-dropdown-menu>
+                      </template>
+                    </el-dropdown>
+
                     <button
-                      class="quick-chat-send-btn h-10 flex items-center justify-center rounded-xl transition-all transform border"
-                      :class="
-                        resolveQuickCourseName() && quickMessage.trim()
-                          ? 'bg-[#c199f9] border-[#c199f9] text-white hover:bg-[#b085f7] hover:scale-105 shadow-lg shadow-purple-100 cursor-pointer'
-                          : 'bg-white border-gray-200 text-gray-300 cursor-not-allowed'
-                      "
-                      :disabled="!resolveQuickCourseName() || !quickMessage.trim()"
-                      @click="submitQuickMessage"
+                      type="button"
+                      class="quick-chat-icon-button quick-chat-voice-button"
+                      :class="{ 'is-listening': quickVoiceListening }"
+                      :title="quickVoiceListening ? '停止语音输入' : '语音输入'"
+                      @click="handleQuickVoiceInput"
                     >
-                      <el-icon
-                        class="text-[16px]"
-                        :class="
-                          resolveQuickCourseName() && quickMessage.trim() ? '' : 'font-bold'
-                        "
-                        ><Top
-                      /></el-icon>
-                      <span>发送</span>
+                      <el-icon><Microphone /></el-icon>
+                    </button>
+                    <button
+                      type="button"
+                      class="quick-chat-send-button"
+                      :class="{
+                        'is-ready':
+                          quickCourse &&
+                          quickMessage.trim() &&
+                          selectedModelReady
+                      }"
+                      :disabled="
+                        !quickCourse ||
+                        !quickMessage.trim() ||
+                        !selectedModelReady
+                      "
+                      :title="
+                        !selectedModelReady
+                          ? selectedModelDisabledReason || '当前没有可用模型'
+                          : '发送'
+                      "
+                      @click="
+                        quickCourse
+                          ? handleNewChat({ course: quickCourse })
+                          : null
+                      "
+                    >
+                      <svg
+                        class="quick-chat-send-icon"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 19V5" />
+                        <path d="M5.5 11.5 12 5l6.5 6.5" />
+                      </svg>
                     </button>
                   </div>
                 </div>
@@ -1354,89 +3065,117 @@ onUnmounted(() => {
           <!-- 【场景 B】 Agent PDF 工作台 -->
           <div
             v-else-if="activeRail === `agentpdf`"
-            class="h-full w-full overflow-hidden"
+            class="h-full w-full min-w-0 overflow-hidden"
           >
-            <div class="h-full bg-white overflow-hidden">
+            <div class="agent-pdf-shell h-full w-full min-w-0 overflow-hidden">
               <AgentPdfWorkbench :service-url="pdfServiceUrl" />
             </div>
           </div>
 
-          <div v-else-if="activeRail === `generation`" class="h-full w-full">
-            <div class="h-full bg-white overflow-hidden">
-              <AiResourceGeneration
-                :course-id="selectedCourseId"
-                :target-student-id="selectedTargetStudentId"
-              />
+          <div
+            v-else-if="activeRail === `generation`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
+            <div
+              v-if="isStaffMode"
+              class="h-full w-full min-w-0 bg-transparent overflow-hidden"
+            >
+              <el-tabs
+                v-model="resourceWorkspaceMode"
+                class="resource-workspace-tabs h-full flex flex-col"
+              >
+                <el-tab-pane label="演示导入资源" name="demo" class="h-full">
+                  <AiDemoResourceManager
+                    v-model:active-pane="demoResourcePane"
+                    :system-courses="myCourses"
+                    :can-import="apiMode === 'admin'"
+                  />
+                </el-tab-pane>
+                <el-tab-pane
+                  label="AI 生成资源"
+                  name="generated"
+                  class="h-full"
+                >
+                  <div
+                    v-if="!selectedStudentId"
+                    class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
+                  >
+                    <AiAppEmptyState
+                      title="请选择学生"
+                      description="选择学生后可查看资源生成任务和学习资源。"
+                      :icon="User"
+                    />
+                  </div>
+                  <AiResourceGeneration
+                    v-else
+                    :course-id="selectedCourseId"
+                    :target-student-id="selectedStudentContextId"
+                    :requires-target-student="isStaffMode"
+                    :resource-types="assistantBootstrap?.resource_types || []"
+                  />
+                </el-tab-pane>
+              </el-tabs>
             </div>
+            <AiStudentResourceLibrary v-else :course-id="selectedCourseId" />
           </div>
 
-          <div v-else-if="activeRail === `path`" class="h-full w-full">
+          <div
+            v-else-if="activeRail === `path`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-white"
+              class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
             >
-              <div
-                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
-              >
-                <LottieAnimation
-                  :animationData="onlineChartAnimation"
-                  :width="360"
-                  :height="360"
-                />
-                <h3 class="mt-4 text-lg font-black text-gray-600">
-                  尚未选择学生
-                </h3>
-                <p class="mt-2 text-sm text-gray-400">
-                  请在顶部选择需要分析的学生以查看个性化路径规划
-                </p>
-              </div>
+              <AiAppEmptyState
+                title="请选择学生"
+                description="选择学生后可查看个性化学习路径。"
+                :icon="Guide"
+              />
             </div>
-            <div v-else class="h-full bg-white overflow-hidden">
+            <div
+              v-else
+              class="h-full w-full min-w-0 bg-transparent overflow-hidden"
+            >
               <AiLearningPath
                 :course-id="selectedCourseId"
-                :target-student-id="selectedTargetStudentId"
+                :target-student-id="selectedStudentContextId"
+                :requires-target-student="isStaffMode"
               />
             </div>
           </div>
 
           <div
             v-else-if="activeRail === `profile`"
-            class="h-full w-full p-4 bg-white"
+            class="h-full w-full min-w-0 overflow-hidden bg-transparent"
           >
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center"
+              class="h-full w-full min-w-0 flex items-center justify-center"
+            >
+              <AiAppEmptyState
+                title="请选择学生"
+                description="选择学生后可查看画像、知识掌握和风险标签。"
+                :icon="User"
+              />
+            </div>
+            <div
+              v-else
+              class="ai-profile-workspace h-full w-full min-w-0 min-h-0 flex gap-4 overflow-hidden"
             >
               <div
-                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
-              >
-                <LottieAnimation
-                  :animationData="emptyStateDevelopmentAnimation"
-                  :width="360"
-                  :height="360"
-                />
-                <h3 class="mt-4 text-lg font-black text-gray-600">
-                  尚未选择学生
-                </h3>
-                <p class="mt-2 text-sm text-gray-400">
-                  请在顶部选择学生以查看学习画像与学情分析
-                </p>
-              </div>
-            </div>
-            <div v-else class="h-full flex gap-4 overflow-hidden">
-              <!-- 左：完整学习画像 -->
-              <div
-                class="flex-1 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                class="ai-profile-main flex-1 min-w-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiLearningProfile
                   :course-id="selectedCourseId"
-                  :target-student-id="selectedTargetStudentId"
+                  :target-student-id="selectedStudentContextId"
+                  :requires-target-student="isStaffMode"
+                  :enrolled-courses="myCourses"
                   @profile-loaded="handleProfileLoaded"
                 />
               </div>
-              <!-- 右：原 chat 右侧的画像 / 智能体 / 拓展资源 选项卡 -->
               <div
-                class="w-[360px] flex-shrink-0 h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                class="ai-profile-inspector w-[440px] flex-shrink-0 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
               >
                 <AiInspector
                   :profileDimensions="profileDimensions"
@@ -1447,31 +3186,44 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div v-else-if="activeRail === `assessment`" class="h-full w-full">
+          <div
+            v-else-if="activeRail === `assessment`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
             <div
               v-if="isStaffMode && !selectedStudentId"
-              class="h-full w-full flex items-center justify-center bg-white"
+              class="h-full w-full min-w-0 flex items-center justify-center bg-transparent"
             >
-              <div
-                class="flex flex-col items-center justify-center bg-transparent lottie-empty-state"
-              >
-                <LottieAnimation
-                  :animationData="saasAnimation"
-                  :width="360"
-                  :height="360"
-                />
-                <h3 class="mt-4 text-lg font-black text-gray-600">
-                  尚未选择学生
-                </h3>
-                <p class="mt-2 text-sm text-gray-400">
-                  请在顶部选择学生以查看学习评估报告
-                </p>
-              </div>
+              <AiAppEmptyState
+                title="请选择学生"
+                description="选择学生后可查看阶段评估、证据链和优化动作。"
+                :icon="DataAnalysis"
+              />
             </div>
-            <div v-else class="h-full bg-white overflow-hidden">
+            <div
+              v-else
+              class="h-full w-full min-w-0 bg-transparent overflow-hidden"
+            >
               <AiAssessment
                 :course-id="selectedCourseId"
-                :target-student-id="selectedTargetStudentId"
+                :target-student-id="selectedStudentContextId"
+                :requires-target-student="isStaffMode"
+              />
+            </div>
+          </div>
+
+          <div
+            v-else-if="activeRail === `governance`"
+            class="h-full w-full min-w-0 overflow-hidden"
+          >
+            <div class="governance-shell h-full w-full min-w-0 overflow-hidden">
+              <AiGovernanceDashboard
+                :course-id="selectedCourseId"
+                :course-name="selectedCourseName"
+                :is-staff-mode="isStaffMode"
+                :viewer-role="apiMode"
+                @select-student="handleGovernanceSelectStudent"
+                @navigate="handleGovernanceNavigate"
               />
             </div>
           </div>
@@ -1479,15 +3231,18 @@ onUnmounted(() => {
           <!-- 【场景 C】 常规任务 (原自动化) -->
           <div
             v-else-if="activeRail === `automation`"
-            class="h-full w-full overflow-hidden flex justify-center bg-white"
+            class="ai-automation-view h-full w-full min-w-0 overflow-hidden flex justify-center bg-white"
           >
             <div
-              class="flex w-full h-full gap-4 transition-all duration-500 ease-in-out p-6"
-              :class="selectedTaskId ? 'max-w-full' : 'max-w-5xl'"
+              class="ai-automation-workspace flex w-full min-w-0 h-full gap-4 transition-all duration-500 ease-in-out p-6"
+              :class="[
+                selectedTaskId ? 'max-w-full' : 'max-w-5xl',
+                { 'is-task-selected': selectedTaskId }
+              ]"
             >
               <!-- 左侧：任务列表 -->
               <div
-                class="h-full bg-white p-2 overflow-y-auto transition-all duration-500"
+                class="ai-automation-list h-full min-w-0 bg-white p-2 overflow-y-auto transition-all duration-500"
                 :class="selectedTaskId ? 'w-[45%]' : 'w-full'"
               >
                 <div class="mb-8">
@@ -1501,28 +3256,27 @@ onUnmounted(() => {
                   <div
                     v-for="task in visibleRoutineTasks"
                     :key="task.id"
-                    class="flex items-start justify-between p-5 rounded-2xl border transition-all group cursor-pointer"
+                    class="ai-automation-task-card flex items-start justify-between p-5 rounded-2xl border transition-all group"
                     :class="
                       selectedTaskId === task.id
                         ? 'border-primary/40 bg-primary/5 shadow-md shadow-primary/10'
                         : 'border-gray-100 hover:border-primary/20 hover:shadow-md bg-gray-50/50'
                     "
-                    @click="selectedTaskId = task.id"
                   >
-                    <div class="flex items-start gap-4">
+                    <button
+                      type="button"
+                      class="ai-automation-task-main flex flex-1 min-w-0 items-start gap-4 rounded-xl border-0 bg-transparent p-0 text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                      :aria-label="`查看任务记录：${task.title}`"
+                      @click="selectedTaskId = task.id"
+                    >
                       <div
-                        class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center transition-transform"
-                        :class="
-                          selectedTaskId === task.id
-                            ? 'text-primary scale-110'
-                            : 'text-primary group-hover:scale-110'
-                        "
+                        class="ai-automation-task-icon w-12 h-12 flex-shrink-0 bg-white rounded-xl shadow-sm flex items-center justify-center text-primary"
                       >
                         <component :is="task.icon" class="w-6 h-6" />
                       </div>
-                      <div>
+                      <div class="min-w-0 flex-1">
                         <h4
-                          class="text-base font-semibold text-gray-800 flex items-center gap-2"
+                          class="text-base font-semibold text-gray-800 flex flex-wrap items-center gap-2"
                         >
                           {{ task.title }}
                           <span
@@ -1547,9 +3301,9 @@ onUnmounted(() => {
                           }}
                         </p>
                       </div>
-                    </div>
+                    </button>
                     <div
-                      class="flex flex-col items-end justify-between h-full pl-2"
+                      class="ai-automation-task-actions flex flex-shrink-0 flex-col items-end justify-between h-full pl-2"
                     >
                       <el-switch
                         v-model="task.status"
@@ -1561,12 +3315,13 @@ onUnmounted(() => {
                       <el-button
                         type="primary"
                         link
-                        class="mt-4 transition-opacity"
+                        class="ai-automation-record-button mt-4 transition-opacity"
                         :class="
                           selectedTaskId === task.id
                             ? 'opacity-100 font-bold'
-                            : 'opacity-0 group-hover:opacity-100'
+                            : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
                         "
+                        @click.stop="selectedTaskId = task.id"
                       >
                         记录 <el-icon class="ml-1"><ArrowRight /></el-icon>
                       </el-button>
@@ -1575,11 +3330,13 @@ onUnmounted(() => {
 
                   <div
                     v-if="visibleRoutineTasks.length === 0"
-                    class="text-center py-12 text-gray-400"
+                    class="py-12 flex justify-center"
                   >
-                    <el-empty
-                      description="暂无计划中的常规任务"
-                      :image-size="120"
+                    <AiAppEmptyState
+                      title="暂无常规任务"
+                      description="当前课程暂未配置周期性或触发式任务。"
+                      :icon="Clock"
+                      compact
                     />
                   </div>
                 </div>
@@ -1588,7 +3345,7 @@ onUnmounted(() => {
               <!-- 右侧：历史记录面板 -->
               <div
                 v-if="selectedTaskId"
-                class="flex-1 h-full bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fade-in"
+                class="ai-automation-history flex-1 min-w-0 h-full bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col overflow-hidden animate-fade-in"
               >
                 <!-- 头部 -->
                 <div
@@ -1623,7 +3380,12 @@ onUnmounted(() => {
 
                 <!-- 时间轴区域 -->
                 <div class="flex-1 overflow-y-auto p-8 relative bg-gray-50/30">
-                  <el-empty description="暂无真实执行记录" :image-size="120" />
+                  <AiAppEmptyState
+                    title="暂无执行记录"
+                    description="任务执行后会在这里显示状态、时间和结果。"
+                    :icon="Document"
+                    compact
+                  />
                 </div>
               </div>
             </div>
@@ -1632,22 +3394,14 @@ onUnmounted(() => {
           <!-- 【场景 D】 其他未开发项 -->
           <div
             v-else
-            class="h-full w-full flex items-center justify-center p-4"
+            class="h-full w-full min-w-0 flex items-center justify-center p-4"
           >
-            <div
-              class="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.02)] w-full max-w-2xl transform hover:scale-[1.01] transition-transform duration-500"
-            >
-              <el-icon :size="80" class="text-gray-200 mb-6 drop-shadow-sm"
-                ><Box
-              /></el-icon>
-              <h3 class="text-xl font-black text-gray-700 mb-2">
-                正在积极建设中
-              </h3>
-              <p class="text-sm text-gray-400">
-                目前「{{
-                  railItems.find(r => r.key === activeRail)?.label
-                }}」属于预期规划内，即将上线，敬请期待...
-              </p>
+            <div class="h-full w-full min-w-0 flex items-center justify-center">
+              <AiAppEmptyState
+                title="模块建设中"
+                :description="`「${railItems.find(r => r.key === activeRail)?.label || '当前模块'}」暂未开放。`"
+                :icon="Box"
+              />
             </div>
           </div>
         </main>
@@ -1655,44 +3409,43 @@ onUnmounted(() => {
     </div>
 
     <FloatingDigitalHuman2D
-      v-if="shouldShowFloatingHuman"
+      v-if="activeRail === 'chat'"
       ref="floatingHumanRef"
       :role-label="currentUserRoleLabel"
       :course-name="selectedCourseName"
       :state="digitalHumanState"
       anchor="appLeftBottom"
       anchor-selector=".ai-app-root"
-      :left-zone-width="sidebarCollapsed ? 34 : 260"
-      :bottom-offset="isMobileViewport ? 24 : 104"
-      :storage-key="
-        isMobileViewport
-          ? 'ai-app-floating-digital-human-2d-mobile-status'
-          : 'ai-app-floating-digital-human-2d-left-bottom'
-      "
+      :left-zone-width="sidebarRenderedWidth"
+      :bottom-offset="104"
+      storage-key="ai-app-floating-digital-human-2d-left-bottom"
     />
 
-    <NavMobile v-if="isMobileViewport" />
+    <PlatformResourcePreviewDialog
+      v-model="platformPreviewVisible"
+      :resource="platformPreviewResource"
+    />
 
     <!-- 栈操作可视化预览弹窗 -->
     <el-dialog
       v-model="stackPreviewVisible"
       title="栈 (Stack) 操作可视化"
-      width="640px"
+      width="min(640px, calc(100vw - 24px))"
       align-center
       destroy-on-close
     >
-      <div class="flex gap-6">
+      <div class="stack-preview-content flex gap-6">
         <!-- 栈可视化区 -->
         <div
-          class="relative w-44 h-72 mx-auto bg-gradient-to-b from-indigo-50 to-purple-50 rounded-2xl border-2 border-dashed border-indigo-300 flex flex-col-reverse items-center p-3 gap-2 overflow-hidden"
+          class="stack-preview-visual relative w-44 h-72 mx-auto bg-gray-50 rounded-2xl border border-dashed border-blue-200 flex flex-col-reverse items-center p-3 gap-2 overflow-hidden"
         >
           <div
-            class="absolute top-2 left-3 text-[11px] font-bold text-indigo-500"
+            class="absolute top-2 left-3 text-[11px] font-bold text-blue-500"
           >
             栈顶 (top) ↑
           </div>
           <div
-            class="absolute bottom-2 right-3 text-[11px] font-bold text-purple-500"
+            class="absolute bottom-2 right-3 text-[11px] font-bold text-gray-500"
           >
             栈底 (bottom)
           </div>
@@ -1704,7 +3457,7 @@ onUnmounted(() => {
             <div
               v-for="item in stackItems"
               :key="item.key"
-              class="w-28 h-9 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center shadow-lg"
+              class="w-28 h-9 rounded-lg bg-blue-500 text-white font-bold flex items-center justify-center shadow-sm"
             >
               {{ item.value }}
             </div>
@@ -1718,16 +3471,16 @@ onUnmounted(() => {
         </div>
 
         <!-- 操作 + 日志 -->
-        <div class="flex-1 flex flex-col gap-3">
-          <div class="flex flex-wrap gap-2">
+        <div class="stack-preview-actions flex-1 flex flex-col gap-3">
+          <div class="stack-preview-controls flex flex-wrap gap-2">
             <el-button type="primary" @click="stackPush">push 压栈</el-button>
             <el-button type="danger" @click="stackPop">pop 出栈</el-button>
             <el-button type="warning" @click="stackPeek">peek 栈顶</el-button>
             <el-button @click="stackReset">重置</el-button>
           </div>
           <div class="text-xs text-gray-500">
-            栈大小：<b class="text-indigo-600">{{ stackItems.length }}</b> ｜
-            栈顶元素：<b class="text-pink-600">{{
+            栈大小：<b class="text-blue-600">{{ stackItems.length }}</b> ｜
+            栈顶元素：<b class="text-blue-600">{{
               stackItems[stackItems.length - 1]?.value || "—"
             }}</b>
           </div>
@@ -1748,21 +3501,28 @@ onUnmounted(() => {
 <style scoped>
 .stack-anim-enter-active,
 .stack-anim-leave-active {
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.18s ease-out,
+    transform 0.22s ease-out;
 }
 .stack-anim-enter-from {
   opacity: 0;
-  transform: translateY(-30px) scale(0.7);
+  transform: translateY(-16px) scale(0.96);
 }
 .stack-anim-leave-to {
   opacity: 0;
-  transform: translateY(-40px) scale(0.7);
+  transform: translateY(-16px) scale(0.96);
 }
 </style>
 
 <style scoped lang="scss">
 .ai-app-root {
-  --el-color-primary: #5e7ff8; // 强制保持平台蓝
+  --el-color-primary: #2f6fcb;
+  --ai-app-shell-bg: #f3f6fa;
+  --ai-app-panel-bg: rgb(255 255 255 / 84%);
+  --ai-app-panel-border: #d8e1ec;
+  --ai-app-panel-shadow:
+    0 12px 30px rgb(51 65 85 / 8%), inset 0 1px 0 rgb(255 255 255 / 88%);
   --ai-app-font:
     "Inter", "NotionInter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial,
@@ -1770,13 +3530,174 @@ onUnmounted(() => {
 
   font-family: var(--ai-app-font);
   font-synthesis-weight: none;
+  color: #1f2937;
+  background: var(--ai-app-shell-bg);
   -webkit-font-smoothing: antialiased;
+  box-sizing: border-box;
+  height: var(--qiming-native-vh, 100dvh);
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  padding-top: var(--pure-safe-area-top, 0);
+  padding-bottom: var(--pure-safe-area-bottom, 0);
+  position: relative;
   text-rendering: optimizeLegibility;
+}
 
-  :global(html.dark) & {
-    color: var(--qiming-native-text-primary, #f8fafc);
-    background: var(--qiming-native-page-bg, #020409) !important;
+.ai-app-root *,
+.ai-app-root *::before,
+.ai-app-root *::after {
+  box-sizing: border-box;
+}
+
+.ai-app-content {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.resource-workspace-tabs {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 20px 20px;
+  overflow: hidden;
+}
+
+.resource-workspace-tabs :deep(.el-tabs__header),
+.resource-workspace-tabs :deep(.el-tabs__content),
+.resource-workspace-tabs :deep(.el-tab-pane) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.resource-workspace-tabs :deep(.el-tabs__content),
+.resource-workspace-tabs :deep(.el-tab-pane) {
+  overflow: hidden;
+}
+
+.ai-workbench-panel {
+  background: var(--ai-app-panel-bg);
+  border: 1px solid var(--ai-app-panel-border);
+  border-radius: 24px;
+  box-shadow: var(--ai-app-panel-shadow);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+
+.ai-app-left-rail {
+  background: rgb(255 255 255 / 86%);
+  border: 1px solid var(--ai-app-panel-border);
+  border-radius: 24px;
+  box-shadow: 0 10px 26px rgb(51 65 85 / 7%);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ai-app-left-rail.is-resizing {
+  transition: none;
+  will-change: width;
+}
+
+.ai-app-left-rail__resize-handle {
+  position: absolute;
+  top: 42px;
+  right: -6px;
+  bottom: 12px;
+  z-index: 25;
+  display: flex;
+  width: 12px;
+  padding: 0;
+  touch-action: none;
+  cursor: col-resize;
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.ai-app-left-rail__resize-handle::before {
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: 1px;
+  content: "";
+  background: transparent;
+  transform: translateX(-50%);
+  transition: background-color 0.16s ease-out;
+}
+
+.ai-app-left-rail__resize-handle span {
+  width: 3px;
+  height: 40px;
+  margin: auto;
+  background: #aeb9c8;
+  border-radius: 3px;
+  opacity: 0.34;
+  transition:
+    opacity 0.16s ease-out,
+    background-color 0.16s ease-out;
+}
+
+.ai-app-left-rail__resize-handle:hover::before,
+.ai-app-left-rail__resize-handle:focus-visible::before,
+.ai-app-left-rail.is-resizing .ai-app-left-rail__resize-handle::before {
+  background: rgb(47 111 203 / 36%);
+}
+
+.ai-app-left-rail__resize-handle:hover span,
+.ai-app-left-rail__resize-handle:focus-visible span,
+.ai-app-left-rail.is-resizing .ai-app-left-rail__resize-handle span {
+  background: var(--el-color-primary);
+  opacity: 0.9;
+}
+
+:global(html.ai-app-sidebar-resizing),
+:global(html.ai-app-sidebar-resizing *) {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-app-left-rail,
+  .ai-app-left-rail__resize-handle::before,
+  .ai-app-left-rail__resize-handle span {
+    transition: none;
   }
+}
+
+.ai-chat-workbench {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 436px 0 12px;
+  overflow: clip;
+}
+
+.ai-chat-dialog-panel {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ai-human-column {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  min-width: 0;
+  max-width: none;
+}
+
+.ai-human-column.is-collapsed {
+  right: 0;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
 }
 
 .ai-app-root :deep(*) {
@@ -1792,12 +3713,18 @@ onUnmounted(() => {
     sans-serif !important;
 }
 
-/* 让 Lottie 空状态动画的白色区域与渐变背景融合，呈现真正的"透明"效果 */
-.lottie-empty-state {
-  :deep(svg) {
-    mix-blend-mode: multiply;
-    background: transparent !important;
-  }
+.agent-pdf-shell {
+  background: transparent;
+  border-radius: 24px;
+}
+
+.governance-shell {
+  background: transparent;
+  border-radius: 8px;
+}
+
+:deep(.course-select .el-select__wrapper) {
+  border-radius: 8px;
 }
 
 /* 全局交互 UI 增强 */
@@ -1822,93 +3749,23 @@ onUnmounted(() => {
 
 /* 面板转场动画 */
 .panel-slide-enter-active {
-  transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.22s ease-out;
 }
 .panel-slide-enter-from {
   opacity: 0;
-  transform: translateX(-30px) scale(0.98);
+  transform: translateX(-12px);
 }
 
 .panel-reveal-enter-active {
-  transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.2s ease-out,
+    transform 0.22s ease-out;
 }
 .panel-reveal-enter-from {
   opacity: 0;
-  transform: translateX(50px) rotate(1deg);
-}
-
-.gradient-text-animate {
-  background: linear-gradient(
-    -45deg,
-    rgb(140, 80, 159),
-    rgb(190, 120, 200),
-    rgb(140, 80, 159)
-  );
-  background-size: 200% auto;
-  color: transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: gradientShift 6s ease-in-out infinite;
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.placeholder-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background: white;
-  h2 {
-    margin-top: 20px;
-    font-weight: bold;
-  }
-  p {
-    color: #666;
-    margin-top: 10px;
-  }
-  .reopen-btn {
-    margin-top: 30px;
-    padding: 10px 24px;
-    border-radius: 20px;
-    border: 1px solid #ddd;
-    background: none;
-    cursor: pointer;
-  }
-}
-
-.pulse-logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 20px;
-  font-weight: 900;
-  color: var(--el-color-primary);
-  letter-spacing: -0.5px;
-  &::before {
-    content: "";
-    display: block;
-    width: 24px;
-    height: 24px;
-    background: linear-gradient(135deg, var(--el-color-primary), #829eff);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(94, 127, 248, 0.3);
-    animation: simple-pulse 2s infinite;
-  }
-  &::after {
-    content: "IntellEdu";
-  }
+  transform: translateX(12px);
 }
 
 :deep(.quick-chat-input) {
@@ -1918,7 +3775,7 @@ onUnmounted(() => {
   .el-textarea__inner {
     border: none !important;
     box-shadow: none !important;
-    padding: 16px 16px;
+    padding: 16px 20px;
     background-color: transparent !important;
     color: #374151;
     &::placeholder {
@@ -1927,395 +3784,679 @@ onUnmounted(() => {
   }
 }
 
-@keyframes simple-pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(94, 127, 248, 0.4);
+.quick-chat-card {
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--ai-app-panel-border);
+  border-radius: 24px;
+  box-shadow: var(--ai-app-panel-shadow);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.quick-chat-card:focus-within {
+  border-color: rgb(47 111 203 / 38%);
+  box-shadow: 0 0 0 3px rgb(47 111 203 / 10%);
+}
+
+.quick-chat-file-input {
+  display: none;
+}
+
+.quick-attachment-shelf {
+  display: flex;
+  gap: 12px;
+  padding: 18px 18px 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.quick-attachment-shelf::-webkit-scrollbar {
+  height: 4px;
+}
+
+.quick-attachment-shelf::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+}
+
+.quick-attachment-card {
+  position: relative;
+  display: flex;
+  flex: 0 0 156px;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 128px;
+  padding: 10px;
+  overflow: hidden;
+  background: rgba(243, 246, 251, 0.92);
+  border: 1px solid rgba(226, 232, 240, 0.88);
+  border-radius: 19px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quick-attachment-card:hover {
+  background: #fff;
+  border-color: rgba(203, 213, 225, 0.95);
+  box-shadow: 0 12px 28px rgba(48, 64, 93, 0.12);
+  transform: translateY(-1px);
+}
+
+.quick-attachment-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72px;
+  overflow: hidden;
+  color: #6b7280;
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  background: linear-gradient(135deg, #fff, #eef2f7);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: 15px;
+}
+
+.quick-attachment-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.quick-attachment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.quick-attachment-name,
+.quick-attachment-meta {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-attachment-name {
+  color: #475467;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.quick-attachment-meta {
+  color: #98a2b3;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.quick-attachment-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: #fff;
+  pointer-events: none;
+  background: rgba(15, 23, 42, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  opacity: 0;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    background 0.18s ease;
+  transform: scale(0.86);
+}
+
+.quick-attachment-card:hover .quick-attachment-remove {
+  pointer-events: auto;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.quick-attachment-card:focus-within .quick-attachment-remove,
+.quick-attachment-remove:focus-visible {
+  pointer-events: auto;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.quick-attachment-remove:focus-visible {
+  outline: 2px solid #1570ef;
+  outline-offset: 2px;
+}
+
+.quick-attachment-remove:hover {
+  background: rgba(220, 38, 38, 0.9);
+}
+
+.quick-chat-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 16px;
+  background: rgba(248, 250, 252, 0.78);
+  border-top: 1px solid rgba(241, 245, 249, 0.95);
+}
+
+.quick-chat-tools-left,
+.quick-chat-tools-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+
+.quick-chat-tools-left {
+  flex-wrap: wrap;
+}
+
+.quick-chat-tools-right {
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.quick-chat-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 250px;
+  height: 38px;
+  padding: 0 14px;
+  color: #4b5565;
+  white-space: nowrap;
+  background: #f1f3f7;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  box-shadow: 0 0 0 rgba(56, 67, 95, 0);
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quick-chat-chip--interactive {
+  cursor: pointer;
+}
+
+.quick-chat-chip--interactive:hover {
+  color: #334155;
+  background: #eef1f6;
+  border-color: rgba(213, 219, 230, 0.95);
+  box-shadow: 0 8px 18px rgba(56, 67, 95, 0.08);
+  transform: translateY(-1px);
+}
+
+.quick-chat-chip--interactive.is-selected {
+  color: #4f69d9;
+  background: rgba(94, 127, 248, 0.12);
+}
+
+.quick-chat-chip--static {
+  cursor: default;
+}
+
+.quick-chat-chip__icon {
+  flex: 0 0 auto;
+  margin-right: 8px;
+  font-size: 15px;
+}
+
+.quick-chat-chip__text {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-overflow: ellipsis;
+}
+
+.quick-chat-chip__arrow {
+  flex: 0 0 auto;
+  margin-left: 7px;
+  font-size: 13px;
+  color: currentColor;
+  opacity: 0.72;
+}
+
+.quick-chat-model-trigger {
+  display: inline-flex;
+  align-items: center;
+  max-width: 240px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  color: #9099aa;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 14px;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.quick-chat-model-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quick-chat-model-trigger:hover {
+  color: #667085;
+  background: rgba(241, 243, 247, 0.86);
+}
+
+.quick-model-option {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+  gap: 8px;
+}
+
+.quick-model-option > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-model-option__status {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+  color: #7a4c00;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: #fff4d6;
+  border-radius: 999px;
+}
+
+.quick-chat-icon-button,
+.quick-chat-send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 17px;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.quick-chat-icon-button {
+  color: #667085;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.quick-chat-icon-button:hover {
+  color: #344054;
+  background: #f1f3f7;
+  border-color: rgba(213, 219, 230, 0.95);
+}
+
+.quick-chat-upload-button {
+  flex: 0 0 auto;
+  background: #fff;
+  border-color: rgba(223, 228, 236, 0.9);
+}
+
+.quick-chat-upload-plus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 31px;
+  font-weight: 300;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.quick-chat-voice-button.is-listening {
+  color: var(--el-color-primary);
+  background: rgba(94, 127, 248, 0.12);
+  box-shadow: 0 0 0 4px rgba(94, 127, 248, 0.12);
+}
+
+.quick-chat-send-button {
+  color: #98a2b3;
+  cursor: not-allowed;
+  background: #fff;
+  border: 1px solid #dfe4ec;
+}
+
+.quick-chat-send-button.is-ready {
+  color: #fff;
+  cursor: pointer;
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  box-shadow: 0 10px 22px rgba(94, 127, 248, 0.24);
+}
+
+.quick-chat-send-button.is-ready:hover {
+  box-shadow: 0 14px 28px rgba(94, 127, 248, 0.3);
+  transform: translateY(-1px);
+}
+
+.quick-chat-send-button:active,
+.quick-chat-icon-button:active,
+.quick-chat-chip--interactive:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.quick-chat-send-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.1;
+}
+
+:global(.quick-chat-dropdown.el-popper) {
+  overflow: visible !important;
+  background: #fff !important;
+  border: 1px solid rgba(216, 225, 240, 0.95) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(48, 64, 93, 0.14) !important;
+}
+
+:global(.quick-chat-dropdown .el-dropdown-menu) {
+  min-width: 220px !important;
+  padding: 8px !important;
+  overflow: hidden;
+  background: #fff !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+:global(.quick-chat-dropdown .el-dropdown-menu__item) {
+  height: 40px !important;
+  padding: 0 14px !important;
+  margin: 2px 0;
+  color: #4f5c6f !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 40px !important;
+  border-radius: 12px !important;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
+}
+
+:global(.quick-chat-dropdown .el-dropdown-menu__item:not(.is-disabled):hover),
+:global(.quick-chat-dropdown .el-dropdown-menu__item:not(.is-disabled):focus) {
+  color: var(--el-color-primary) !important;
+  background: rgba(94, 127, 248, 0.1) !important;
+}
+
+:global(.quick-chat-dropdown .el-popper__arrow::before) {
+  background: #fff !important;
+  border-color: rgba(216, 225, 240, 0.95) !important;
+  border-radius: 3px;
+}
+
+@media (max-width: 1440px) {
+  .ai-chat-workbench {
+    padding-right: 376px;
   }
-  70% {
-    box-shadow: 0 0 0 10px rgba(94, 127, 248, 0);
+
+  .ai-human-column {
+    right: 0;
+    width: 360px;
   }
-  100% {
-    box-shadow: 0 0 0 0 rgba(94, 127, 248, 0);
+}
+
+@media (max-width: 1280px) {
+  .ai-chat-workbench {
+    padding-right: 16px;
+  }
+
+  .ai-human-column {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .ai-chat-workbench {
+    padding: 10px 14px 10px 10px;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .quick-attachment-remove {
+    top: 4px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    color: #b42318;
+    pointer-events: auto;
+    touch-action: manipulation;
+    background: rgb(255 255 255 / 96%);
+    border-color: rgb(254 202 202 / 96%);
+    box-shadow: 0 4px 12px rgb(15 23 42 / 14%);
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .quick-attachment-remove:hover,
+  .quick-attachment-remove:focus-visible {
+    color: #fff;
+    background: #d92d20;
   }
 }
 
 @media (max-width: 768px) {
-  .ai-app-root {
-    width: 100%;
-    height: var(--qiming-native-vh, 100dvh);
-    min-height: var(--qiming-native-vh, 100dvh);
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  .ai-app-root > .flex-1 {
-    min-width: 0;
-  }
-
-  .ai-app-root > .flex-1 > .flex-1 {
-    width: 100%;
-  }
-
-  .ai-app-left-rail {
-    position: fixed !important;
-    top: calc(24px + var(--pure-safe-area-top, 0));
-    bottom: calc(82px + var(--pure-safe-area-bottom, 0));
-    left: 18px;
-    z-index: 120 !important;
-    width: min(292px, calc(100vw - 36px)) !important;
-    max-width: calc(100vw - 36px);
-    border: 1px solid rgba(226, 232, 240, 0.92);
-    border-radius: 22px;
-    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
-  }
-
-  .ai-app-left-rail.is-collapsed {
-    top: calc(24px + var(--pure-safe-area-top, 0));
-    bottom: auto;
-    width: 46px !important;
-    min-width: 46px !important;
-    max-width: 46px !important;
-    height: 46px;
-    min-height: 46px !important;
-    overflow: visible;
-    background: transparent !important;
-    border: 0;
-    border-radius: 16px;
-    box-shadow: none;
-    pointer-events: none;
-  }
-
-  .ai-app-left-rail.is-collapsed :deep(.ai-sidebar) {
-    padding: 0;
-  }
-
-  .ai-app-left-rail.is-collapsed > div:first-child,
-  .ai-app-left-rail.is-collapsed > div:nth-child(2),
-  .ai-app-left-rail.is-collapsed .collapsed-rail-label {
-    display: none !important;
-  }
-
-  .ai-app-left-rail.is-collapsed > button {
-    position: absolute !important;
-    top: 0 !important;
-    right: auto !important;
-    left: 0 !important;
-    width: 46px !important;
-    height: 46px !important;
-    transform: none !important;
-    border-radius: 14px !important;
-    border-color: rgba(226, 232, 240, 0.82) !important;
-    box-shadow: 0 12px 28px rgba(94, 127, 248, 0.18) !important;
-    pointer-events: auto;
-  }
-
-  .ai-app-left-rail:not(.is-collapsed) > button {
-    top: 14px !important;
-    right: 14px !important;
-    width: 34px !important;
-    height: 34px !important;
-    color: #6b7a96 !important;
-    background: rgba(255, 255, 255, 0.86) !important;
-    border-color: rgba(203, 213, 225, 0.78) !important;
-    border-radius: 12px !important;
-    box-shadow: 0 8px 20px rgba(35, 50, 82, 0.08) !important;
-    transform: none !important;
-  }
-
-  .ai-app-left-rail.is-collapsed > button.is-mobile-collapsed-trigger {
-    background: rgba(255, 255, 255, 0.92) !important;
-    backdrop-filter: blur(16px);
-  }
-
-  .ai-chat-scene,
-  .ai-chat-welcome,
-  main > div[class*="p-4"] {
-    padding: calc(54px + var(--pure-safe-area-top, 0)) 12px
-      calc(74px + var(--pure-safe-area-bottom, 0)) !important;
-    gap: 10px !important;
-  }
-
-  .ai-chat-scene {
+  .ai-course-context-bar {
+    align-items: stretch;
+    justify-content: flex-start;
     flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 12px;
+    overflow: visible;
+  }
+
+  .ai-course-context-bar > span:not(:first-child) {
+    margin-top: 4px;
+  }
+
+  .ai-course-context-bar :deep(.el-select) {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .ai-course-context-bar :deep(.el-select__wrapper) {
+    min-height: 44px;
+  }
+
+  .ai-profile-workspace {
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 0 8px;
+    overflow-x: hidden;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 
-  .ai-chat-card {
+  .ai-profile-main {
     flex: 0 0 auto;
-    height: clamp(340px, 50vh, 420px) !important;
-    min-height: 340px;
-    border-radius: 24px !important;
+    width: 100%;
+    height: clamp(420px, 68dvh, 680px) !important;
+    min-height: 420px;
+    border-radius: 12px;
   }
 
-  .ai-app-human-panel {
+  .ai-profile-inspector {
+    flex: 0 0 auto;
+    width: 100% !important;
+    height: clamp(420px, 64dvh, 620px) !important;
+    min-height: 420px;
+    border-radius: 12px;
+  }
+
+  .ai-automation-view {
+    align-items: stretch;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .ai-automation-workspace {
+    flex-direction: column;
+    gap: 12px;
+    height: auto !important;
+    min-height: 100%;
+    padding: 4px 0 12px;
+  }
+
+  .ai-automation-list {
     flex: 0 0 auto;
     width: 100% !important;
     height: auto !important;
-    min-height: 0;
-    gap: 6px;
+    padding: 0;
+    overflow: visible;
   }
 
-  .ai-app-human-panel > button {
-    display: none !important;
+  .ai-automation-workspace.is-task-selected .ai-automation-list {
+    min-height: 320px;
+    max-height: 48dvh;
+    padding-right: 4px;
+    overflow-y: auto;
   }
 
-  .ai-app-human-panel > div:first-of-type {
-    height: clamp(188px, 28vh, 246px);
-    min-height: 188px;
-    border-radius: 24px !important;
+  .ai-automation-task-card {
+    gap: 8px;
+    padding: 16px;
   }
 
-  .ai-human-actions {
-    padding: 8px !important;
-    min-height: 0 !important;
-    border-radius: 20px !important;
+  .ai-automation-task-icon {
+    width: 44px;
+    height: 44px;
   }
 
-  .ai-human-actions[style] {
-    min-height: 112px !important;
-    max-height: 126px !important;
+  .ai-automation-task-actions {
+    min-width: 44px;
+    padding-left: 0;
   }
 
-  .ai-human-actions > div:last-child {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+  .ai-automation-record-button {
+    min-width: 44px;
+    min-height: 44px;
+    padding-inline: 4px;
+    opacity: 1 !important;
   }
 
-  .ai-human-actions > div:first-child {
-    padding-bottom: 5px !important;
-    margin-bottom: 2px !important;
-  }
-
-  .ai-human-actions :deep(.el-button) {
-    min-height: 30px !important;
-    padding: 6px 8px !important;
-    font-size: 11px !important;
-  }
-
-  main > div[class*="p-4"] > .flex-1 {
-    min-width: 0;
-    border-radius: 24px !important;
-  }
-
-  .gradient-text-animate {
-    font-size: 24px !important;
-    line-height: 1.14;
-    letter-spacing: 0;
-  }
-
-  .ai-chat-welcome {
-    align-items: stretch !important;
-    justify-content: flex-start !important;
-    padding-bottom: calc(24px + var(--pure-safe-area-bottom, 0)) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .ai-chat-welcome-card {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    gap: 12px !important;
-    max-width: none !important;
-    min-height: 100%;
+  .ai-automation-history {
+    flex: 0 0 auto;
     width: 100%;
-    padding: 0 0 10px;
-    transform: none !important;
+    height: min(560px, 68dvh) !important;
+    min-height: 360px;
+    border-radius: 16px;
   }
 
-  .ai-chat-welcome-card > .text-center {
-    order: 1;
-    padding: 0 4px;
-    text-align: left;
-    margin: 0 !important;
-    gap: 6px;
-  }
-
-  .ai-chat-welcome-card > .text-center p {
-    max-width: 340px;
-    font-size: 13px !important;
-    line-height: 1.4;
-  }
-
-  .quick-chat-box {
-    order: 2;
-    display: flex !important;
-    flex: 0 0 auto;
-    flex-direction: column;
-    min-height: 174px;
-    overflow: hidden;
-    border-radius: 20px !important;
-    box-shadow: 0 12px 34px rgba(94, 127, 248, 0.1) !important;
-  }
-
-  .quick-chat-box :deep(.quick-chat-input) {
-    flex: 0 0 auto;
-  }
-
-  .quick-chat-box :deep(.el-textarea__inner) {
-    height: 78px !important;
-    min-height: 78px !important;
-    padding: 14px 12px !important;
-    font-size: 14px !important;
-    line-height: 1.42;
-  }
-
-  .quick-chat-box > div:last-child {
-    display: flex !important;
-    flex: 0 0 auto;
-    flex-direction: column;
+  .stack-preview-content {
     align-items: stretch;
-    gap: 7px;
-    padding: 9px !important;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
   }
 
-  .quick-chat-box > div:last-child > div:first-child {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+  .stack-preview-visual {
+    flex: 0 0 auto;
+    width: min(176px, 100%);
   }
 
-  .quick-chat-box > div:last-child > div:last-child {
+  .stack-preview-actions {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stack-preview-controls :deep(.el-button) {
+    min-height: 44px;
+    margin-left: 0;
+  }
+
+  .ai-app-left-rail {
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 8px;
+    width: min(82vw, 300px) !important;
+    max-width: calc(100vw - 24px);
+    border-radius: 16px;
+  }
+
+  .ai-app-left-rail.is-collapsed {
+    width: 34px !important;
+    border-radius: 12px;
+  }
+
+  .ai-app-left-rail__resize-handle {
+    display: none;
+  }
+
+  .resource-workspace-tabs {
+    padding: 0 12px 12px;
+  }
+
+  .ai-app-root.is-chat .ai-chat-workbench {
+    gap: 10px;
+    padding: 10px 10px 10px 48px;
+  }
+
+  .quick-chat-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-chat-tools-right {
     justify-content: space-between;
     width: 100%;
   }
 
-  .quick-chat-box > div:last-child span {
-    justify-content: center;
-    max-width: 100%;
-    min-width: 0;
-    overflow: hidden;
-    min-height: 32px;
-    padding-right: 8px !important;
-    padding-left: 8px !important;
-    font-size: 12px !important;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .quick-chat-model-trigger {
+    max-width: 180px;
   }
 
-  .quick-chat-box > div:last-child button {
-    position: relative;
-    z-index: 2;
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    min-height: 44px !important;
+  .quick-attachment-remove {
+    top: 4px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    color: #b42318;
+    pointer-events: auto;
     touch-action: manipulation;
+    background: rgb(255 255 255 / 96%);
+    border-color: rgb(254 202 202 / 96%);
+    box-shadow: 0 4px 12px rgb(15 23 42 / 14%);
+    opacity: 1;
+    transform: scale(1);
   }
 
-  .quick-chat-box > div:last-child button.quick-chat-send-btn {
-    width: auto !important;
-    min-width: 74px !important;
-    padding: 0 12px !important;
-    gap: 4px;
-    font-size: 13px;
-    font-weight: 700;
+  .quick-attachment-remove:hover,
+  .quick-attachment-remove:focus-visible {
+    color: #fff;
+    background: #d92d20;
   }
-
-  .quick-chat-box > div:last-child > div:last-child > span {
-    justify-content: flex-start;
-    max-width: calc(100% - 46px);
-  }
-
-  .ai-chat-welcome-human {
-    order: 3;
-    display: flex;
-    flex: 1 1 292px;
-    flex-direction: column;
-    margin-top: 8px;
-    min-height: 292px;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.76);
-    border: 1px solid rgba(255, 255, 255, 0.72);
-    border-radius: 24px;
-    box-shadow: 0 16px 42px rgba(94, 127, 248, 0.12);
-  }
-
-  .ai-app-root.dark .ai-chat-welcome-human {
-    background: rgb(15 23 42 / 82%);
-    border-color: rgb(148 163 184 / 22%);
-    box-shadow: 0 18px 44px rgb(0 0 0 / 30%);
-  }
-
-  .ai-chat-welcome-human :deep(.virtual-human-panel) {
-    flex: 1 1 auto;
-    height: auto;
-    min-height: 224px;
-    background: transparent;
-  }
-
-  .ai-chat-welcome-actions {
-    display: grid;
-    flex: 0 0 auto;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.82);
-    border-top: 1px solid rgba(226, 232, 240, 0.7);
-  }
-
-  .ai-app-root.dark .ai-chat-welcome-actions {
-    background: rgb(2 6 23 / 74%);
-    border-top-color: rgb(148 163 184 / 20%);
-  }
-
-  .ai-chat-welcome-actions button {
-    min-width: 0;
-    min-height: 32px;
-    padding: 0 8px;
-    overflow: hidden;
-    font-size: 11px;
-    font-weight: 600;
-    color: #5e7ff8;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    background: rgba(239, 246, 255, 0.8);
-    border: 1px solid rgba(191, 219, 254, 0.8);
-    border-radius: 12px;
-  }
-
-  .ai-app-root.dark .ai-chat-welcome-actions button {
-    color: #c7d2fe;
-    background: rgb(30 41 59 / 80%);
-    border-color: rgb(129 140 248 / 24%);
-  }
-
-  :deep(.el-dialog) {
-    width: calc(100vw - 24px) !important;
-    max-width: calc(100vw - 24px) !important;
-  }
-}
-
-:global(html.qiming-native-keyboard-open .ai-chat-welcome) {
-  height: var(--qiming-native-vh, 100dvh) !important;
-  min-height: var(--qiming-native-vh, 100dvh) !important;
-  padding-top: calc(40px + var(--pure-safe-area-top, 0)) !important;
-}
-
-:global(html.qiming-native-keyboard-open .quick-chat-box) {
-  flex: 0 0 auto !important;
-}
-
-:global(html.qiming-native-keyboard-open .ai-app-left-rail.is-collapsed) {
-  opacity: 0 !important;
-  transform: translate3d(-18px, -10px, 0) scale(0.84) !important;
-  pointer-events: none !important;
-}
-
-:global(html.qiming-native-keyboard-open .quick-chat-box .el-textarea__inner) {
-  height: 128px !important;
-  min-height: 128px !important;
-  padding: 12px 12px 12px 10px !important;
-  font-size: 16px !important;
-}
-
-:global(html.qiming-native-keyboard-open .ai-chat-welcome-human) {
-  display: none !important;
-}
-
-:global(html.qiming-native-keyboard-open .ai-chat-welcome-human .virtual-human-panel) {
-  display: none !important;
 }
 </style>

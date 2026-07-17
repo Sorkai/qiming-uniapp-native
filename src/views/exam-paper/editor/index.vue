@@ -31,15 +31,12 @@ import {
   getPublishClasses,
   getPublishStudents,
   PublishTargetType,
+  QuestionType,
   type AIPaperAnalyzeResult,
   type ClassInfo,
-  type PublishTargetStudent
+  type PublishTargetStudent,
+  type QuestionTypeKey
 } from "@/api/examPaper";
-import {
-  logNativeFallback,
-  isNativeWebViewRuntime
-} from "@/utils/nativeRuntime";
-import { nativeDemoStudentPaper } from "@/views/exam-paper/nativeDemoPaper";
 
 defineOptions({
   name: "ExamPaperEditor"
@@ -224,11 +221,18 @@ const route = useRoute();
 const { isDark } = useDark();
 
 // 试卷ID（编辑模式）
-const paperId = computed(() => route.params.id as string);
-const isEditMode = computed(() => !!paperId.value);
+const paperId = computed(() => {
+  const id = Number(route.params.id);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+});
+const isEditMode = computed(() => paperId.value !== null);
+const isSuccessfulResponseCode = (code: number) => code === 0 || code === 200;
 
 // 是否有未保存的更改
 const hasUnsavedChanges = ref(false);
+let paperRevision = 0;
+let lastPersistedRevision = -1;
+let isReplacingCreatedPaperRoute = false;
 
 // 课程列表
 const courseOptions = ref<Array<{ id: number; name: string }>>([]);
@@ -268,20 +272,6 @@ const paper = reactive({
     useHighestScore: false
   }
 });
-
-const applyNativeDemoPaperDetail = () => {
-  paper.title = nativeDemoStudentPaper.title;
-  paper.description = nativeDemoStudentPaper.description || "";
-  paper.courseId = nativeDemoStudentPaper.courseId;
-  paper.timeLimit = nativeDemoStudentPaper.timeLimit;
-  paper.startTime = nativeDemoStudentPaper.startTime || "";
-  paper.endTime = nativeDemoStudentPaper.endTime || "";
-  paper.questionGroups = JSON.parse(
-    JSON.stringify(nativeDemoStudentPaper.questionGroups || [])
-  );
-  updateTotals();
-  hasUnsavedChanges.value = false;
-};
 
 // 设置面板是否展开
 const settingsPanelVisible = ref(false);
@@ -399,9 +389,10 @@ const questionTypes = questionTypeGroups.flatMap(g => g.types);
 watch(
   () => paper,
   () => {
+    paperRevision += 1;
     hasUnsavedChanges.value = true;
   },
-  { deep: true }
+  { deep: true, flush: "sync" }
 );
 
 // 计算总题数和总分
@@ -923,54 +914,114 @@ const startAutoSave = () => {
   }, 1000);
 };
 
-// 保存试卷
-const savePaper = async (isAutoSave = false) => {
+let savePaperTask: Promise<number | null> | null = null;
+let savePaperShouldNotify = false;
+
+// 保存试卷并返回后端分配的真实ID
+const persistPaper = async (revisionToSave: number): Promise<number | null> => {
   if (!paper.title.trim()) {
-    if (!isAutoSave) {
+    if (savePaperShouldNotify) {
       ElMessage.warning("请输入试卷标题");
     }
-    return;
+    return null;
   }
 
   autoSaveStatus.value = "saving";
   try {
-    const paperData = {
-      title: paper.title,
-      description: paper.description,
-      courseId: paper.courseId || 0,
-      timeLimit: paper.timeLimit,
-      startTime: paper.startTime,
-      endTime: paper.endTime,
-      questionGroups: paper.questionGroups,
-      settings: paper.settings,
-      antiCheat: paper.antiCheat,
-      retake: paper.retake,
-      scoring: paper.scoring
-    };
+    const paperData = JSON.parse(
+      JSON.stringify({
+        title: paper.title,
+        description: paper.description,
+        courseId: paper.courseId || 0,
+        timeLimit: paper.timeLimit,
+        startTime: paper.startTime,
+        endTime: paper.endTime,
+        questionGroups: normalizeEditorQuestionGroups(paper.questionGroups),
+        settings: paper.settings,
+        antiCheat: paper.antiCheat,
+        retake: paper.retake,
+        scoring: paper.scoring
+      })
+    );
 
-    if (isEditMode.value) {
-      await updatePaper({
-        paperId: Number(paperId.value),
+    const existingPaperId = paperId.value;
+    let savedPaperId = existingPaperId;
+
+    if (existingPaperId !== null) {
+      const res = await updatePaper({
+        paperId: existingPaperId,
         ...paperData
       } as any);
+      if (!isSuccessfulResponseCode(res.code)) {
+        throw new Error(res.msg || "保存失败");
+      }
     } else {
       const res = await createPaper(paperData as any);
-      if (res.code === 0 && res.data?.paperId) {
-        // 创建成功后可以更新URL
+      const createdPaperId = Number(res.data?.paperId);
+      if (
+        !isSuccessfulResponseCode(res.code) ||
+        !Number.isSafeInteger(createdPaperId) ||
+        createdPaperId <= 0
+      ) {
+        throw new Error(res.msg || "创建试卷失败：服务端未返回有效试卷ID");
+      }
+      savedPaperId = createdPaperId;
+    }
+
+    lastPersistedRevision = Math.max(lastPersistedRevision, revisionToSave);
+
+    if (existingPaperId === null) {
+      isReplacingCreatedPaperRoute = true;
+      try {
+        await router.replace({
+          name: "ExamPaperEditorEdit",
+          params: { id: String(savedPaperId) }
+        });
+      } finally {
+        isReplacingCreatedPaperRoute = false;
       }
     }
-    autoSaveStatus.value = "saved";
-    hasUnsavedChanges.value = false;
-    resetAutoSaveCountdown();
-    if (!isAutoSave) {
+
+    if (paperRevision === revisionToSave) {
+      autoSaveStatus.value = "saved";
+      hasUnsavedChanges.value = false;
+      resetAutoSaveCountdown();
+    } else {
+      autoSaveStatus.value = "saving";
+      hasUnsavedChanges.value = true;
+    }
+    return savedPaperId;
+  } catch (error) {
+    autoSaveStatus.value = "error";
+    if (savePaperShouldNotify) {
+      ElMessage.error(error instanceof Error ? error.message : "保存失败");
+    }
+    return null;
+  }
+};
+
+const savePaper = (isAutoSave = false): Promise<number | null> => {
+  if (!isAutoSave) savePaperShouldNotify = true;
+  if (savePaperTask) return savePaperTask;
+
+  savePaperTask = (async () => {
+    let savedPaperId: number | null = paperId.value;
+
+    do {
+      const revisionToSave = paperRevision;
+      savedPaperId = await persistPaper(revisionToSave);
+      if (savedPaperId === null) return null;
+    } while (lastPersistedRevision < paperRevision);
+
+    if (savePaperShouldNotify) {
       ElMessage.success("保存成功");
     }
-  } catch {
-    autoSaveStatus.value = "error";
-    if (!isAutoSave) {
-      ElMessage.error("保存失败");
-    }
-  }
+    return savedPaperId;
+  })().finally(() => {
+    savePaperTask = null;
+    savePaperShouldNotify = false;
+  });
+  return savePaperTask;
 };
 
 // 预览试卷
@@ -1086,7 +1137,7 @@ const fetchPublishStudents = async () => {
   try {
     const params: any = { courseId: publishFilterCourseId.value || 0 };
     const res = await getPublishStudents(params);
-    if (res.code === 0) {
+    if (isSuccessfulResponseCode(res.code)) {
       publishStudentList.value = res.data || [];
     }
   } catch (e) {
@@ -1138,19 +1189,11 @@ const confirmPublish = async () => {
           ? publishSelectedStudentIds.value
           : [];
 
-    if (isNativeWebViewRuntime()) {
-      logNativeFallback("原生演示模式下模拟发布试卷", {
-        paperId: Number(paperId.value) || Date.now(),
-        targetType: publishTargetType.value,
-        targetIds
-      });
-      ElMessage.success("试卷发布成功！");
-      publishDialogVisible.value = false;
-      return;
-    }
+    const savedPaperId = await savePaper();
+    if (savedPaperId === null) return;
 
     const res = await publishPaperAdvanced({
-      paperId: Number(paperId.value) || Date.now(),
+      paperId: savedPaperId,
       config: {
         targetType: publishTargetType.value,
         targetIds,
@@ -1166,14 +1209,14 @@ const confirmPublish = async () => {
       }
     });
 
-    if (res.code === 0) {
-      ElMessage.success("试卷发布成功！");
-      publishDialogVisible.value = false;
-    } else {
-      ElMessage.error(res.msg || "发布失败");
+    if (!isSuccessfulResponseCode(res.code)) {
+      throw new Error(res.msg || "发布失败");
     }
-  } catch {
-    ElMessage.error("发布失败");
+
+    ElMessage.success("试卷发布成功！");
+    publishDialogVisible.value = false;
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "发布失败");
   } finally {
     publishSubmitting.value = false;
   }
@@ -1212,7 +1255,7 @@ const saveAsTemplate = async () => {
       description: templateForm.value.description,
       questionGroups: paper.questionGroups
     });
-    if (res.code === 0) {
+    if (isSuccessfulResponseCode(res.code)) {
       ElMessage.success("已保存为私有模板");
       saveAsTemplateDialogVisible.value = false;
     } else {
@@ -1234,9 +1277,8 @@ const goBack = () => {
       type: "warning"
     })
       .then(() => {
-        savePaper().then(() => {
-          hasUnsavedChanges.value = false;
-          router.back();
+        savePaper().then(savedPaperId => {
+          if (savedPaperId !== null) router.back();
         });
       })
       .catch(action => {
@@ -1504,7 +1546,7 @@ const archiveQuestionHandler = async (question: any, groupId: number) => {
     const res = await archiveQuestionToBankApi({
       questions: [questionData as any]
     });
-    if (res.code === 0) {
+    if (isSuccessfulResponseCode(res.code)) {
       ElMessage.success("题目已归档到题库");
     } else {
       ElMessage.error(res.msg || "归档失败");
@@ -1538,7 +1580,7 @@ const analyzeWithAI = async () => {
     }));
 
     const res = await aiAnalyzePaper({ questionGroups });
-    if (res.code === 0) {
+    if (isSuccessfulResponseCode(res.code)) {
       aiAnalysisResult.value = res.data;
       ElMessage.success("AI 分析完成");
     } else {
@@ -1638,7 +1680,7 @@ const archiveAllQuestionsToBank = async () => {
     );
 
     const res = await batchArchiveToBank({ questions: allQuestions });
-    if (res.code === 0) {
+    if (isSuccessfulResponseCode(res.code)) {
       ElMessage.success(`已成功归档 ${allQuestions.length} 道题目到题库`);
     } else {
       ElMessage.error(res.msg || "批量归档失败");
@@ -1728,6 +1770,11 @@ const insertLatexToStem = (question: any, latex: string) => {
 
 // 离开页面前确认
 onBeforeRouteLeave((to, from, next) => {
+  if (isReplacingCreatedPaperRoute) {
+    next();
+    return;
+  }
+
   if (hasUnsavedChanges.value) {
     ElMessageBox.confirm("有未保存的更改，是否保存后再离开？", "提示", {
       confirmButtonText: "保存并离开",
@@ -1736,7 +1783,9 @@ onBeforeRouteLeave((to, from, next) => {
       type: "warning"
     })
       .then(() => {
-        savePaper().then(() => next());
+        savePaper().then(savedPaperId => {
+          savedPaperId === null ? next(false) : next();
+        });
       })
       .catch(action => {
         if (action === "cancel") {
@@ -2113,7 +2162,7 @@ const loadTemplate = async (templateId: string) => {
       ? templateId.slice(3)
       : templateId;
     const res = await getTemplateDetail(actualId);
-    if (res.code === 0 && res.data) {
+    if (isSuccessfulResponseCode(res.code) && res.data) {
       const template = res.data;
       paper.title = template.title || "";
       paper.description = template.description || "";
@@ -2135,50 +2184,225 @@ const loadTemplate = async (templateId: string) => {
 const fetchCourseList = async () => {
   try {
     const res = await getCourseList();
-    if (res.code === 0) {
+    if (isSuccessfulResponseCode(res.code)) {
       courseOptions.value = res.data;
     }
   } catch (e) {
-    if (isNativeWebViewRuntime()) {
-      logNativeFallback("加载课程列表失败，已使用原生演示课程", e);
-      courseOptions.value = [
-        { id: 1, name: "高等数学" },
-        { id: 2, name: "大学英语" },
-        { id: 3, name: "计算机基础" }
-      ];
-    } else {
-      console.error("加载课程列表失败", e);
-    }
+    console.error("加载课程列表失败", e);
   }
+};
+
+const questionTypeKeyByCode: Record<number, QuestionTypeKey> = {
+  [QuestionType.SINGLE_CHOICE]: "radio",
+  [QuestionType.MULTIPLE_CHOICE]: "checkbox",
+  [QuestionType.TRUE_FALSE]: "judge",
+  [QuestionType.FILL_BLANK]: "input",
+  [QuestionType.SHORT_ANSWER]: "textarea",
+  [QuestionType.ESSAY]: "textarea-essay",
+  [QuestionType.MATRIX_SINGLE]: "matrix-single",
+  [QuestionType.MATRIX_MULTIPLE]: "matrix-multiple",
+  [QuestionType.MATCHING]: "matching",
+  [QuestionType.ORDERING]: "ordering",
+  [QuestionType.SLIDER]: "slider",
+  [QuestionType.NPS_RATING]: "nps-rating",
+  [QuestionType.STAR_RATING]: "star-rating",
+  [QuestionType.COMPOSITE]: "composite"
+};
+
+const normalizeEditorQuestionType = (questionType: unknown) => {
+  const numericType =
+    typeof questionType === "number"
+      ? questionType
+      : typeof questionType === "string" && /^\d+$/.test(questionType.trim())
+        ? Number(questionType)
+        : null;
+
+  return numericType === null
+    ? questionType
+    : (questionTypeKeyByCode[numericType] ?? questionType);
+};
+
+const preferQuestionArray = (primary: unknown, fallback: unknown) => {
+  if (Array.isArray(primary) && primary.length > 0) return primary;
+  if (Array.isArray(fallback)) return fallback;
+  return Array.isArray(primary) ? primary : [];
+};
+
+const normalizeOrderingItems = (items: unknown) => {
+  if (!Array.isArray(items)) return [];
+
+  return items.map((item, index) => {
+    if (item && typeof item === "object") {
+      const record = item as Record<string, unknown>;
+      return {
+        ...record,
+        key: String(record.key ?? index + 1),
+        content: String(
+          record.content ?? record.label ?? record.text ?? record.key ?? ""
+        )
+      };
+    }
+
+    return { key: String(index + 1), content: String(item ?? "") };
+  });
+};
+
+const normalizeCorrectMatches = (
+  question: Record<string, any>,
+  leftItems: any[],
+  rightItems: any[]
+) => {
+  const answer =
+    question.correctMatches ??
+    question.correctAnswers ??
+    question.correctAnswer;
+
+  if (answer && typeof answer === "object" && !Array.isArray(answer)) {
+    return { ...answer };
+  }
+  if (Array.isArray(answer)) {
+    return Object.fromEntries(
+      leftItems
+        .map((left, index) => [left?.key, answer[index]])
+        .filter(([leftKey, rightKey]) => leftKey && rightKey != null)
+    );
+  }
+
+  return Object.fromEntries(
+    leftItems
+      .map((left, index) => [left?.key, rightItems[index]?.key])
+      .filter(([leftKey, rightKey]) => leftKey && rightKey)
+  );
+};
+
+const normalizeEditorQuestion = (
+  source: Record<string, any>,
+  fallbackType?: unknown
+): Record<string, any> => {
+  const questionType = normalizeEditorQuestionType(
+    source.questionType ?? fallbackType
+  );
+  const question: Record<string, any> = { ...source, questionType };
+
+  if (questionType === "matrix-single" || questionType === "matrix-multiple") {
+    const rows = preferQuestionArray(source.matrixRows, source.rows);
+    const columns = preferQuestionArray(source.matrixCols, source.columns);
+    question.matrixRows = rows;
+    question.rows = rows;
+    question.matrixCols = columns;
+    question.columns = columns;
+  }
+
+  if (questionType === "matching") {
+    const matchingPairs = Array.isArray(source.matchingPairs)
+      ? source.matchingPairs
+      : [];
+    const pairLeftItems = matchingPairs.map((pair, index) => ({
+      key: `L${index + 1}`,
+      content: pair?.left ?? ""
+    }));
+    const pairRightItems = matchingPairs.map((pair, index) => ({
+      key: `R${index + 1}`,
+      content: pair?.right ?? ""
+    }));
+    question.leftItems = preferQuestionArray(source.leftItems, pairLeftItems);
+    question.rightItems = preferQuestionArray(
+      source.rightItems,
+      pairRightItems
+    );
+    const pairCount = Math.min(
+      question.leftItems.length,
+      question.rightItems.length
+    );
+    question.matchingPairs = Array.from({ length: pairCount }, (_, index) => ({
+      ...(matchingPairs[index] && typeof matchingPairs[index] === "object"
+        ? matchingPairs[index]
+        : {}),
+      left: question.leftItems[index]?.content ?? "",
+      right: question.rightItems[index]?.content ?? ""
+    }));
+    question.correctMatches = normalizeCorrectMatches(
+      source,
+      question.leftItems,
+      question.rightItems
+    );
+  }
+
+  if (questionType === "ordering") {
+    const items = normalizeOrderingItems(
+      preferQuestionArray(source.orderingItems, source.items)
+    );
+    question.orderingItems = items;
+    question.items = items;
+    question.correctOrder =
+      source.correctOrder ??
+      source.correctAnswers ??
+      source.correctAnswer ??
+      [];
+  }
+
+  if (Array.isArray(source.subQuestions)) {
+    question.subQuestions = source.subQuestions.map(subQuestion =>
+      normalizeEditorQuestion(subQuestion)
+    );
+  }
+
+  return question;
+};
+
+const normalizeEditorQuestionGroups = (groups: unknown) => {
+  if (!Array.isArray(groups)) return [];
+
+  return groups.map(group => {
+    const groupQuestionType = normalizeEditorQuestionType(group.questionType);
+    return {
+      ...group,
+      questionType: groupQuestionType,
+      questions: Array.isArray(group.questions)
+        ? group.questions.map(question =>
+            normalizeEditorQuestion(question, groupQuestionType)
+          )
+        : []
+    };
+  });
 };
 
 // 加载试卷详情（编辑模式）
 const loadPaperDetail = async () => {
+  if (paperId.value === null) {
+    ElMessage.error("无效的试卷ID");
+    return;
+  }
+
   try {
-    const res = await getPaperDetail(Number(paperId.value));
-    if (res.code === 0 && res.data) {
-      const data = res.data;
-      paper.title = data.title || "";
-      paper.description = data.description || "";
-      paper.courseId = data.courseId || null;
-      paper.timeLimit = data.timeLimit || 90;
-      paper.startTime = data.startTime || "";
-      paper.endTime = data.endTime || "";
-      paper.questionGroups = data.questionGroups || [];
+    const res = await getPaperDetail(paperId.value);
+    if (isSuccessfulResponseCode(res.code) && res.data) {
+      const data = res.data as typeof res.data & {
+        settings?: Partial<(typeof paper)["settings"]>;
+        antiCheat?: Partial<(typeof paper)["antiCheat"]>;
+        retake?: Partial<(typeof paper)["retake"]>;
+        scoring?: Partial<(typeof paper)["scoring"]>;
+      };
+      paper.title = data.title ?? "";
+      paper.description = data.description ?? "";
+      paper.courseId = data.courseId ?? null;
+      paper.timeLimit = data.timeLimit ?? 90;
+      paper.startTime = data.startTime ?? "";
+      paper.endTime = data.endTime ?? "";
+      paper.questionGroups = normalizeEditorQuestionGroups(data.questionGroups);
+      Object.assign(paper.settings, data.settings ?? {});
+      Object.assign(paper.antiCheat, data.antiCheat ?? {});
+      Object.assign(paper.retake, data.retake ?? {});
+      Object.assign(paper.scoring, data.scoring ?? {});
       updateTotals();
+      lastPersistedRevision = paperRevision;
       hasUnsavedChanges.value = false;
-    } else if (isNativeWebViewRuntime()) {
-      logNativeFallback("加载试卷失败，已使用原生演示试卷", res?.msg);
-      applyNativeDemoPaperDetail();
+    } else {
+      ElMessage.error(res.msg || "加载试卷失败");
     }
   } catch (error) {
-    if (isNativeWebViewRuntime()) {
-      logNativeFallback("加载试卷失败，已使用原生演示试卷", error);
-      applyNativeDemoPaperDetail();
-    } else {
-      console.error("加载试卷失败:", error);
-      ElMessage.error("加载试卷失败");
-    }
+    console.error("加载试卷失败:", error);
+    ElMessage.error("加载试卷失败");
   }
 };
 
@@ -2196,7 +2420,7 @@ onMounted(async () => {
     await loadPaperDetail();
   }
 
-  if (route.query.publish === "1") {
+  if (route.name === "ExamPaperPublish" || route.query.publish === "1") {
     await nextTick();
     publishPaperHandler();
   }
@@ -6435,151 +6659,189 @@ $admin-radius: 16px;
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .exam-paper-editor {
     min-width: 0;
-    padding-bottom: var(--pure-mobile-content-bottom-gap, 140px);
+    min-height: 100vh;
+    margin: 0 !important;
   }
 
   .editor-fixed-top {
-    top: calc(var(--pure-safe-area-top, 0px) + 8px);
-    margin: 8px 12px 12px;
-    border-radius: 12px;
+    top: 0;
+    margin: 0 0 8px;
+    overflow: visible;
+    border-radius: 10px;
   }
 
   .editor-header {
-    align-items: stretch;
-    gap: 10px;
-    padding: 12px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
 
-    .header-left {
-      flex: 1 1 100%;
-      min-width: 0;
+  .editor-header .header-left,
+  .editor-header .header-center,
+  .editor-header .header-right {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
 
-      .logo {
-        width: 100%;
-      }
+  .editor-header .header-left .logo .logo-icon {
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+  }
 
-      .logo-icon {
-        width: 30px;
-        height: 30px;
-        margin-right: 8px;
-      }
+  .editor-header .header-left .logo .logo-text {
+    font-size: 17px;
+  }
 
-      .logo-text {
-        display: block;
-        min-width: 0;
-        font-size: 18px;
-        line-height: 1.25;
-        white-space: normal;
-        word-break: keep-all;
-      }
-    }
+  .editor-header .header-right {
+    gap: 8px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
 
-    .header-center {
-      order: 3;
-      flex: 1 1 100%;
-      max-width: none;
-      margin: 0;
-    }
+  .editor-header .header-right > * {
+    flex: 0 0 auto;
+  }
 
-    .header-right {
-      order: 2;
-      flex: 1 1 100%;
-      min-width: 0;
-      gap: 8px;
-      flex-wrap: wrap;
-
-      .auto-save-status {
-        min-height: 34px;
-        padding: 6px 10px;
-        font-size: 12px;
-        white-space: normal;
-      }
-
-      :deep(.el-button) {
-        height: 36px;
-        min-width: 72px;
-        padding: 0 10px;
-        margin-left: 0;
-        font-size: 13px;
-      }
-    }
+  .editor-header .header-right .auto-save-status,
+  .editor-header .header-right :deep(.el-button) {
+    min-height: 44px;
   }
 
   .question-toolbar {
-    padding: 12px;
+    min-width: 0;
+    padding: 8px;
+  }
 
-    .toolbar-hint {
-      margin-bottom: 12px;
-      line-height: 1.4;
-    }
+  .question-toolbar .toolbar-groups {
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
 
-    .toolbar-groups {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
+  .question-toolbar .toolbar-groups .toolbar-group {
+    flex: 0 0 auto;
+  }
 
-      .toolbar-group-label {
-        letter-spacing: 0;
-      }
-    }
+  .question-toolbar .toolbar-items {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
 
-    .toolbar-items {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-
-      .type-item {
-        min-width: 0;
-        min-height: 86px;
-        padding: 8px 6px;
-
-        .type-icon-wrapper {
-          width: 32px;
-          height: 32px;
-          margin-bottom: 6px;
-        }
-
-        .type-label {
-          max-width: 100%;
-          font-size: 12px;
-          line-height: 1.25;
-          text-align: center;
-          white-space: normal;
-          word-break: keep-all;
-        }
-      }
-    }
+  .question-toolbar .toolbar-items .type-item {
+    min-width: 72px;
+    min-height: 72px;
+    padding: 8px;
   }
 
   .editor-main {
-    min-height: 0;
+    min-width: 0;
     flex-direction: column;
     overflow: visible;
   }
 
-  .editor-outline {
-    width: auto;
+  .editor-outline,
+  .editor-outline.collapsed {
+    width: 100%;
+    min-width: 0;
     max-height: 220px;
-    flex-shrink: 0;
-    margin: 0 12px 12px;
+    flex: 0 0 auto;
     overflow: hidden;
     border-right: 0;
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: 12px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
 
-    &.collapsed {
-      width: auto;
-      max-height: 54px;
-    }
+  .editor-outline.collapsed {
+    max-height: 56px;
+  }
+
+  .editor-outline .outline-header :deep(.el-button) {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   .editor-content {
+    width: 100%;
+    min-width: 0;
+    padding: 8px;
     overflow: visible;
-    padding: 12px;
-    background-size: 520px;
+  }
+
+  .editor-content .paper-canvas {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 8px;
+  }
+
+  .editor-content .ai-analysis-panel .settings-content,
+  .editor-content .settings-panel .settings-content,
+  .editor-content .questions-container .question-card {
+    min-width: 0;
+    padding: 8px;
+  }
+
+  .editor-content .questions-container .question-group-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    margin: 12px 0 8px;
+  }
+
+  .editor-content
+    .questions-container
+    .question-group-header
+    .group-title-wrapper {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .editor-content
+    .questions-container
+    .question-group-header
+    .group-title-input {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .preview-dialog .preview-header,
+  .preview-dialog .preview-controls {
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .preview-dialog .preview-content {
+    justify-content: flex-start;
+    padding: 8px;
+  }
+
+  .exam-paper-editor :deep(.el-dialog:not(.is-fullscreen)) {
+    width: calc(100vw - 16px) !important;
+    max-width: 680px;
+  }
+}
+
+@media (width <= 380px) {
+  .editor-header .header-left .logo .logo-text {
+    display: none;
+  }
+
+  .editor-header,
+  .question-toolbar,
+  .editor-content,
+  .editor-content .paper-canvas,
+  .editor-content .questions-container .question-card {
+    padding: 6px;
   }
 }
 </style>

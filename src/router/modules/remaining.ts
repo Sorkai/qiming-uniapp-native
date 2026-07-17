@@ -7,7 +7,7 @@ export default [
     name: "Home",
     component: () => import("@/views/home/index.vue"),
     meta: {
-      title: $t("menus.pureHome"),
+      title: "启明智教",
       showLink: false,
       rank: 100
     }
@@ -56,7 +56,8 @@ export default [
     meta: {
       title: $t("buttons.pureAccountSettings"),
       showLink: false,
-      rank: 104
+      rank: 104,
+      roles: ["admin", "teacher", "student"]
     }
   },
   {
@@ -66,7 +67,8 @@ export default [
     meta: {
       title: "账号管理",
       showLink: false,
-      rank: 105
+      rank: 105,
+      roles: ["student"]
     }
   },
   {
@@ -76,7 +78,8 @@ export default [
     meta: {
       title: "AI App",
       showLink: false,
-      rank: 105.5
+      rank: 105.5,
+      roles: ["admin", "teacher", "student"]
     }
   },
   {
@@ -99,7 +102,7 @@ export default [
       title: "课程学习",
       showLink: false,
       rank: 106,
-      roles: ["admin", "teacher", "student"]
+      roles: ["student"]
     }
   },
   {
@@ -109,7 +112,8 @@ export default [
     meta: {
       title: "作业详情",
       showLink: false,
-      rank: 107
+      rank: 107,
+      roles: ["student"]
     }
   },
   {
@@ -119,7 +123,19 @@ export default [
     meta: {
       title: "考试详情",
       showLink: false,
-      rank: 108
+      rank: 108,
+      roles: ["student"]
+    }
+  },
+  {
+    path: "/account/wrong-exercise",
+    name: "WrongExercise",
+    component: () => import("@/views/account/wrong-exercise.vue"),
+    meta: {
+      title: "错题本",
+      showLink: false,
+      rank: 108.5,
+      roles: ["student"]
     }
   },
   // 学生答卷页面（全屏，无布局）

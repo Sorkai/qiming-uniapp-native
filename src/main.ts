@@ -13,6 +13,7 @@ import { useVxeTable } from "@/plugins/vxeTable";
 import { useElementPlus } from "@/plugins/elementPlus";
 import { injectResponsiveStorage } from "@/utils/responsive";
 import { registerPwa } from "@/utils/pwa";
+import { initClarity } from "@/utils/clarity";
 import { userKey, type DataInfo } from "@/utils/auth";
 
 import Table from "@pureadmin/table";
@@ -38,9 +39,15 @@ function readNativeQueryParams() {
   const queryNative =
     searchParams.get("qimingNative") === "1" ||
     hashParams.get("qimingNative") === "1";
+  const queryMiniProgram =
+    searchParams.get("qimingMiniProgram") === "1" ||
+    hashParams.get("qimingMiniProgram") === "1";
   const storedNative =
     sessionStorage.getItem("qimingNativeWebView") === "1" ||
     localStorage.getItem("qimingNativeWebView") === "1";
+  const storedMiniProgram =
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1";
   const nativeStatusTop =
     hashParams.get("nativeStatusTop") ||
     searchParams.get("nativeStatusTop") ||
@@ -48,9 +55,13 @@ function readNativeQueryParams() {
     localStorage.getItem("qimingNativeStatusTop") ||
     "";
 
-  if (queryNative) {
+  if (queryNative || queryMiniProgram) {
     sessionStorage.setItem("qimingNativeWebView", "1");
     localStorage.setItem("qimingNativeWebView", "1");
+  }
+  if (queryMiniProgram) {
+    sessionStorage.setItem("qimingMiniProgramWebView", "1");
+    localStorage.setItem("qimingMiniProgramWebView", "1");
   }
   if (nativeStatusTop) {
     sessionStorage.setItem("qimingNativeStatusTop", nativeStatusTop);
@@ -58,7 +69,8 @@ function readNativeQueryParams() {
   }
 
   return {
-    isNative: queryNative || storedNative,
+    isNative: queryNative || queryMiniProgram || storedNative,
+    isMiniProgram: queryMiniProgram || storedMiniProgram,
     nativeStatusTop
   };
 }
@@ -83,19 +95,95 @@ function normalizeNativeInitialHash() {
   const targetPath = role === "student" ? "/account" : "/welcome/index";
   if (role === "student") params.set("menu", "home");
   const targetQuery = params.toString();
-  window.location.hash = `#${targetPath}${targetQuery ? `?${targetQuery}` : ""}`;
+  const targetHash = `#${targetPath}${targetQuery ? `?${targetQuery}` : ""}`;
+  const targetUrl = `${window.location.pathname}${window.location.search}${targetHash}`;
+  window.history.replaceState(window.history.state, "", targetUrl);
+}
+
+function normalizeNativeStatusbarTop(value: string, clearance = 0) {
+  const statusTop = Number(value);
+  if (!Number.isFinite(statusTop) || statusTop <= 0) return 0;
+  return Math.min(Math.max(statusTop, 22), 28) + clearance;
+}
+
+function readCurrentHashRouteInfo() {
+  const hash = window.location.hash || "";
+  const queryStart = hash.indexOf("?");
+  const path =
+    (queryStart >= 0 ? hash.slice(1, queryStart) : hash.slice(1)) || "/";
+  const hashQuery = queryStart >= 0 ? hash.slice(queryStart + 1) : "";
+  const params = new URLSearchParams(
+    hashQuery || window.location.search.slice(1)
+  );
+  return {
+    path,
+    role: params.get("demoRole") || ""
+  };
+}
+
+function resolveMiniProgramDocumentTitle(
+  path: string,
+  role: string,
+  routeTitle?: unknown
+) {
+  const titleFallbacks: Record<string, string> = {
+    "menus.pureHome": "启明智教",
+    "menus.pureLogin": "登录",
+    "menus.pureEmpty": "启明智教",
+    "menus.aiPPT": "AI 课件",
+    "menus.virtualLab": "虚拟实验室",
+    "menus.competition": "综合赛事",
+    "menus.todo": "待办"
+  };
+
+  if (path === "/welcome/index") {
+    if (role === "admin") return "管理工作台";
+    if (role === "teacher") return "教师工作台";
+    return "启明智教";
+  }
+  if (path === "/account") return "学生主页";
+  if (path === "/course/list") return "课程";
+  if (path === "/course/category") return "课程分类";
+  if (path === "/course/assessment") return "作业考试";
+  if (path.startsWith("/course/discussion")) return "讨论管理";
+  if (path.startsWith("/course/")) return "课程学习";
+  if (path === "/user/list") return "用户管理";
+  if (path === "/ai-app/workspace" || path === "/account/ai-app") {
+    return "AI App";
+  }
+  if (path.startsWith("/student-exam-center/do")) return "参加考试";
+  if (path.startsWith("/exam-paper/result")) return "考试结果";
+  if (typeof routeTitle === "string" && routeTitle.trim()) {
+    const normalizedTitle = routeTitle.trim();
+    if (titleFallbacks[normalizedTitle]) return titleFallbacks[normalizedTitle];
+    if (normalizedTitle.startsWith("menus.")) return "启明智教";
+    return normalizedTitle;
+  }
+  return "启明智教";
 }
 
 function applyNativeWebViewRuntime() {
   if (typeof window === "undefined") return;
   normalizeNativeInitialHash();
-  const { isNative, nativeStatusTop } = readNativeQueryParams();
+  const { isNative, isMiniProgram, nativeStatusTop } = readNativeQueryParams();
   if (!isNative) return;
 
-  document.title = "IntellEdu";
+  document.title = "启明智教";
   const root = document.documentElement;
   root.classList.add("qiming-native-webview");
   root.dataset.qimingNative = "true";
+  const isAndroidNative =
+    !isMiniProgram && /Android/i.test(window.navigator.userAgent);
+  root.classList.toggle("qiming-native-android", isAndroidNative);
+  if (isMiniProgram) {
+    root.classList.add("qiming-mini-program-webview");
+    root.dataset.qimingMiniProgram = "true";
+    const initialRoute = readCurrentHashRouteInfo();
+    document.title = resolveMiniProgramDocumentTitle(
+      initialRoute.path,
+      initialRoute.role
+    );
+  }
   let maxObservedViewportHeight = 0;
   let focusedNativeInput = false;
 
@@ -226,21 +314,26 @@ function applyNativeWebViewRuntime() {
     true
   );
 
-  const statusTop = Number(nativeStatusTop);
-  if (Number.isFinite(statusTop) && statusTop > 0) {
+  const statusTop = normalizeNativeStatusbarTop(
+    nativeStatusTop,
+    isAndroidNative ? 6 : 0
+  );
+  if (statusTop > 0) {
     const statusTopPx = `${statusTop}px`;
     root.style.setProperty("--pure-safe-area-top", statusTopPx);
     root.style.setProperty("--qiming-native-safe-top", statusTopPx);
     root.style.setProperty("--qiming-native-status-top", statusTopPx);
+    root.style.setProperty("--qiming-native-statusbar-offset", statusTopPx);
   }
 
   const syncStatusBar = () => {
     try {
       const plusApi = (globalThis as any).plus;
-      const isDark =
+      const isDarkSurface =
+        readCurrentHashRouteInfo().path === "/home" ||
         root.classList.contains("dark") ||
         document.body?.classList.contains("dark");
-      plusApi?.navigator?.setStatusBarStyle?.(isDark ? "light" : "dark");
+      plusApi?.navigator?.setStatusBarStyle?.(isDarkSurface ? "light" : "dark");
       plusApi?.navigator?.setStatusBarBackground?.("rgba(0,0,0,0)");
     } catch {
       // The H5 preview and some WebView runtimes do not expose plus.navigator.
@@ -277,6 +370,17 @@ function applyNativeWebViewRuntime() {
 
   const getSingleQueryValue = (value: unknown) =>
     Array.isArray(value) ? value[0] : value;
+
+  const syncMiniProgramDocumentTitle = () => {
+    if (!isMiniProgram) return;
+    const currentRoute = router.currentRoute.value;
+    const role = String(getSingleQueryValue(currentRoute.query.demoRole) || "");
+    document.title = resolveMiniProgramDocumentTitle(
+      currentRoute.path,
+      role,
+      currentRoute.meta?.title
+    );
+  };
 
   const getNativeUserRole = () => {
     const storedUserInfo = storageLocal().getItem<DataInfo<number>>(userKey);
@@ -329,7 +433,7 @@ function applyNativeWebViewRuntime() {
         query[key] = String(singleValue);
       }
     });
-    omitKeys.forEach(key => {
+    [...omitKeys, "demoRole"].forEach(key => {
       delete query[key];
     });
     return {
@@ -357,7 +461,8 @@ function applyNativeWebViewRuntime() {
     const targetHash = `#${path}${queryString ? `?${queryString}` : ""}`;
     const ensureHashNavigation = () => {
       if (window.location.hash === targetHash) return;
-      window.location.hash = targetHash;
+      const targetUrl = `${window.location.pathname}${window.location.search}${targetHash}`;
+      window.history.replaceState(window.history.state, "", targetUrl);
     };
     router
       .replace({ path, query })
@@ -408,8 +513,11 @@ function applyNativeWebViewRuntime() {
       // Best-effort route restore cache for Android task switching.
     }
     window.setTimeout(normalizeNativeRoleRoute, 40);
+    window.setTimeout(syncMiniProgramDocumentTitle, 60);
+    window.setTimeout(syncStatusBar, 80);
   });
   window.setTimeout(normalizeNativeRoleRoute, 300);
+  window.setTimeout(syncMiniProgramDocumentTitle, 320);
 
   const dispatchNativeBackEvent = () => {
     const event = new CustomEvent("qiming:native-back", {
@@ -430,8 +538,8 @@ function applyNativeWebViewRuntime() {
       getSingleQueryValue(currentRoute.query.menu) || ""
     );
     const role = String(
-      getSingleQueryValue(currentRoute.query.demoRole) ||
-        getNativeUserRole() ||
+      getNativeUserRole() ||
+        getSingleQueryValue(currentRoute.query.demoRole) ||
         ""
     );
 
@@ -560,6 +668,7 @@ getPlatformConfig(app).then(async config => {
   setupStore(app);
   useAppStoreHook().refreshUA();
   registerPwa();
+  initClarity();
   app.use(router);
   await router.isReady();
   injectResponsiveStorage(app, config);

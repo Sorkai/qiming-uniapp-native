@@ -71,6 +71,16 @@ export default {
       }
     },
     {
+      path: "/ai-app/governance",
+      name: "AiAppGovernance",
+      component: () => import("@/views/ai-app/index.vue"),
+      meta: {
+        title: "治理看板",
+        icon: "ri:dashboard-line",
+        roles: ["admin", "teacher"]
+      }
+    },
+    {
       path: "/ai-app/automation",
       name: "AiAppAutomation",
       component: () => import("@/views/ai-app/index.vue"),

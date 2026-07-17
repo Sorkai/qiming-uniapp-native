@@ -207,7 +207,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 /* 头部整体布局 */
 .layout-header {
   position: fixed;
-  top: 15px;
+  top: calc(15px + var(--pure-safe-area-top, 0px));
   right: 15px;
   left: 90px;
   z-index: 1000;
@@ -523,7 +523,7 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .layout-header {
     top: calc(12px + var(--pure-safe-area-top, 0px));
     right: 12px;
@@ -595,8 +595,9 @@ const handleButtonMouseMove = (e: MouseEvent) => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .layout-header {
+    top: calc(12px + var(--pure-safe-area-top, 0px));
     height: 60px;
     padding: 0 12px;
   }
@@ -667,8 +668,9 @@ const handleButtonMouseMove = (e: MouseEvent) => {
   }
 }
 
-@media (max-width: 379px) {
+@media (width <= 379px) {
   .layout-header {
+    top: calc(12px + var(--pure-safe-area-top, 0px));
     right: 10px;
     left: 10px;
     padding: 0 10px;

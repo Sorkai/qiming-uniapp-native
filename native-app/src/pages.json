@@ -13,6 +13,7 @@
     }
   ],
   "globalStyle": {
+    "navigationStyle": "custom",
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "IntellEdu",
     "navigationBarBackgroundColor": "#F7F8FC",

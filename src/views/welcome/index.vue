@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect, onUnmounted } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import ReCol from "@/components/ReCol";
 import LottieAnimation from "@/components/LottieAnimation.vue";
@@ -36,38 +36,7 @@ const handleViewReport = () => {
 
 const { isDark } = useDark();
 const userStore = useUserStoreHook();
-
-const getNativeDemoRoleName = () => {
-  if (typeof window === "undefined") return "";
-  const query = new URLSearchParams(window.location.search);
-  const hashQueryText = window.location.hash.includes("?")
-    ? window.location.hash.split("?")[1]
-    : "";
-  const hashQuery = new URLSearchParams(hashQueryText);
-  const role = hashQuery.get("demoRole") || query.get("demoRole");
-  if (role === "student") return "吴同学";
-  if (role === "admin") return "管理员";
-  if (role === "teacher") return "教师";
-  return "";
-};
-
-const getStoredDisplayName = () => {
-  if (typeof window === "undefined") return "";
-  try {
-    const userInfo = JSON.parse(localStorage.getItem("user-info") || "{}");
-    return String(userInfo?.nickname || userInfo?.username || "").trim();
-  } catch {
-    return "";
-  }
-};
-
-const nickname = computed(
-  () =>
-    String(userStore.nickname || userStore.username || "").trim() ||
-    getStoredDisplayName() ||
-    getNativeDemoRoleName() ||
-    "老师"
-);
+const nickname = ref(userStore.nickname || userStore.username);
 
 // 随机选择一个动画
 const selectedAnimation = ref(
@@ -94,49 +63,30 @@ const isAdminUser = ref(isAdmin());
 // 打字机效果
 const displayedText = ref("");
 const isTyping = ref(true);
-let typewriterTimer: ReturnType<typeof setInterval> | undefined;
-
-const isNativeMobileWebView = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview") &&
-  document.documentElement.classList.contains("ua-mobile");
 
 const startTypewriter = () => {
   const fullText = `${greeting.value}, ${nickname.value}!`;
-  if (typewriterTimer) {
-    clearInterval(typewriterTimer);
-  }
   displayedText.value = "";
   isTyping.value = true;
-
-  if (isNativeMobileWebView()) {
-    displayedText.value = fullText;
-    isTyping.value = false;
-    return;
-  }
-
   let i = 0;
 
-  typewriterTimer = setInterval(() => {
+  const timer = setInterval(() => {
     if (i < fullText.length) {
       displayedText.value += fullText.charAt(i);
       i++;
     } else {
-      if (typewriterTimer) clearInterval(typewriterTimer);
+      clearInterval(timer);
       isTyping.value = false;
     }
   }, 100);
 };
 
 // 监听问候语变化重新触发打字机
+import { watchEffect } from "vue";
 watchEffect(() => {
   if (greeting.value && nickname.value) {
     startTypewriter();
   }
-});
-
-onUnmounted(() => {
-  if (typewriterTimer) clearInterval(typewriterTimer);
 });
 </script>
 
@@ -146,22 +96,24 @@ onUnmounted(() => {
     <div
       class="welcome-header mb-6 px-4 py-5 md:px-6 md:py-5 rounded-[24px] relative overflow-hidden flex flex-col lg:flex-row justify-between items-center text-slate-800 dark:text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.01]"
     >
-      <div class="z-10 text-center lg:text-left group w-full lg:w-auto">
+      <div
+        class="welcome-copy-block z-10 text-center lg:text-left group w-full lg:w-auto"
+      >
         <h1
-          class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight transition-transform duration-300 group-hover:translate-x-2 min-h-[60px] flex items-center justify-center lg:justify-start tracking-tight"
+          class="welcome-title text-3xl md:text-5xl font-extrabold mb-4 leading-tight transition-transform duration-300 group-hover:translate-x-2 min-h-[60px] flex items-center justify-center lg:justify-start tracking-tight"
         >
           {{ displayedText }}
           <span v-if="isTyping" class="cursor-blink ml-1">|</span>
           <span v-else class="wave ml-2">👋</span>
         </h1>
         <p
-          class="text-lg md:text-2xl font-medium leading-relaxed text-slate-600 dark:text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8 mx-auto lg:mx-0"
+          class="welcome-description text-lg md:text-2xl font-medium leading-relaxed text-slate-600 dark:text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8 mx-auto lg:mx-0"
         >
           欢迎回到智慧教学平台。您的 AI
           助手已经为您准备好了今天的课程方案和学生进度报告。
         </p>
         <div
-          class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start items-center"
+          class="welcome-actions mt-8 flex flex-wrap gap-4 justify-center lg:justify-start items-center"
         >
           <el-button
             :color="isDark ? '#a5b4fc' : '#ffffff'"
@@ -171,7 +123,7 @@ onUnmounted(() => {
             }"
             round
             size="large"
-            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
+            class="welcome-action font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
             @click="router.push('/course/teacherplan')"
           >
             <div class="flex items-center">
@@ -183,7 +135,7 @@ onUnmounted(() => {
             :color="isDark ? '#a5b4fc' : '#ffffff'"
             round
             size="large"
-            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
+            class="welcome-action font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
             :style="{
               color: isDark ? '#ffffff' : '#a5b4fc',
               border: isDark ? 'none' : '1px solid #e2e8f0'
@@ -229,15 +181,15 @@ onUnmounted(() => {
     </div>
 
     <!-- Statistics Grid -->
-    <StatsOverview class="mb-8" />
+    <StatsOverview class="stats-overview mb-8" />
 
     <!-- 统计API图表部分 -->
-    <el-row :gutter="24" justify="space-around">
+    <el-row class="dashboard-chart-grid" :gutter="24" justify="space-around">
       <!-- 只有管理员才能看到这两个图表 -->
       <template v-if="isAdminUser">
         <re-col
           v-motion
-          class="mb-[24px]"
+          class="dashboard-chart-col mb-[24px]"
           :value="12"
           :md="12"
           :sm="24"
@@ -253,7 +205,7 @@ onUnmounted(() => {
                 <el-tag size="small" effect="plain">实时更新</el-tag>
               </div>
             </template>
-            <div class="h-[450px]">
+            <div class="h-[350px]">
               <TeacherStudentUsage />
             </div>
           </el-card>
@@ -261,7 +213,7 @@ onUnmounted(() => {
 
         <re-col
           v-motion
-          class="mb-[24px]"
+          class="dashboard-chart-col mb-[24px]"
           :value="12"
           :md="12"
           :sm="24"
@@ -276,7 +228,7 @@ onUnmounted(() => {
                 </span>
               </div>
             </template>
-            <div class="h-[450px]">
+            <div class="h-[350px]">
               <WeekUsage />
             </div>
           </el-card>
@@ -287,13 +239,13 @@ onUnmounted(() => {
       <re-col
         id="efficient-index-report"
         v-motion
-        class="mb-[24px]"
+        class="dashboard-chart-col mb-[24px]"
         :value="24"
         :md="10"
         :sm="24"
         :xs="24"
       >
-        <el-card shadow="never" class="chart-card h-full">
+        <el-card shadow="never" class="chart-card analysis-chart-card h-full">
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-lg font-bold flex items-center">
@@ -302,15 +254,22 @@ onUnmounted(() => {
               </span>
             </div>
           </template>
-          <div class="min-h-[600px]">
+          <div class="min-h-0 md:min-h-[600px]">
             <EfficientIndex />
           </div>
         </el-card>
       </re-col>
 
       <!-- 所有用户(包括教师)都可以看到课程统计 -->
-      <re-col v-motion class="mb-[24px]" :value="24" :md="14" :sm="24" :xs="24">
-        <el-card shadow="never" class="chart-card h-full">
+      <re-col
+        v-motion
+        class="dashboard-chart-col mb-[24px]"
+        :value="24"
+        :md="14"
+        :sm="24"
+        :xs="24"
+      >
+        <el-card shadow="never" class="chart-card analysis-chart-card h-full">
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-lg font-bold flex items-center">
@@ -319,7 +278,7 @@ onUnmounted(() => {
               </span>
             </div>
           </template>
-          <div class="min-h-[600px]">
+          <div class="min-h-0 md:min-h-[600px]">
             <CourseStatistics />
           </div>
         </el-card>
@@ -415,6 +374,148 @@ onUnmounted(() => {
   }
 }
 
+.analysis-chart-card {
+  :deep(.el-card__body) {
+    padding-top: 16px;
+  }
+}
+
+@media screen and (max-width: 768px),
+  screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .welcome-container {
+    margin-right: max(8px, env(safe-area-inset-right, 0px));
+    margin-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+  }
+
+  .welcome-header {
+    padding: 16px 14px !important;
+    margin-bottom: 12px !important;
+    border-radius: 16px !important;
+    transform: none !important;
+  }
+
+  .welcome-copy-block {
+    min-width: 0;
+  }
+
+  .welcome-title {
+    min-height: 40px !important;
+    margin-bottom: 8px !important;
+    font-size: 26px !important;
+    line-height: 1.25 !important;
+    transform: none !important;
+  }
+
+  .welcome-description {
+    margin-bottom: 16px !important;
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .welcome-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+    width: 100%;
+    margin-top: 0 !important;
+  }
+
+  :deep(.welcome-action.el-button) {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 10px !important;
+    margin-left: 0 !important;
+    font-size: 15px !important;
+    transform: none !important;
+  }
+
+  .stats-overview {
+    margin-bottom: 12px !important;
+  }
+
+  .dashboard-chart-grid {
+    margin-right: -4px !important;
+    margin-left: -4px !important;
+  }
+
+  .dashboard-chart-col {
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .chart-card {
+    border-radius: 12px;
+
+    &:hover {
+      box-shadow: none;
+      transform: none;
+    }
+
+    :deep(.el-card__header) {
+      padding: 14px 10px 10px;
+
+      .text-lg {
+        min-width: 0;
+        font-size: 16px;
+        line-height: 1.4;
+      }
+    }
+
+    :deep(.el-card__body) {
+      min-width: 0;
+      padding: 8px 4px 12px;
+    }
+  }
+
+  .analysis-chart-card {
+    :deep(.el-card__body) {
+      padding-top: 6px;
+    }
+  }
+}
+
+@media screen and (max-width: 340px) {
+  .welcome-container {
+    margin-right: max(6px, env(safe-area-inset-right, 0px));
+    margin-left: max(6px, env(safe-area-inset-left, 0px));
+  }
+
+  .welcome-title {
+    font-size: 24px !important;
+  }
+
+  :deep(.welcome-action.el-button) {
+    padding: 0 6px !important;
+    font-size: 14px !important;
+  }
+}
+
+@media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .welcome-header {
+    padding: 12px 16px !important;
+  }
+
+  .welcome-title {
+    min-height: 32px !important;
+    font-size: 24px !important;
+  }
+
+  .welcome-description {
+    margin-bottom: 10px !important;
+    font-size: 14px !important;
+  }
+
+  .welcome-actions {
+    max-width: 420px;
+    margin-right: auto !important;
+    margin-left: auto !important;
+  }
+}
+
 .wave {
   display: inline-block;
   cursor: pointer;
@@ -446,133 +547,6 @@ onUnmounted(() => {
 
   html.dark & {
     color: rgb(255 255 255 / 80%);
-  }
-}
-
-@media (max-width: 768px) {
-  .welcome-container {
-    min-height: auto;
-    padding: 0 !important;
-  }
-
-  .welcome-header {
-    width: 100%;
-    min-height: 0;
-    padding: 22px 18px !important;
-    margin-bottom: 14px !important;
-    border-radius: 18px !important;
-    box-shadow: 0 10px 22px rgb(15 23 42 / 5%);
-
-    h1 {
-      min-height: 0 !important;
-      margin-bottom: 10px !important;
-      font-size: 24px !important;
-      line-height: 1.15 !important;
-      letter-spacing: 0 !important;
-      transform: none !important;
-    }
-
-    p {
-      max-width: 100%;
-      margin-bottom: 14px !important;
-      font-size: 14px !important;
-      line-height: 1.55 !important;
-    }
-
-    .mt-8 {
-      display: grid !important;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px !important;
-      width: min(320px, 100%);
-      margin: 0 auto !important;
-    }
-
-    :deep(.el-button) {
-      width: 100%;
-      height: 38px;
-      padding: 0 12px !important;
-      margin: 0 !important;
-      font-size: 13px !important;
-    }
-  }
-
-  .chart-card {
-    border-radius: 18px;
-    margin-bottom: 14px;
-    overflow: visible;
-
-    html.dark & {
-      background: var(--qiming-native-surface-bg, var(--el-bg-color-overlay));
-      border: 1px solid
-        var(--qiming-native-border-color, rgb(148 163 184 / 20%));
-      box-shadow: 0 12px 28px rgb(0 0 0 / 24%);
-    }
-
-    &:hover {
-      transform: none;
-    }
-
-    :deep(.el-card__header) {
-      padding: 15px 14px 10px;
-
-      html.dark & {
-        border-bottom-color: var(
-          --qiming-native-border-color,
-          rgb(148 163 184 / 20%)
-        );
-      }
-
-      .text-lg {
-        display: inline-flex;
-        align-items: center;
-        min-width: 0;
-        color: #374151 !important;
-        font-size: 16px !important;
-        font-weight: 800 !important;
-        line-height: 1.25 !important;
-        text-shadow: none !important;
-        letter-spacing: 0 !important;
-        transform: translateZ(0);
-        -webkit-font-smoothing: antialiased;
-        -webkit-text-fill-color: #374151 !important;
-
-        html.dark & {
-          color: var(--qiming-native-text-primary, #f8fafc) !important;
-          -webkit-text-fill-color: var(
-            --qiming-native-text-primary,
-            #f8fafc
-          ) !important;
-        }
-      }
-    }
-
-    :deep(.el-card__body) {
-      padding: 0 12px 14px;
-    }
-
-    :deep(.min-h-\[600px\]),
-    :deep(.h-\[450px\]) {
-      min-height: 0 !important;
-      height: auto !important;
-      max-height: none;
-      overflow: visible;
-    }
-
-    :deep(.el-scrollbar__wrap),
-    :deep(.el-scrollbar__view) {
-      max-height: none !important;
-      overflow: visible !important;
-    }
-  }
-
-  :deep(.el-row) {
-    margin-right: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  :deep(.el-col) {
-    padding-right: 0 !important;
-    padding-left: 0 !important;
   }
 }
 </style>

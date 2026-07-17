@@ -96,6 +96,17 @@
             >学习情况</el-button
           >
         </div>
+        <div v-if="canRebuild" class="button-row mt-2">
+          <el-button
+            size="default"
+            type="danger"
+            plain
+            class="action-btn"
+            :loading="isRebuilding"
+            @click="$emit('rebuild', course)"
+            >重建课程</el-button
+          >
+        </div>
       </div>
     </div>
   </el-card>
@@ -115,10 +126,14 @@ withDefaults(
     course: any;
     isSelected?: boolean;
     canDelete?: boolean;
+    canRebuild?: boolean;
+    isRebuilding?: boolean;
   }>(),
   {
     isSelected: false,
-    canDelete: false
+    canDelete: false,
+    canRebuild: false,
+    isRebuilding: false
   }
 );
 
@@ -129,7 +144,8 @@ defineEmits([
   "view-attrs",
   "allocation",
   "study-status",
-  "toggle-select"
+  "toggle-select",
+  "rebuild"
 ]);
 </script>
 
@@ -303,41 +319,29 @@ defineEmits([
 }
 
 @media screen and (max-width: 768px) {
-  .course-card {
-    border-radius: 14px;
-  }
-
   .course-thumb-container {
-    height: 116px;
+    height: 160px;
   }
 
   .course-content {
-    padding: 10px;
+    padding: 14px;
   }
 
   .course-title {
     display: -webkit-box;
-    margin-bottom: 5px;
-    font-size: 15px;
-    line-height: 1.35;
     white-space: normal;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
   }
 
   .course-desc {
-    height: 36px;
-    margin-bottom: 8px;
-    font-size: 12px;
-    line-height: 18px;
+    margin-bottom: 12px;
   }
 
   .course-meta {
     flex-direction: column;
     align-items: flex-start;
-    gap: 5px;
-    margin-bottom: 8px;
-    font-size: 12px;
+    margin-bottom: 12px;
   }
 
   .course-footer {
@@ -347,31 +351,10 @@ defineEmits([
 
     .action-btn {
       min-width: calc(50% - 4px);
-      height: 30px;
-      padding: 5px 8px;
+      height: 34px;
+      padding: 6px 10px;
       font-size: 12px;
-      border-radius: 8px;
     }
   }
-}
-</style>
-
-<style lang="scss">
-html.qiming-native-webview.ua-mobile .course-card {
-  box-shadow: 0 8px 20px rgb(28 39 68 / 7%) !important;
-}
-
-html.qiming-native-webview.ua-mobile .course-actions-overlay {
-  display: none;
-}
-
-html.qiming-native-webview.ua-mobile .course-selection {
-  top: 8px;
-  right: 8px;
-}
-
-html.qiming-native-webview.ua-mobile .course-status-tag {
-  top: 8px;
-  left: 8px;
 }
 </style>

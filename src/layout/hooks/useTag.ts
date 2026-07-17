@@ -29,14 +29,18 @@ import CloseLeftTags from "~icons/ri/text-direction-r";
 import RefreshRight from "~icons/ep/refresh-right";
 import Close from "~icons/ep/close";
 
+const configureKey = `${responsiveStorageNameSpace()}configure`;
+const getConfigure = () =>
+  storageLocal().getItem<StorageConfigs>(configureKey) ?? {
+    hideTabs: false,
+    showModel: "smart"
+  };
+
 export function useTags() {
   const route = useRoute();
   const router = useRouter();
   const instance = getCurrentInstance();
   const pureSetting = useSettingStoreHook();
-  const configureKey = `${responsiveStorageNameSpace()}configure`;
-  const getConfigure = () =>
-    storageLocal().getItem<StorageConfigs>(configureKey) ?? {};
 
   const buttonTop = ref(0);
   const buttonLeft = ref(0);
@@ -48,9 +52,9 @@ export function useTags() {
   const isScrolling = ref(false);
 
   /** 显示模式，默认灵动模式 */
-  const showModel = ref(getConfigure().showModel || "smart");
+  const showModel = ref(getConfigure()?.showModel || "smart");
   /** 是否隐藏标签页，默认显示 */
-  const showTags = ref(getConfigure().hideTabs ?? false);
+  const showTags = ref(getConfigure()?.hideTabs ?? false);
   const multiTags: any = computed(() => {
     return useMultiTagsStoreHook().multiTags;
   });

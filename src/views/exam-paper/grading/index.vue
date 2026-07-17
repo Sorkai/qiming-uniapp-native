@@ -8,10 +8,8 @@ import {
   getGradingStatistics,
   getGradingPaperList,
   autoGradeObjective,
-  type GradingPaperItem,
-  type GradingStatistics
+  getCourseList
 } from "@/api/examPaper";
-import { isNativeWebViewRuntime, logNativeFallback } from "@/utils/nativeRuntime";
 
 // 导入 SVG 图标组件
 import IconEdit from "@/assets/home-icons/edit.svg?component";
@@ -36,11 +34,18 @@ const searchForm = reactive({
 });
 
 // 课程列表
-const courseList = ref([
-  { id: 1, name: "高等数学" },
-  { id: 2, name: "线性代数" },
-  { id: 3, name: "概率论" }
-]);
+const courseList = ref<Array<{ id: number; name: string }>>([]);
+
+const loadCourses = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0 && Array.isArray(res.data)) {
+      courseList.value = res.data;
+    }
+  } catch (error) {
+    console.error("获取课程列表失败", error);
+  }
+};
 
 // 状态选项
 const statusOptions = [
@@ -50,7 +55,7 @@ const statusOptions = [
 ];
 
 // 统计数据
-const statistics = ref<GradingStatistics>({
+const statistics = ref({
   pending: 0,
   grading: 0,
   completed: 0,
@@ -58,7 +63,7 @@ const statistics = ref<GradingStatistics>({
 });
 
 // 待阅卷列表
-const gradingList = ref<GradingPaperItem[]>([]);
+const gradingList = ref<any[]>([]);
 
 // 分页
 const pagination = reactive({
@@ -74,96 +79,15 @@ const paginationLayout = computed(() =>
   isMobile.value ? "prev, pager, next" : "total, prev, pager, next"
 );
 
-const nativeDemoGradingList: GradingPaperItem[] = [
-  {
-    id: 1,
-    paperTitle: "2024年春季概率论期末考试",
-    courseName: "概率论",
-    studentCount: 45,
-    gradedCount: 30,
-    pendingCount: 15,
-    status: "grading",
-    deadline: "2099-04-15",
-    publishTime: "2024-04-01 09:30"
-  },
-  {
-    id: 2,
-    paperTitle: "高等数学单元测验",
-    courseName: "高等数学",
-    studentCount: 36,
-    gradedCount: 36,
-    pendingCount: 0,
-    status: "completed",
-    deadline: "2024-04-08",
-    publishTime: "2024-03-30 14:00"
-  },
-  {
-    id: 3,
-    paperTitle: "线性代数综合练习",
-    courseName: "线性代数",
-    studentCount: 28,
-    gradedCount: 0,
-    pendingCount: 28,
-    status: "pending",
-    deadline: "2099-05-01",
-    publishTime: "2024-04-12 10:15"
-  }
-];
-
-const nativeDemoStatistics: GradingStatistics = {
-  pending: nativeDemoGradingList.filter(item => item.status === "pending")
-    .length,
-  grading: nativeDemoGradingList.filter(item => item.status === "grading")
-    .length,
-  completed: nativeDemoGradingList.filter(item => item.status === "completed")
-    .length,
-  total: nativeDemoGradingList.reduce((sum, item) => sum + item.studentCount, 0)
-};
-
-const isSuccessResponse = (res: { code?: unknown; success?: unknown }) =>
-  res?.code === 0 ||
-  res?.code === 200 ||
-  res?.code === "0" ||
-  res?.code === "200" ||
-  res?.success === true;
-
-const applyNativeDemoStatistics = () => {
-  statistics.value = { ...nativeDemoStatistics };
-};
-
-const applyNativeDemoGradingList = () => {
-  const keyword = searchForm.keyword.trim();
-  const visibleList = nativeDemoGradingList.filter(item => {
-    const matchesKeyword =
-      !keyword ||
-      item.paperTitle.includes(keyword) ||
-      item.courseName.includes(keyword);
-    const matchesStatus = !searchForm.status || item.status === searchForm.status;
-    const matchesCourse =
-      !searchForm.courseId ||
-      courseList.value.find(course => course.id === searchForm.courseId)
-        ?.name === item.courseName;
-
-    return matchesKeyword && matchesStatus && matchesCourse;
-  });
-
-  gradingList.value = visibleList;
-  pagination.total = visibleList.length;
-};
-
 // 加载统计数据
 const loadStatistics = async () => {
   try {
     const res = await getGradingStatistics();
-    if (isSuccessResponse(res) && res.data) {
+    if (res.code === 0 && res.data) {
       statistics.value = res.data;
-    } else if (isNativeWebViewRuntime()) {
-      logNativeFallback("使用原生演示阅卷统计", res);
-      applyNativeDemoStatistics();
     }
   } catch (e) {
-    logNativeFallback("获取阅卷统计失败", e);
-    if (isNativeWebViewRuntime()) applyNativeDemoStatistics();
+    console.error("获取阅卷统计失败", e);
   }
 };
 
@@ -178,16 +102,12 @@ const handleSearch = async () => {
       status: (searchForm.status as any) || undefined,
       courseId: searchForm.courseId || undefined
     });
-    if (isSuccessResponse(res) && res.data) {
+    if (res.code === 0 && res.data) {
       gradingList.value = res.data.list || [];
       pagination.total = res.data.total || 0;
-    } else if (isNativeWebViewRuntime()) {
-      logNativeFallback("使用原生演示阅卷列表", res);
-      applyNativeDemoGradingList();
     }
   } catch (e) {
-    logNativeFallback("获取阅卷列表失败", e);
-    if (isNativeWebViewRuntime()) applyNativeDemoGradingList();
+    console.error("获取阅卷列表失败", e);
   } finally {
     loading.value = false;
   }
@@ -268,6 +188,7 @@ const handlePageChange = (page: number) => {
 onMounted(() => {
   loadStatistics();
   handleSearch();
+  loadCourses();
 });
 </script>
 
@@ -845,11 +766,11 @@ $radius-xl: 20px;
   gap: 20px;
   margin-bottom: 24px;
 
-  @media (max-width: 1200px) {
+  @media (width <= 1200px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @media (max-width: 768px) {
+  @media (width <= 768px) {
     grid-template-columns: 1fr;
   }
 
@@ -1186,100 +1107,72 @@ $radius-xl: 20px;
   }
 }
 
-@media (max-width: 768px) {
-  .grading-container {
-    padding: 10px 8px calc(var(--pure-mobile-tab-height, 58px) + 24px);
-  }
-
+@media (width <= 768px) {
   .page-header {
-    min-height: 0;
-    padding: 14px;
-    margin-bottom: 12px;
-    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 16px;
 
     .header-content {
-      display: grid;
-      grid-template-columns: 44px minmax(0, 1fr);
-      gap: 12px;
-      align-items: center;
+      gap: 14px;
+      align-items: flex-start;
     }
 
     .header-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
+      width: 48px;
+      height: 48px;
 
       svg {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
       }
     }
 
     .header-info {
-      min-width: 0;
-
       .page-title {
-        margin-bottom: 4px;
-        font-size: 21px;
-        line-height: 1.2;
+        margin-bottom: 6px;
+        font-size: 20px;
       }
 
       .page-desc {
         font-size: 13px;
-        line-height: 1.45;
+        line-height: 1.6;
       }
     }
   }
 
   .stats-section {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 16px;
 
     .stat-card {
-      display: grid;
-      grid-template-columns: 40px minmax(0, 1fr);
-      gap: 10px;
-      align-items: center;
-      min-height: 78px;
-      padding: 12px;
-      border-radius: 18px;
+      gap: 14px;
+      padding: 16px;
 
       .stat-icon {
-        grid-column: 1;
-        width: 40px;
-        height: 40px;
-        border-radius: 14px;
+        width: 44px;
+        height: 44px;
 
         svg {
-          width: 20px;
-          height: 20px;
+          width: 22px;
+          height: 22px;
         }
       }
 
       .stat-info {
-        grid-column: 2;
-        min-width: 0;
-
         .stat-value {
-          margin-bottom: 4px;
-          font-size: 22px;
-          line-height: 1.05;
+          font-size: 24px;
         }
 
         .stat-label {
           font-size: 12px;
-          line-height: 1.35;
-          white-space: normal;
         }
       }
     }
   }
 
   .search-card {
-    padding: 14px;
-    margin-bottom: 12px;
-    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 16px;
 
     .search-form {
       display: block;
@@ -1288,7 +1181,7 @@ $radius-xl: 20px;
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
       }
 
       :deep(.el-form-item__label) {
@@ -1314,14 +1207,13 @@ $radius-xl: 20px;
     :deep(.el-button.search-btn),
     :deep(.el-button.reset-btn) {
       flex: 1;
-      min-height: 36px;
-      height: 36px;
-      font-size: 13px;
+      min-height: 40px;
+      height: 40px;
     }
 
     :deep(.el-input__wrapper),
     :deep(.el-select__wrapper) {
-      min-height: 36px;
+      min-height: 42px;
       border-radius: 12px;
     }
   }
@@ -1339,13 +1231,7 @@ $radius-xl: 20px;
   }
 }
 
-@media (max-width: 360px) {
-  .stats-section {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 520px) {
+@media (width <= 520px) {
   .search-card {
     .search-actions {
       :deep(.el-form-item__content) {

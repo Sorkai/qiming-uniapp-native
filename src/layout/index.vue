@@ -62,7 +62,7 @@ const set: setType = reactive({
   }),
 
   hideTabs: computed(() => {
-    return $storage?.configure?.hideTabs ?? false;
+    return $storage?.configure?.hideTabs;
   })
 });
 
@@ -94,7 +94,6 @@ useResizeObserver(appWrapperRef, entries => {
     : entry.borderBoxSize;
   const width = borderBox?.inlineSize ?? entry.contentRect.width;
   const height = borderBox?.blockSize ?? entry.contentRect.height;
-  const wasMobileLayout = appStore.getDevice === "mobile";
 
   appStore.setViewportSize({ width, height });
   appStore.refreshUA(width);
@@ -102,11 +101,7 @@ useResizeObserver(appWrapperRef, entries => {
   const forceMobileLayout = appStore.getUA.isMobile || appStore.getUA.isTablet;
   if (forceMobileLayout) {
     setTheme("vertical");
-    if (!wasMobileLayout) {
-      toggle("mobile", false);
-    } else {
-      appStore.toggleDevice("mobile");
-    }
+    toggle("mobile", false);
     isAutoCloseSidebar = true;
     return;
   }
@@ -223,6 +218,7 @@ const LayHeader = defineComponent({
       </div>
       <el-scrollbar v-else>
         <el-backtop
+          v-if="set.device !== 'mobile'"
           :title="t('buttons.pureBackTop')"
           :right="10"
           :bottom="10"
@@ -254,10 +250,7 @@ const LayHeader = defineComponent({
     }
 
     .mobile-main-container {
-      padding-bottom: var(
-        --pure-mobile-content-bottom-gap,
-        var(--pure-mobile-tab-height)
-      ); // 预留底部导航高度
+      padding-bottom: var(--pure-mobile-tab-height); // 预留底部导航高度
     }
   }
 

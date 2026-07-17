@@ -1,6 +1,5 @@
-import { http, resolveApiURL } from "@/utils/http";
-import { storageLocal } from "@pureadmin/utils";
-import { getToken, userKey, type DataInfo } from "@/utils/auth";
+import { http } from "@/utils/http";
+import { adaptUserDetailToMine } from "./mobileApiAdapters";
 
 export type UserResult = {
   success: boolean;
@@ -141,26 +140,28 @@ export type StsUploadCompleteResult = {
   };
 };
 
-export type FileListResult = {
+export type FileResource = {
+  fileId: number;
+  fileUrl: string;
+  fileName: string;
+  extension: string;
+  size: number;
+  resourceType: string;
+};
+
+export type FileListPayload = {
   total: number;
-  fileList: Array<{
-    fileId: number;
-    fileUrl: string;
-    fileName: string;
-    extension: string;
-    size: number;
-    resourceType: string;
-  }>;
+  fileList: FileResource[];
+};
+
+export type FileListResult = {
+  code?: number;
+  msg?: string;
+  total?: number;
+  fileList?: FileResource[];
   data?: {
     total?: number;
-    fileList?: Array<{
-      fileId: number;
-      fileUrl: string;
-      fileName: string;
-      extension: string;
-      size: number;
-      resourceType: string;
-    }>;
+    fileList?: FileResource[];
   };
 };
 
@@ -203,91 +204,6 @@ type ResultTable = {
   };
 };
 
-const isNativeWebViewPreview = () => {
-  return (
-    typeof document !== "undefined" &&
-    document.documentElement.classList.contains("qiming-native-webview")
-  );
-};
-
-const getNativeAccessToken = () => {
-  try {
-    const token = getToken();
-    const userInfo = storageLocal().getItem<DataInfo<number>>(userKey);
-    return (
-      token?.accessToken ||
-      token?.refreshToken ||
-      userInfo?.accessToken ||
-      userInfo?.refreshToken ||
-      ""
-    );
-  } catch {
-    return "";
-  }
-};
-
-async function requestUserDetailWithNativeFallback(
-  request: () => Promise<UserCenterDetailResult>
-) {
-  if (isNativeWebViewPreview()) {
-    const token = getNativeAccessToken();
-    if (token) {
-      try {
-        return await fetchNativeUserDetail(token);
-      } catch (fetchError) {
-        console.warn("[NativeFetchFallback] user detail request failed", {
-          error: fetchError
-        });
-      }
-    }
-  }
-
-  try {
-    return await request();
-  } catch (error) {
-    if (!isNativeWebViewPreview()) throw error;
-
-    const token = getNativeAccessToken();
-    if (!token) throw error;
-
-    let lastFetchError: unknown = error;
-
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        return await fetchNativeUserDetail(token);
-      } catch (fetchError) {
-        lastFetchError = fetchError;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 260 * (attempt + 1)));
-    }
-
-    console.warn("[NativeFetchFallback] user detail request failed", {
-      error: lastFetchError
-    });
-    throw error;
-  }
-}
-
-async function fetchNativeUserDetail(token: string) {
-  const url = resolveApiURL("/edu/v1/user/detail");
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: "{}"
-  });
-
-  if (!response.ok) {
-    throw new Error(`Native user detail failed: ${response.status}`);
-  }
-
-  return (await response.json()) as UserCenterDetailResult;
-}
-
 /** 登录 */
 export const getLogin = (data?: object) => {
   return http.request<UserResult>("post", "/login", { data });
@@ -296,11 +212,6 @@ export const getLogin = (data?: object) => {
 /** 刷新`token` */
 export const refreshTokenApi = (data?: object) => {
   return http.request<RefreshTokenResult>("post", "/refresh-token", { data });
-};
-
-/** 账户设置-个人信息 */
-export const getMine = (data?: object) => {
-  return http.request<UserInfoResult>("get", "/mine", { data });
 };
 
 /** 账户设置-个人安全日志 */
@@ -326,9 +237,22 @@ export const userLogin = (data: { mobile: string; password: string }) => {
 
 /** 获取用户信息 */
 export const getUserDetail = () => {
-  return requestUserDetailWithNativeFallback(() =>
-    http.request<UserCenterDetailResult>("post", "/edu/v1/user/detail", {})
+  return http.request<UserCenterDetailResult>(
+    "post",
+    "/edu/v1/user/detail",
+    {}
   );
+};
+
+/**
+ * 账户设置-个人信息
+ *
+ * The legacy `/mine` endpoint is not part of the current user-center API.
+ * Keep the old response shape for existing account-settings consumers while
+ * sourcing the data from the canonical user-detail endpoint.
+ */
+export const getMine = (_data?: object): Promise<UserInfoResult> => {
+  return getUserDetail().then(adaptUserDetailToMine);
 };
 
 /** 文件上传 */

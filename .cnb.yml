@@ -1,0 +1,58 @@
+wechat-miniprogram:
+  push:
+    - name: Build and Deploy EdgeOne Pages (wechat-miniprogram)
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 16
+      docker:
+        image: node:22
+        volumes:
+          - /root/.local/share/pnpm/store:copy-on-write
+      imports:
+        - https://cnb.cool/sorkai/qiming-uniapp-native-secrets/-/blob/main/envs.yml
+      env:
+        NODE_OPTIONS: --max-old-space-size=8192
+      stages:
+        - name: Prepare pnpm
+          script: |
+            set -eu
+            corepack enable
+            corepack prepare pnpm@9 --activate
+            node -v
+            (cd ~ && pnpm -v)
+            pnpm --global config set store-dir /root/.local/share/pnpm/store
+
+        - name: Install dependencies
+          script: |
+            set -eu
+            pnpm --ignore-workspace edgeone:install
+
+        - name: Build WeChat H5
+          script: |
+            set -eu
+            pnpm test:contracts
+            pnpm typecheck
+            pnpm --ignore-workspace edgeone:build
+
+        - name: Verify build output
+          script: |
+            set -eu
+            test -d dist
+            test -f dist/index.html
+            test -f dist/version.json
+            test -f dist/hyWOiOCR1C.txt
+            test -f dist/homepage/bannerphoto.png
+
+        - name: Deploy to EdgeOne Pages
+          script: |
+            set -eu
+            if [ -z "${EDGEONE_API_TOKEN:-}" ]; then
+              echo "EDGEONE_API_TOKEN is not configured. Import it from a CNB secret repository or configure it in the CNB project." >&2
+              exit 1
+            fi
+            if [ -z "${EDGEONE_PAGES_NAME:-}" ]; then
+              echo "EDGEONE_PAGES_NAME is not configured. Set it to the target EdgeOne Pages project name before deploying." >&2
+              exit 1
+            fi
+            DEPLOY_ENV="${EDGEONE_DEPLOY_ENV:-production}"
+            npx --yes edgeone pages deploy ./dist -n "$EDGEONE_PAGES_NAME" -t "$EDGEONE_API_TOKEN" -e "$DEPLOY_ENV"

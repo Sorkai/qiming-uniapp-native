@@ -6,7 +6,8 @@ export default {
   meta: {
     icon: "ep:home-filled",
     title: "欢迎",
-    rank: welcome
+    rank: welcome,
+    roles: ["admin", "teacher"]
   },
   children: [
     {

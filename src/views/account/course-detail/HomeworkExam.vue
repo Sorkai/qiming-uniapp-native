@@ -112,6 +112,7 @@
         <!-- 随练标签页：嵌入新版随练组件 -->
         <el-tab-pane label="随练" name="practice">
           <WrongExercise
+            v-if="visible && homeworkExamTab === 'practice'"
             :embedded="true"
             :course-id="courseId"
             :current-theme="currentTheme"
@@ -606,7 +607,7 @@ const viewExam = (exam: any) => {
   .homework-container {
     height: auto;
     min-height: 100vh;
-    padding: var(--course-mobile-top-offset, 176px) 16px
+    padding: var(--course-mobile-top-offset, 156px) 16px
       calc(24px + env(safe-area-inset-bottom));
     overflow: visible;
   }
@@ -619,7 +620,7 @@ const viewExam = (exam: any) => {
 
 @media (max-width: 479px) {
   .homework-container {
-    padding: var(--course-mobile-top-offset, 176px) 10px
+    padding: var(--course-mobile-top-offset, 156px) 10px
       calc(20px + env(safe-area-inset-bottom));
   }
 }

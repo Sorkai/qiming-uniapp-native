@@ -22,6 +22,12 @@ const setConfig = (cfg?: unknown) => {
   config = Object.assign(config, cfg);
 };
 
+const getInlinePlatformConfig = () => {
+  if (typeof globalThis === "undefined") return null;
+  const inlineConfig = (globalThis as any).__QIMING_PLATFORM_CONFIG__;
+  return inlineConfig && typeof inlineConfig === "object" ? inlineConfig : null;
+};
+
 const getConfig = (key?: string): PlatformConfigs => {
   if (typeof key === "string") {
     const arr = key.split(".");
@@ -43,6 +49,16 @@ const getConfig = (key?: string): PlatformConfigs => {
 /** 获取项目动态全局配置 */
 export const getPlatformConfig = async (app: App): Promise<undefined> => {
   app.config.globalProperties.$config = getConfig();
+  const inlineConfig = getInlinePlatformConfig();
+  if (inlineConfig) {
+    const $config = Object.assign(
+      app.config.globalProperties.$config,
+      inlineConfig
+    );
+    app.config.globalProperties.$config = $config;
+    setConfig($config);
+    return $config;
+  }
   return axios({
     method: "get",
     url: `${publicPath}platform-config.json`

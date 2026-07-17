@@ -1307,7 +1307,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .sensitive-words-page {
     padding-bottom: calc(
       var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
@@ -1375,7 +1375,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 420px) {
+@media (width <= 420px) {
   .sensitive-words-page {
     .sensitive-stats-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));

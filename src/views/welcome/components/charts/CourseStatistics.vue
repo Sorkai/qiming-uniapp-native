@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch, computed, nextTick } from "vue";
-import { useDark, useECharts } from "@pureadmin/utils";
+import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { message } from "@/utils/message";
 import ClipboardIcon from "@/assets/new-release/clipboard-note-document-report-paper-list-data-svgrepo-com.svg?component";
 import { utils, writeFile } from "xlsx";
@@ -12,7 +12,6 @@ import { getCourseList } from "@/api/course";
 import { getHomeworkList } from "@/api/homework";
 import { getExamList } from "@/api/exam";
 import { isAdmin } from "@/utils/auth";
-import { useAppStoreHook } from "@/store/modules/app";
 import {
   ElPagination,
   ElSelect,
@@ -45,11 +44,7 @@ const selectedExam = ref<number>();
 // 进度排序与分页
 const progressSortOrder = ref<"none" | "asc" | "desc">("none");
 const progressPage = ref(1);
-const appStore = useAppStoreHook();
-const isMobile = computed(
-  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
-);
-const progressPageSize = computed(() => (isMobile.value ? 5 : 10));
+const progressPageSize = ref(10);
 
 // 缓存所有课程的数据
 const allProgressData = ref<any[]>([]);
@@ -61,12 +56,23 @@ const examChartRef = ref();
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
 
-const { setOptions: setProgressOptions } = useECharts(progressChartRef, {
-  theme
-});
+const { setOptions: setProgressOptions, resize: resizeProgressChart } =
+  useECharts(progressChartRef, {
+    theme
+  });
 
-const { setOptions: setExamOptions } = useECharts(examChartRef, {
-  theme
+const { setOptions: setExamOptions, resize: resizeExamChart } = useECharts(
+  examChartRef,
+  {
+    theme
+  }
+);
+
+useResizeObserver(progressChartRef, () => resizeProgressChart(), {
+  time: 80
+});
+useResizeObserver(examChartRef, () => resizeExamChart(), {
+  time: 80
 });
 
 const handleExport = () => {
@@ -565,19 +571,18 @@ const updateProgressChart = users => {
       }
     },
     grid: {
-      left: isMobile.value ? 8 : 20,
-      right: isMobile.value ? 36 : 60, // 增加右侧间距以显示百分比文字
-      top: isMobile.value ? 8 : 20,
-      bottom: isMobile.value ? 8 : 20,
+      left: 20,
+      right: 60, // 增加右侧间距以显示百分比文字
+      top: 20,
+      bottom: 20,
       containLabel: true
     },
     xAxis: {
       type: "value",
-      name: isMobile.value ? "" : "完成进度(%)",
+      name: "完成进度(%)",
       max: 100,
       axisLabel: {
         formatter: "{value}%",
-        fontSize: isMobile.value ? 10 : 12,
         color: isDark.value ? "#cbd5e1" : "#64748b"
       },
       splitLine: {
@@ -591,9 +596,7 @@ const updateProgressChart = users => {
       type: "category",
       data: userNames,
       axisLabel: {
-        fontSize: isMobile.value ? 10 : 12,
-        width: isMobile.value ? 70 : 120,
-        overflow: "truncate",
+        fontSize: 12,
         color: isDark.value ? "#fafafa" : "#475569"
       },
       axisLine: {
@@ -607,13 +610,12 @@ const updateProgressChart = users => {
         name: "完成进度",
         type: "bar",
         data: progressData,
-        barMaxWidth: isMobile.value ? 18 : 24,
+        barMaxWidth: 24,
         label: {
           show: true,
           position: "right",
           formatter: "{c}%",
           color: isDark.value ? "#ffffff" : "#4b5563",
-          fontSize: isMobile.value ? 11 : 12,
           fontWeight: "bold"
         },
         itemStyle: {
@@ -711,9 +713,9 @@ const renderExamChart = courseData => {
       title: {
         text: courseData.examName,
         left: "center",
-        top: isMobile.value ? 4 : 10,
+        top: 10,
         textStyle: {
-          fontSize: isMobile.value ? 13 : 16,
+          fontSize: 16,
           fontWeight: "bold",
           color: isDark.value ? "#ffffff" : "#1e293b"
         }
@@ -724,19 +726,19 @@ const renderExamChart = courseData => {
       },
       legend: {
         bottom: "5%",
-        itemGap: isMobile.value ? 10 : 20,
+        itemGap: 20,
         data: levels,
         textStyle: {
           color: isDark.value ? "#fafafa" : "#334155",
-          fontSize: isMobile.value ? 11 : 13
+          fontSize: 13
         }
       },
       series: [
         {
           name: "成绩分布",
           type: "pie",
-          radius: isMobile.value ? ["34%", "58%"] : ["40%", "65%"],
-          center: isMobile.value ? ["50%", "48%"] : ["50%", "50%"],
+          radius: ["40%", "65%"],
+          center: ["50%", "50%"],
           avoidLabelOverlap: true,
           itemStyle: {
             borderRadius: 12,
@@ -758,14 +760,14 @@ const renderExamChart = courseData => {
             }
           },
           label: {
-            show: !isMobile.value,
+            show: true,
             formatter: "{b}: {c}人",
             color: isDark.value ? "#ffffff" : "#334155",
             fontSize: 12,
             fontWeight: 500
           },
           labelLine: {
-            show: !isMobile.value,
+            show: true,
             lineStyle: {
               color: isDark.value ? "#cbd5e1" : "#cbd5e1"
             }
@@ -812,9 +814,9 @@ const renderExamChart = courseData => {
           text: courseData.examName,
           subtext: "基本信息统计",
           left: "center",
-          top: isMobile.value ? 4 : 10,
+          top: 10,
           textStyle: {
-            fontSize: isMobile.value ? 13 : 16,
+            fontSize: 16,
             fontWeight: "bold",
             color: isDark.value ? "#ffffff" : "#1e293b"
           },
@@ -830,10 +832,10 @@ const renderExamChart = courseData => {
           }
         },
         grid: {
-          left: isMobile.value ? 8 : 20,
-          right: isMobile.value ? 20 : 40,
-          top: isMobile.value ? 58 : 80,
-          bottom: isMobile.value ? 24 : 40,
+          left: 20,
+          right: 40,
+          top: 80,
+          bottom: 40,
           containLabel: true
         },
         xAxis: {
@@ -841,7 +843,7 @@ const renderExamChart = courseData => {
           data: chartData.map(item => item.name),
           axisLabel: {
             color: isDark.value ? "#cbd5e1" : "#64748b",
-            fontSize: isMobile.value ? 10 : 13
+            fontSize: 13
           },
           axisLine: {
             lineStyle: {
@@ -866,13 +868,13 @@ const renderExamChart = courseData => {
             name: "数值",
             type: "bar",
             data: chartData,
-            barMaxWidth: isMobile.value ? 42 : 60,
+            barMaxWidth: 60,
             label: {
               show: true,
               position: "top",
               color: isDark.value ? "#ffffff" : "#4b5563",
               fontWeight: "bold",
-              fontSize: isMobile.value ? 11 : 14
+              fontSize: 14
             },
             itemStyle: {
               borderRadius: [6, 6, 0, 0]
@@ -980,7 +982,7 @@ onMounted(async () => {
                 </div>
                 <div class="analysis-brand-copy flex flex-col">
                   <span
-                    class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                    class="text-xl font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider"
                     >分析课程数据</span
                   >
                   <span
@@ -1197,12 +1199,19 @@ onMounted(async () => {
   --el-select-input-focus-border-color: #2563eb;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 991px) {
   .analysis-toolbar {
-    padding: 14px;
-    gap: 12px;
-    border-radius: 18px;
-    box-shadow: 0 8px 20px rgb(37 99 235 / 8%);
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    border-radius: 16px !important;
+  }
+
+  .analysis-toolbar-main {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
   }
 
   .analysis-toolbar-main,
@@ -1220,60 +1229,51 @@ onMounted(async () => {
   .analysis-actions,
   .analysis-panel-tools {
     width: 100%;
-    justify-content: center;
   }
 
   .analysis-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 8px !important;
     align-self: stretch;
-    gap: 8px;
   }
 
   :deep(.analysis-actions .el-button) {
     width: 100%;
-    min-width: 0;
-    height: 36px;
-    padding: 0 8px;
     margin-left: 0;
-    font-size: 12px;
   }
 
   .analysis-panel-grid {
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
     margin-top: 0;
   }
 
   .analysis-panel {
-    padding: 14px;
-    border-radius: 18px;
+    padding: 8px !important;
+    border-radius: 12px !important;
   }
 
   .analysis-panel-header {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
-    padding: 0;
+    padding: 0 !important;
+    margin-bottom: 12px !important;
   }
 
   .analysis-section-title {
     min-width: 0;
-    font-size: 15px;
-    line-height: 1.35;
+    font-size: 17px;
+    line-height: 1.45;
     white-space: normal;
   }
 
   .analysis-sort-box {
     flex-direction: column;
-    align-items: center;
-    align-self: center;
-    justify-content: center;
-    gap: 6px;
-    width: fit-content;
-    max-width: 100%;
-    padding: 10px 12px;
-    margin: 0 auto;
-    text-align: center;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px !important;
   }
 
   .analysis-exam-select {
@@ -1282,59 +1282,61 @@ onMounted(async () => {
 
   .progress-chart,
   .exam-chart {
-    height: 300px;
+    height: 360px;
   }
 
   :deep(.custom-radio-group) {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    width: auto;
+    width: 100%;
   }
 
   :deep(.custom-radio-group .el-radio-button__inner) {
-    padding: 7px 8px;
-    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 6px 8px;
+    font-size: 12px;
     white-space: normal;
+  }
+
+  :deep(.custom-radio-group .el-radio-button) {
+    flex: 1 1 0;
+  }
+
+  :deep(.analysis-action-btn.el-button) {
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 8px;
+    transform: none !important;
+  }
+
+  :deep(.analysis-exam-select .el-input__wrapper),
+  :deep(.analysis-toolbar-select .el-input__wrapper) {
+    min-height: 44px;
   }
 
   :deep(.pure-pagination) {
     flex-wrap: wrap;
     justify-content: center;
   }
-}
-</style>
 
-<style>
-html.qiming-native-webview.ua-mobile.dark .analysis-panel {
-  background: #111827 !important;
-  border-color: rgb(148 163 184 / 20%) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark .analysis-section-title,
-html.qiming-native-webview.ua-mobile.dark .analysis-panel-title,
-html.qiming-native-webview.ua-mobile.dark .analysis-panel-header {
-  color: #f8fafc !important;
-  -webkit-text-fill-color: #f8fafc !important;
-  text-shadow: none !important;
+  :deep(.pure-pagination .btn-prev),
+  :deep(.pure-pagination .btn-next),
+  :deep(.pure-pagination .number),
+  :deep(.pure-pagination .more) {
+    min-width: 44px;
+    height: 44px;
+    margin: 0;
+    line-height: 44px;
+  }
 }
 
-html.qiming-native-webview.ua-mobile.dark .analysis-panel-title span,
-html.qiming-native-webview.ua-mobile.dark .analysis-panel h1,
-html.qiming-native-webview.ua-mobile.dark .analysis-panel h2,
-html.qiming-native-webview.ua-mobile.dark .analysis-panel h3 {
-  color: #f8fafc !important;
-  -webkit-text-fill-color: #f8fafc !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark .analysis-sort-box {
-  color: #e5e7eb !important;
-  background: rgb(15 23 42 / 92%) !important;
-  border-color: rgb(148 163 184 / 26%) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark .analysis-sort-box span {
-  color: #d4d4d8 !important;
-  -webkit-text-fill-color: #d4d4d8 !important;
+@media screen and (max-width: 359px) {
+  :deep(.pure-pagination .number:not(.is-active)),
+  :deep(.pure-pagination .more) {
+    display: none;
+  }
 }
 </style>

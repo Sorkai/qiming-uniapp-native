@@ -1,9 +1,9 @@
 export function registerPwa() {
-  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
-    return;
-  }
-
-  if (window.location.protocol === "file:") {
+  if (
+    typeof window === "undefined" ||
+    window.location.protocol === "file:" ||
+    !("serviceWorker" in navigator)
+  ) {
     return;
   }
 

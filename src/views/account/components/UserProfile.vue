@@ -21,7 +21,6 @@
           size="small"
           @click="openEditDialog"
         >
-          <el-icon><Edit /></el-icon>
           <span>修改资料</span>
         </el-button>
         <el-button
@@ -29,7 +28,6 @@
           size="small"
           @click="openPasswordDialog"
         >
-          <el-icon><Lock /></el-icon>
           <span>修改密码</span>
         </el-button>
       </div>
@@ -60,7 +58,6 @@
           <div class="info-item">
             <div class="label">邮箱</div>
             <div class="value email-value">
-              <el-icon v-if="extraInfo.email"><Message /></el-icon>
               {{ extraInfo.email || "未设置" }}
               <el-tag
                 v-if="!extraInfo.email"
@@ -87,14 +84,12 @@
           <div class="info-item">
             <div class="label">注册时间</div>
             <div class="value time-value">
-              <el-icon><Calendar /></el-icon>
               {{ formattedRegisterTime }}
             </div>
           </div>
           <div class="info-item">
             <div class="label">最后登录</div>
             <div class="value time-value">
-              <el-icon><Calendar /></el-icon>
               {{ formattedLastLoginTime }}
             </div>
           </div>
@@ -113,21 +108,18 @@
             <div class="info-item">
               <div class="label">入驻日期</div>
               <div class="value">
-                <el-icon><Calendar /></el-icon>
                 <span>{{ studyStats.joinDate }}</span>
               </div>
             </div>
             <div class="info-item">
               <div class="label">作业均分</div>
               <div class="value">
-                <el-icon><Check /></el-icon>
                 <span class="score-value">{{ studyStats.avgScore }}</span>
               </div>
             </div>
             <div class="info-item">
               <div class="label">累计学时</div>
               <div class="value">
-                <el-icon><Clock /></el-icon>
                 <template v-if="studyStats.totalHours !== null">
                   <span class="number-solid">{{ studyStats.totalHours }}</span>
                   小时
@@ -169,7 +161,6 @@
       <div class="extra-section recent-courses">
         <div class="section-header">
           <div class="section-title">
-            <el-icon><DeskIcon /></el-icon>
             <span>最近学习的课程</span>
           </div>
           <el-button link type="primary" @click="emit('to-course')"
@@ -183,8 +174,7 @@
             class="course-mini-card"
             @click="
               router.push({
-                path: `/course/${course.courseId}`,
-                query: route.query
+                path: `/course/${course.courseId}`
               })
             "
           >
@@ -226,7 +216,6 @@
       <div class="extra-section learning-dynamics">
         <div class="section-header">
           <div class="section-title">
-            <el-icon><TrendIcon /></el-icon>
             <span>学习动态</span>
           </div>
         </div>
@@ -237,7 +226,10 @@
             class="activity-item"
           >
             <div class="activity-dot" :class="`dot-${activity.type}`">
-              <component :is="activity.icon" class="activity-icon-svg" />
+              <AccountSvgIcon
+                :name="activity.icon || 'activity'"
+                class="activity-icon-svg"
+              />
             </div>
             <div class="activity-body">
               <div class="activity-content">{{ activity.content }}</div>
@@ -257,8 +249,7 @@
     <el-dialog
       v-model="dialogVisible"
       title="修改个人资料"
-      width="500px"
-      class="student-profile-dialog student-profile-edit-dialog"
+      width="min(500px, calc(100vw - 24px))"
       destroy-on-close
       :close-on-click-modal="false"
     >
@@ -273,9 +264,11 @@
           >
             <div class="avatar-container">
               <el-avatar v-if="avatarUrl" :src="avatarUrl" :size="100" />
-              <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+              <div v-else class="avatar-uploader-icon">
+                <AccountSvgIcon name="plus" />
+              </div>
               <div class="edit-icon">
-                <el-icon><Edit /></el-icon>
+                <AccountSvgIcon name="edit" />
               </div>
             </div>
           </el-upload>
@@ -295,12 +288,11 @@
           >
             <template #suffix>
               <el-dropdown trigger="click" @command="handleBannerCommand">
-                <el-icon
+                <AccountSvgIcon
+                  name="chevron-down"
                   class="el-input__icon cursor-pointer"
                   style="margin-right: 8px"
-                >
-                  <ArrowDown />
-                </el-icon>
+                />
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="preset"
@@ -357,8 +349,7 @@
     <el-dialog
       v-model="presetDialogVisible"
       title="选择预设背景图"
-      width="600px"
-      class="student-profile-dialog student-profile-preset-dialog"
+      width="min(600px, calc(100vw - 24px))"
       append-to-body
     >
       <div class="preset-banners-grid">
@@ -370,7 +361,7 @@
         >
           <img :src="url" alt="preset" />
           <div class="preset-overlay">
-            <el-icon><Plus /></el-icon>
+            <AccountSvgIcon name="plus" />
             <span>点击裁剪</span>
           </div>
         </div>
@@ -381,8 +372,7 @@
     <el-dialog
       v-model="cropperDialogVisible"
       :title="currentCroppingType === 'avatar' ? '裁剪头像' : '裁剪横幅图'"
-      width="800px"
-      class="student-profile-dialog student-profile-cropper-dialog"
+      width="min(800px, calc(100vw - 24px))"
       append-to-body
       destroy-on-close
     >
@@ -415,8 +405,7 @@
     <el-dialog
       v-model="passwordDialogVisible"
       title="修改密码"
-      width="500px"
-      class="student-profile-dialog student-profile-password-dialog"
+      width="min(500px, calc(100vw - 24px))"
       destroy-on-close
       :close-on-click-modal="false"
     >
@@ -467,20 +456,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import {
-  Edit,
-  Plus,
-  Lock,
-  Calendar,
-  Message,
-  Check,
-  ArrowDown,
-  Clock
-} from "@element-plus/icons-vue";
+import { useRouter } from "vue-router";
 import type { FormInstance } from "element-plus";
 import { ElMessage } from "element-plus";
 import ReCropper from "@/components/ReCropper";
+import AccountSvgIcon from "./AccountSvgIcon.vue";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
 import { userKey, removeToken, getToken, setToken } from "@/utils/auth";
@@ -502,13 +482,6 @@ import {
 import { getFrontendCourseList } from "@/api/frontend/course";
 import dayjs from "dayjs";
 
-// 导入新图标
-import CheckIcon from "@/assets/newicon/check-correct-svgrepo-com.svg?component";
-import EmailIcon from "@/assets/newicon/email-svgrepo-com.svg?component";
-import PlayIcon from "@/assets/newicon/play-svgrepo-com.svg?component";
-import TrendIcon from "@/assets/newicon/trend-up-svgrepo-com.svg?component";
-import DeskIcon from "@/assets/newicon/desk-computer-svgrepo-com.svg?component";
-
 const props = defineProps<{
   currentTheme?: string;
 }>();
@@ -516,7 +489,6 @@ const props = defineProps<{
 const emit = defineEmits(["to-course"]);
 
 const router = useRouter();
-const route = useRoute();
 const defaultAvatar = "/src/assets/user.jpg";
 const dialogVisible = ref(false);
 const loading = ref(false);
@@ -617,54 +589,40 @@ const studyStats = reactive(getInitialStats());
 // 最近学习课程
 const recentCourses = ref([]);
 
-// 图标映射
 const iconMap = {
-  CheckIcon,
-  EmailIcon,
-  PlayIcon,
-  TrendIcon,
-  DeskIcon
+  CheckIcon: "check",
+  EmailIcon: "mail",
+  PlayIcon: "play",
+  TrendIcon: "activity",
+  DeskIcon: "desktop"
 };
 
-// 学习动态
-const learningActivities = ref([
-  {
-    id: 1,
-    content: "完成了《Python 基础入门》第三章的学习",
-    timestamp: "10分钟前",
-    type: "success",
-    icon: CheckIcon
-  },
-  {
-    id: 2,
-    content: "提交了《Web 前端开发》的中期作业",
-    timestamp: "2小时前",
-    type: "primary",
-    icon: EmailIcon
-  },
-  {
-    id: 3,
-    content: "开始学习新课程《人工智能导论》",
-    timestamp: "昨天",
-    type: "warning",
-    icon: PlayIcon
-  },
-  {
-    id: 4,
-    content: "《数据结构与算法》课程进度达到 60%",
-    timestamp: "2天前",
-    type: "info",
-    icon: TrendIcon
-  }
-]);
+// The activity endpoint is unavailable on native builds; keep the honest empty state.
+const learningActivities = ref([]);
 
 const fetchActivities = async () => {
+  const isNativeWebView =
+    document.documentElement.classList.contains("qiming-native-webview") ||
+    document.documentElement.dataset.qimingNative === "true" ||
+    window.location.protocol === "file:" ||
+    new URLSearchParams(window.location.search).has("qimingNative");
+  if (
+    isNativeWebView ||
+    document.documentElement.classList.contains(
+      "qiming-mini-program-webview"
+    ) ||
+    document.documentElement.dataset.qimingMiniProgram === "true" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1"
+  ) {
+    return;
+  }
   try {
     const res = await getUserActivities().catch(() => null);
     if (res?.code === 200 && res.data?.list) {
       learningActivities.value = res.data.list.map(item => ({
         ...item,
-        icon: iconMap[item.iconName] || TrendIcon
+        icon: iconMap[item.iconName] || "activity"
       }));
     }
   } catch (error) {
@@ -1188,7 +1146,7 @@ const formattedLastLoginTime = computed(() =>
     : "-"
 );
 
-const defaultBanner = "/src/assets/bannerphoto.png";
+const defaultBanner = "/src/assets/course/cover-default.jpg";
 const bannerStyle = computed(() => {
   const url = userInfo.value?.bannerUrl || extraInfo.bannerUrl || defaultBanner;
   return { backgroundImage: `url(${url})` };
@@ -1358,7 +1316,7 @@ onMounted(async () => {
     display: flex;
     gap: 28px;
 
-    @media (max-width: 768px) {
+    @media (width <= 768px) {
       flex-direction: column;
       gap: 20px;
     }
@@ -1448,15 +1406,8 @@ onMounted(async () => {
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
       &::after {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        content: "";
-        background: linear-gradient(90deg, #97b4f7, #dce2f7, transparent);
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        display: none;
+        content: none;
       }
 
       .dark & {
@@ -1474,10 +1425,6 @@ onMounted(async () => {
           0 8px 30px -4px rgb(151 180 247 / 20%),
           0 2px 8px rgb(0 0 0 / 4%);
         transform: translateY(-3px);
-
-        &::after {
-          opacity: 1;
-        }
 
         .dark & {
           box-shadow:
@@ -1569,20 +1516,10 @@ onMounted(async () => {
 
         .time-value {
           font-size: 14.5px;
-
-          .el-icon {
-            font-size: 16px;
-            color: #97b4f7;
-          }
         }
 
         .email-value {
           font-size: 14.5px;
-
-          .el-icon {
-            font-size: 16px;
-            color: #10b981;
-          }
         }
 
         .score-value {
@@ -1600,16 +1537,17 @@ onMounted(async () => {
     }
 
     .info-group.stats {
-      background: linear-gradient(160deg, #f0fdf4, #dcfce7);
-      border-color: rgb(16 185 129 / 15%);
+      background: linear-gradient(160deg, #fefefe, #f0f4ff);
+      border-color: rgb(151 180 247 / 15%);
 
       .dark & {
-        background: linear-gradient(160deg, #064e3b, #022c22);
-        border-color: rgb(16 185 129 / 15%);
+        background: linear-gradient(160deg, #0f172a, #111b2d);
+        border-color: rgb(56 189 248 / 10%);
       }
 
       &::after {
-        background: linear-gradient(90deg, #10b981, #059669, transparent);
+        display: none;
+        content: none;
       }
     }
 
@@ -1633,7 +1571,7 @@ onMounted(async () => {
         min-width: 12px;
         font-size: 15px;
         font-weight: 800;
-        color: #10b981;
+        color: #4f7df3;
       }
 
       .loading-placeholder {
@@ -1776,36 +1714,19 @@ onMounted(async () => {
   border-radius: 8px;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .user-profile {
-    .profile-banner {
-      height: clamp(132px, 36vw, 168px);
-      margin-bottom: 22px;
-      border-radius: 18px;
-      background-position: center center;
-
-      .banner-overlay {
-        padding: 20px 24px;
-      }
-    }
-
     .profile-header {
       gap: 14px;
       align-items: stretch;
-      flex-direction: column;
       margin-bottom: 20px;
 
       .action-buttons {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
         gap: 10px;
-        width: 100%;
 
         .btn-elevated {
-          width: 100%;
           min-height: 44px;
           padding: 10px 16px;
-          justify-content: center;
         }
       }
     }
@@ -1871,63 +1792,6 @@ onMounted(async () => {
           }
         }
       }
-    }
-
-    :deep(.el-dialog) {
-      display: flex;
-      flex-direction: column;
-      width: min(560px, calc(100vw - 24px)) !important;
-      max-height: calc(100vh - 24px);
-      max-height: calc(100dvh - 24px);
-      margin: 12px auto !important;
-      border-radius: 20px;
-    }
-
-    :deep(.el-dialog__body) {
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: none;
-      padding: 16px 18px 8px !important;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    :deep(.el-form-item) {
-      display: block;
-      margin-bottom: 18px;
-    }
-
-    :deep(.el-form-item__label) {
-      justify-content: flex-start;
-      width: auto !important;
-      height: auto;
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
-
-    :deep(.el-dialog__footer) {
-      flex: 0 0 auto;
-      padding: 12px 18px 18px;
-    }
-
-    :deep(.el-dialog__footer .dialog-footer),
-    :deep(.el-dialog__footer) {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    :deep(.el-dialog__footer .el-button) {
-      min-height: 42px;
-      padding: 0 18px;
-    }
-
-    .preset-banners-grid {
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    }
-
-    .cropper-container {
-      padding: 12px;
     }
   }
 }
@@ -2119,7 +1983,7 @@ onMounted(async () => {
         }
 
         &.elective {
-          background: linear-gradient(135deg, #10b981, #059669);
+          background: linear-gradient(135deg, #6366f1, #4f46e5);
         }
       }
     }
@@ -2221,22 +2085,23 @@ onMounted(async () => {
         flex-shrink: 0;
         align-items: center;
         justify-content: center;
-        width: 34px;
-        height: 34px;
+        width: 38px;
+        height: 38px;
         border-radius: 10px;
 
         .activity-icon-svg {
-          width: 17px;
-          height: 17px;
+          width: 30px;
+          height: 30px;
+          --account-icon-stroke: 2.7;
         }
 
         &.dot-success {
-          color: #10b981;
-          background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+          color: #4f7df3;
+          background: linear-gradient(135deg, #e8eeff, #d8e3ff);
 
           .dark & {
-            color: #34d399;
-            background: rgb(16 185 129 / 15%);
+            color: #8fb1ff;
+            background: rgb(79 125 243 / 16%);
           }
         }
 
@@ -2319,176 +2184,9 @@ onMounted(async () => {
   box-shadow: 0 4px 20px rgb(0 0 0 / 30%);
 }
 
-@media (max-width: 1200px) {
+@media (width <= 1200px) {
   .profile-extra-sections {
     flex-direction: column;
-  }
-}
-</style>
-
-<style lang="scss">
-@media (max-width: 768px) {
-  .student-profile-dialog {
-    width: min(560px, calc(100vw - 24px)) !important;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
-    margin: 12px auto !important;
-    overflow: hidden;
-    border-radius: 20px;
-
-    .el-dialog__header {
-      padding: 18px 18px 8px;
-    }
-
-    .el-dialog__body {
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: none;
-      padding: 16px 18px 8px !important;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .el-form-item {
-      display: block;
-      margin-bottom: 18px;
-    }
-
-    .el-form-item__label {
-      justify-content: flex-start;
-      width: auto !important;
-      height: auto;
-      margin-bottom: 8px;
-      line-height: 1.3;
-    }
-
-    .el-form-item__content {
-      width: 100%;
-      margin-left: 0 !important;
-    }
-
-    .el-dialog__footer {
-      flex: 0 0 auto;
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      padding: 12px 18px 18px;
-    }
-
-    .el-dialog__footer .el-button {
-      min-height: 42px;
-      padding: 0 18px;
-    }
-  }
-
-  .student-profile-preset-dialog {
-    .preset-banners-grid {
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      padding: 4px;
-    }
-  }
-
-  .student-profile-cropper-dialog {
-    width: calc(100vw - 20px) !important;
-
-    .cropper-container {
-      padding: 12px;
-    }
-  }
-}
-
-html.qiming-native-webview.ua-mobile {
-  .student-profile-dialog {
-    width: calc(100vw - 24px) !important;
-    max-width: 560px !important;
-    max-height: calc(100vh - 24px);
-    max-height: calc(100dvh - 24px);
-    margin: 12px auto !important;
-    overflow: hidden;
-    border-radius: 20px;
-
-    .el-dialog__header {
-      padding: 18px 18px 8px;
-    }
-
-    .el-dialog__body {
-      max-width: 100%;
-      padding: 16px 18px 8px !important;
-      overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .el-form {
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .el-form-item {
-      display: block;
-      margin-bottom: 18px;
-    }
-
-    .el-form-item__label {
-      justify-content: flex-start;
-      width: auto !important;
-      max-width: 100%;
-      height: auto;
-      margin-bottom: 8px;
-      line-height: 1.35;
-    }
-
-    .el-form-item__content {
-      width: 100%;
-      max-width: 100%;
-      margin-left: 0 !important;
-    }
-
-    .el-input,
-    .el-textarea,
-    .el-select,
-    .el-radio-group {
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .el-radio-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-    }
-
-    .el-dialog__footer {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      padding: 12px 18px 18px;
-    }
-
-    .el-dialog__footer .el-button {
-      min-height: 42px;
-      padding: 0 18px;
-    }
-  }
-
-  .student-profile-cropper-dialog {
-    width: calc(100vw - 20px) !important;
-    max-width: calc(100vw - 20px) !important;
-
-    .cropper-container {
-      max-width: 100%;
-      padding: 12px;
-      overflow: hidden;
-    }
-  }
-
-  .student-profile-preset-dialog {
-    .preset-banners-grid {
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      padding: 4px;
-    }
   }
 }
 </style>

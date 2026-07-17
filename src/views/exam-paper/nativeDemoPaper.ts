@@ -171,4 +171,3 @@ export const createNativeDemoExamSession = (): StartExamResult => ({
   remainingTime: nativeDemoStudentPaper.timeLimit * 60,
   serverTime: Date.now()
 });
-

@@ -84,9 +84,6 @@ const flatI18n = (prefix = "zh-CN") => {
   return cache;
 };
 
-const hasOwn = (object: object, key: PropertyKey) =>
-  Object.prototype.hasOwnProperty.call(object, key);
-
 /**
  * 国际化转换工具函数（自动读取根目录locales文件夹下文件进行国际化匹配）
  * @param message message
@@ -108,7 +105,7 @@ export function transformI18n(message: any = "") {
 
   if (key && flatI18n("zh-CN").has(key)) {
     return i18n.global.t.call(i18n.global.locale, message);
-  } else if (!key && hasOwn(siphonI18n("zh-CN"), message)) {
+  } else if (!key && Object.hasOwn(siphonI18n("zh-CN"), message)) {
     // 兼容非嵌套形式的国际化写法
     return i18n.global.t.call(i18n.global.locale, message);
   } else {

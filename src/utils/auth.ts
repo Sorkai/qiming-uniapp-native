@@ -77,13 +77,15 @@ export function setToken(data: DataInfo<Date>) {
     nickname,
     roles,
     permissions,
-    roleType
+    roleType,
+    userId
   }) {
     useUserStoreHook().SET_AVATAR(avatar || "");
     useUserStoreHook().SET_USERNAME(username);
     useUserStoreHook().SET_NICKNAME(nickname);
     useUserStoreHook().SET_ROLES(roles);
     useUserStoreHook().SET_PERMS(permissions);
+    useUserStoreHook().SET_USERID(userId ?? null);
     storageLocal().setItem(userKey, {
       accessToken,
       refreshToken,
@@ -93,7 +95,8 @@ export function setToken(data: DataInfo<Date>) {
       nickname,
       roles,
       permissions,
-      roleType
+      roleType,
+      userId
     });
   }
 
@@ -105,7 +108,8 @@ export function setToken(data: DataInfo<Date>) {
       nickname: data?.nickname ?? "",
       roles,
       permissions: data?.permissions ?? [],
-      roleType: data?.roleType ?? 0
+      roleType: data?.roleType ?? 0,
+      userId: data?.userId
     });
   } else {
     const avatar =
@@ -120,13 +124,15 @@ export function setToken(data: DataInfo<Date>) {
       storageLocal().getItem<DataInfo<number>>(userKey)?.permissions ?? [];
     const roleType =
       storageLocal().getItem<DataInfo<number>>(userKey)?.roleType ?? 0;
+    const userId = storageLocal().getItem<DataInfo<number>>(userKey)?.userId;
     setUserKey({
       avatar,
       username,
       nickname,
       roles,
       permissions,
-      roleType
+      roleType,
+      userId
     });
   }
 }

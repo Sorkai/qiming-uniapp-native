@@ -4,13 +4,22 @@ import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
 import { usePageResponsive } from "@/utils/pageResponsive";
-import { Search } from "@element-plus/icons-vue";
 import {
-  getStudentExamList,
-  getStudentPaperList,
-  type StudentPaperItem,
-  type StudentPaperStatistics
-} from "@/api/examPaper";
+  Check,
+  CircleCheck,
+  Clock,
+  Document,
+  DocumentChecked,
+  Edit,
+  Loading,
+  Lock,
+  RefreshRight,
+  Search,
+  Star,
+  Timer,
+  View
+} from "@element-plus/icons-vue";
+import { getStudentPaperList, type StudentPaperItem } from "@/api/examPaper";
 import WaitingToCompleteIcon from "@/assets/papercentreicons/waitingtocomplete.svg?component";
 import AlreadyCompletedIcon from "@/assets/papercentreicons/alreadycompleted.svg?component";
 import AlreadyDeadlineIcon from "@/assets/papercentreicons/alreadydeadline.svg?component";
@@ -24,6 +33,24 @@ defineOptions({
 const router = useRouter();
 const { isDark } = useDark();
 const { isMobile, paginationLayout } = usePageResponsive();
+
+const isMiniProgramWebView = () => {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return false;
+  }
+  const root = document.documentElement;
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+  return (
+    root.classList.contains("qiming-mini-program-webview") ||
+    root.dataset.qimingMiniProgram === "true" ||
+    hashParams.get("qimingMiniProgram") === "1" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1"
+  );
+};
 
 // 筛选条件
 const activeTab = ref<
@@ -98,265 +125,6 @@ const mobileTabOptions = computed(() => [
 // 直接使用后端返回的数据，不需要前端再次筛选
 const filteredPapers = computed(() => papers.value);
 
-type StudentPaperStatus = StudentPaperItem["status"];
-
-const paperStatuses: StudentPaperStatus[] = [
-  "available",
-  "submitted",
-  "graded",
-  "completed",
-  "expired",
-  "retake"
-];
-
-const createEmptyStatistics = (): StudentPaperStatistics => ({
-  available: 0,
-  submitted: 0,
-  graded: 0,
-  completed: 0,
-  expired: 0,
-  retake: 0,
-  avgScore: 0
-});
-
-const isNativeDemoPreview = () => {
-  if (typeof window === "undefined") return false;
-  const queryText = `${window.location.search}&${window.location.hash}`;
-  return (
-    queryText.includes("qimingNative=1") ||
-    localStorage.getItem("qimingNativeWebView") === "1" ||
-    sessionStorage.getItem("qimingNativeWebView") === "1" ||
-    document.documentElement.classList.contains("qiming-native-webview")
-  );
-};
-
-const nativeDemoPapers: StudentPaperItem[] = [
-  {
-    id: 1,
-    title: "2024年春季期中考试",
-    description: "覆盖函数、导数与综合应用题，建议完成后查看错题解析。",
-    courseId: 1,
-    courseName: "高等数学",
-    timeLimit: 105,
-    totalPoints: 100,
-    totalQuestions: 7,
-    startTime: "2024-04-15 09:00:00",
-    endTime: "2099-04-15 11:00:00",
-    status: "available",
-    submissionId: null,
-    score: null
-  },
-  {
-    id: 2,
-    title: "英语阅读理解专项测评",
-    description: "训练长篇阅读、词汇辨析和主旨概括能力。",
-    courseId: 2,
-    courseName: "大学英语",
-    timeLimit: 60,
-    totalPoints: 100,
-    totalQuestions: 18,
-    startTime: "2024-04-08 14:00:00",
-    endTime: "2024-04-08 15:00:00",
-    status: "completed",
-    submissionId: 1,
-    score: 85
-  },
-  {
-    id: 3,
-    title: "计算机基础实验小测",
-    description: "实验课后巩固，等待教师发布批改结果。",
-    courseId: 3,
-    courseName: "计算机基础",
-    timeLimit: 45,
-    totalPoints: 60,
-    totalQuestions: 12,
-    startTime: "2024-04-10 10:00:00",
-    endTime: "2024-04-10 10:45:00",
-    status: "submitted",
-    submissionId: 3,
-    score: null
-  }
-];
-
-const isSuccessResponse = (res: { code?: unknown; success?: unknown }) =>
-  res?.code === 0 ||
-  res?.code === 200 ||
-  res?.code === "0" ||
-  res?.code === "200" ||
-  res?.success === true;
-
-const toFiniteNumber = (value: unknown, fallback = 0) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const readPageList = (data: any) => {
-  const list =
-    data?.list ?? data?.records ?? data?.rows ?? data?.data?.list ?? [];
-  return Array.isArray(list) ? list : [];
-};
-
-const readPageTotal = (data: any, fallback: number) =>
-  toFiniteNumber(
-    data?.total ?? data?.totalCount ?? data?.count ?? data?.pagination?.total,
-    fallback
-  );
-
-const resolvePaperStatus = (item: any): StudentPaperStatus => {
-  const status = item?.status;
-  if (
-    typeof status === "string" &&
-    paperStatuses.includes(status as StudentPaperStatus)
-  ) {
-    return status as StudentPaperStatus;
-  }
-
-  const score = item?.score ?? item?.finalScore ?? item?.studentScore;
-  if (item?.allowRetake || toFiniteNumber(item?.remainingRetakeCount) > 0) {
-    return "retake";
-  }
-  if (item?.submitted === true) {
-    return score === null || score === undefined ? "submitted" : "completed";
-  }
-
-  const numericStatus = Number(status);
-  if (numericStatus === 0 || numericStatus === 1) return "available";
-  if (numericStatus === 2) return "expired";
-  return "available";
-};
-
-const normalizeStudentPaper = (item: any): StudentPaperItem => {
-  const score = item?.score ?? item?.finalScore ?? item?.studentScore;
-  const submissionId = item?.submissionId ?? item?.submitId;
-
-  return {
-    id: toFiniteNumber(item?.id ?? item?.paperId ?? item?.examId),
-    title: String(item?.title ?? item?.paperTitle ?? item?.examName ?? ""),
-    description: item?.description ?? item?.paperDescription ?? item?.remark,
-    courseId: toFiniteNumber(item?.courseId),
-    courseName: String(item?.courseName ?? item?.course?.name ?? ""),
-    timeLimit: toFiniteNumber(
-      item?.timeLimit ?? item?.duration ?? item?.limitMinutes
-    ),
-    totalPoints: toFiniteNumber(
-      item?.totalPoints ?? item?.totalScore ?? item?.scoreTotal
-    ),
-    totalQuestions: toFiniteNumber(
-      item?.totalQuestions ?? item?.questionCount ?? item?.questionNum
-    ),
-    startTime: String(
-      item?.startTime ?? item?.availableFrom ?? item?.beginTime ?? ""
-    ),
-    endTime: String(item?.endTime ?? item?.availableTo ?? item?.deadline ?? ""),
-    status: resolvePaperStatus(item),
-    submissionId:
-      submissionId === null || submissionId === undefined
-        ? null
-        : toFiniteNumber(submissionId),
-    score:
-      score === null || score === undefined ? null : toFiniteNumber(score),
-    allowRetake: Boolean(item?.allowRetake),
-    remainingRetakeCount: toFiniteNumber(item?.remainingRetakeCount),
-    retakeStartTime: item?.retakeStartTime,
-    retakeEndTime: item?.retakeEndTime
-  };
-};
-
-const normalizeStatistics = (
-  value: Partial<StudentPaperStatistics> | undefined,
-  allPapers: StudentPaperItem[]
-): StudentPaperStatistics => {
-  const computedStatistics = createEmptyStatistics();
-  allPapers.forEach(item => {
-    computedStatistics[item.status] += 1;
-  });
-
-  const scoredPapers = allPapers.filter(item => typeof item.score === "number");
-  computedStatistics.avgScore = scoredPapers.length
-    ? Math.round(
-        scoredPapers.reduce((sum, item) => sum + Number(item.score), 0) /
-          scoredPapers.length
-      )
-    : 0;
-
-  if (!value) return computedStatistics;
-
-  return {
-    available: toFiniteNumber(value.available, computedStatistics.available),
-    submitted: toFiniteNumber(value.submitted, computedStatistics.submitted),
-    graded: toFiniteNumber(value.graded, computedStatistics.graded),
-    completed: toFiniteNumber(value.completed, computedStatistics.completed),
-    expired: toFiniteNumber(value.expired, computedStatistics.expired),
-    retake: toFiniteNumber(value.retake, computedStatistics.retake),
-    avgScore: toFiniteNumber(value.avgScore, computedStatistics.avgScore)
-  };
-};
-
-const applyPaperPayload = (
-  data: any,
-  options: { clientFilterByTab?: boolean } = {}
-) => {
-  const allPapers = readPageList(data)
-    .map(normalizeStudentPaper)
-    .filter(item => item.id > 0);
-  const visiblePapers = options.clientFilterByTab
-    ? allPapers.filter(item => item.status === activeTab.value)
-    : allPapers;
-
-  papers.value = visiblePapers;
-  total.value = options.clientFilterByTab
-    ? visiblePapers.length
-    : readPageTotal(data, visiblePapers.length);
-  statistics.value = normalizeStatistics(data?.statistics, allPapers);
-};
-
-const applyNativeDemoPapers = () => {
-  const keyword = searchQuery.value.trim();
-  const courseId =
-    selectedCourse.value && selectedCourse.value !== "0"
-      ? Number(selectedCourse.value)
-      : 0;
-  const visiblePapers = nativeDemoPapers.filter(item => {
-    const matchesTab = item.status === activeTab.value;
-    const matchesCourse = !courseId || item.courseId === courseId;
-    const matchesKeyword =
-      !keyword ||
-      item.title.includes(keyword) ||
-      item.courseName.includes(keyword) ||
-      item.description?.includes(keyword);
-    return matchesTab && matchesCourse && matchesKeyword;
-  });
-
-  papers.value = visiblePapers;
-  total.value = visiblePapers.length;
-  statistics.value = normalizeStatistics(undefined, nativeDemoPapers);
-};
-
-const buildLegacyExamParams = () => {
-  const params: any = {
-    pageNum: currentPage.value,
-    pageSize: pageSize.value
-  };
-
-  if (selectedCourse.value && selectedCourse.value !== "0") {
-    params.courseId = Number(selectedCourse.value);
-  }
-
-  return params;
-};
-
-const fetchPapersFromLegacyApi = async () => {
-  try {
-    const legacyRes = await getStudentExamList(buildLegacyExamParams());
-    if (!isSuccessResponse(legacyRes)) return false;
-    applyPaperPayload(legacyRes.data, { clientFilterByTab: true });
-    return true;
-  } catch (legacyError) {
-    console.warn("Student legacy exam list API failed:", legacyError);
-    return false;
-  }
-};
-
 // 获取试卷列表
 const fetchPapers = async () => {
   loading.value = true;
@@ -379,32 +147,30 @@ const fetchPapers = async () => {
     const res = await getStudentPaperList(params);
     console.log("获取试卷列表响应:", res);
 
-    if (isSuccessResponse(res)) {
-      applyPaperPayload(res.data);
-      return;
-    } else if (await fetchPapersFromLegacyApi()) {
-      return;
-    } else if (isNativeDemoPreview()) {
-      console.warn("[StudentExamCenter] using native demo paper fallback", {
-        message: res.msg,
-        params
-      });
-      applyNativeDemoPapers();
-      return;
+    if (res.code === 0) {
+      papers.value = res.data.list || [];
+      total.value = res.data.total || 0;
+      statistics.value = res.data.statistics || {
+        available: 0,
+        submitted: 0,
+        graded: 0,
+        completed: 0,
+        expired: 0,
+        retake: 0,
+        avgScore: 0
+      };
     } else {
-      ElMessage.error(res.msg || "获取试卷列表失败");
+      if (!isMiniProgramWebView()) {
+        ElMessage.error(res.msg || "获取试卷列表失败");
+      }
     }
   } catch (error) {
-    if (await fetchPapersFromLegacyApi()) {
-      return;
+    papers.value = [];
+    total.value = 0;
+    if (!isMiniProgramWebView()) {
+      console.error("获取试卷列表失败:", error);
+      ElMessage.error("获取试卷列表失败");
     }
-    if (isNativeDemoPreview()) {
-      console.warn("[StudentExamCenter] using native demo paper fallback", error);
-      applyNativeDemoPapers();
-      return;
-    }
-    console.error("获取试卷列表失败:", error);
-    ElMessage.error("获取试卷列表失败");
   } finally {
     loading.value = false;
   }
@@ -1400,7 +1166,7 @@ $info-color: #6b7280;
   }
 }
 
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .student-exam-center {
     padding: 0 14px 20px;
 
@@ -1441,7 +1207,7 @@ $info-color: #6b7280;
 
       .header-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 10px;
 
         .stat-item {
@@ -1465,7 +1231,7 @@ $info-color: #6b7280;
     }
 
     .stats-section {
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 14px;
       margin-bottom: 18px;
     }
@@ -1636,12 +1402,20 @@ $info-color: #6b7280;
   }
 }
 
-@media (max-width: 360px) {
+@media (width <= 479px) {
   .student-exam-center {
     padding: 0 10px 18px;
 
     .page-header {
       padding: 18px 16px;
+
+      .header-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stats-section {
+      grid-template-columns: 1fr;
     }
 
     .filter-toolbar {

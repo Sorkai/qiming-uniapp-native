@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, watch, nextTick } from "vue";
-import { useDark, useECharts } from "@pureadmin/utils";
+import { onMounted, ref, computed, watch } from "vue";
+import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { useAppStoreHook } from "@/store/modules/app";
 import { getEfficientIndex } from "@/api/statistics";
+import { getCourseList } from "@/api/course";
 import {
   ElTooltip,
   ElCheckbox,
@@ -24,9 +25,7 @@ const showOptimizePanel = ref(false); // 默认折叠优化建议面板
 
 const currentPage = ref(1);
 const appStore = useAppStoreHook();
-const isMobile = computed(
-  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
-);
+const isMobile = computed(() => appStore.getDevice === "mobile");
 const pageSize = computed(() => (isMobile.value ? 1 : 5));
 
 const { isDark } = useDark();
@@ -37,42 +36,140 @@ const { setOptions, resize } = useECharts(chartRef, {
   theme
 });
 
-let chartFrame = 0;
+useResizeObserver(chartRef, () => resize(), {
+  time: 80
+});
 
-const scheduleRenderChart = async () => {
-  await nextTick();
-  if (chartFrame) cancelAnimationFrame(chartFrame);
-  chartFrame = requestAnimationFrame(() => {
-    chartFrame = requestAnimationFrame(() => {
-      renderChart();
-      resize();
-    });
-  });
+type ActiveCourseIndex = {
+  ready: boolean;
+  ids: Set<number>;
+  names: Set<string>;
 };
+
+const normalizeCourseName = (value: unknown) => String(value ?? "").trim();
+
+const normalizeCourseId = (value: unknown) => {
+  const courseId = Number(value);
+  return Number.isFinite(courseId) && courseId > 0 ? courseId : null;
+};
+
+const readEfficientCourseId = (item: any) =>
+  normalizeCourseId(item?.courseId ?? item?.id);
+
+const readEfficientCourseName = (item: any) =>
+  normalizeCourseName(item?.courseName ?? item?.title ?? item?.name);
+
+const normalizeDuration = (value: unknown) => {
+  const duration = Number(value);
+  return Number.isFinite(duration) ? duration : 0;
+};
+
+const fetchActiveCourseIndex = async (): Promise<ActiveCourseIndex> => {
+  const pageSize = 1000;
+  const firstPage = await getCourseList({ pageNum: 1, pageSize });
+
+  if (firstPage?.code !== 200 || !firstPage?.data) {
+    throw new Error("获取课程列表失败");
+  }
+
+  const firstList = firstPage?.data?.courseList || [];
+  const total = firstPage?.data?.total || firstList.length;
+  const pageCount = Math.ceil(total / pageSize);
+  let courseList = [...firstList];
+
+  if (pageCount > 1) {
+    const restPages = await Promise.allSettled(
+      Array.from({ length: pageCount - 1 }, (_, index) =>
+        getCourseList({ pageNum: index + 2, pageSize })
+      )
+    );
+
+    restPages.forEach(result => {
+      if (result.status === "fulfilled") {
+        courseList = courseList.concat(result.value?.data?.courseList || []);
+      }
+    });
+  }
+
+  return {
+    ready: true,
+    ids: new Set(
+      courseList
+        .map(course => normalizeCourseId(course.courseId))
+        .filter((courseId): courseId is number => courseId !== null)
+    ),
+    names: new Set(
+      courseList
+        .map(course => normalizeCourseName(course.title))
+        .filter(Boolean)
+    )
+  };
+};
+
+const normalizeEfficientList = (
+  list: any[],
+  activeCourses: ActiveCourseIndex
+) =>
+  list
+    .map(item => ({
+      ...item,
+      courseId: readEfficientCourseId(item) ?? item?.courseId,
+      courseName: readEfficientCourseName(item),
+      planTime: normalizeDuration(item?.planTime),
+      correctPlanTime: normalizeDuration(item?.correctPlanTime),
+      planWorkTime: normalizeDuration(item?.planWorkTime),
+      correctPlanWorkTime: normalizeDuration(item?.correctPlanWorkTime)
+    }))
+    .filter(item => {
+      if (!item.courseName) return false;
+      if (!activeCourses.ready) return true;
+
+      const courseId = readEfficientCourseId(item);
+      if (courseId !== null && activeCourses.ids.size > 0) {
+        return activeCourses.ids.has(courseId);
+      }
+
+      return activeCourses.names.has(item.courseName);
+    });
 
 // 获取教学效率指数数据
 const fetchData = async () => {
   loading.value = true;
   try {
-    const response = await getEfficientIndex();
+    const [efficientResponse, activeCourseResponse] = await Promise.allSettled([
+      getEfficientIndex(),
+      fetchActiveCourseIndex()
+    ]);
+
+    if (efficientResponse.status !== "fulfilled") {
+      throw efficientResponse.reason;
+    }
+
+    const response = efficientResponse.value;
+    const activeCourses =
+      activeCourseResponse.status === "fulfilled"
+        ? activeCourseResponse.value
+        : {
+            ready: false,
+            ids: new Set<number>(),
+            names: new Set<string>()
+          };
 
     if (response?.data?.efficientIndexList) {
-      efficientData.value = response.data.efficientIndexList.map(
-        (item, index) => ({
-          ...item,
-          courseName:
-            String(item?.courseName ?? "").trim() ||
-            `\u672A\u547D\u540D\u8BFE\u7A0B ${index + 1}`
-        })
+      efficientData.value = normalizeEfficientList(
+        response.data.efficientIndexList,
+        activeCourses
       );
       // 默认选中所有课程
       selectedCourses.value = efficientData.value.map((_, index) => index);
+      currentPage.value = 1;
     }
+
+    renderChart();
   } catch (error) {
     console.error("获取教学效率指数数据失败:", error);
   } finally {
     loading.value = false;
-    scheduleRenderChart();
   }
 };
 
@@ -90,7 +187,7 @@ const pagedData = computed(() => {
 
 // 监听分页和选中项变化重新渲染图表
 watch([currentPage, selectedCourses, isMobile], () => {
-  scheduleRenderChart();
+  renderChart();
 });
 
 watch([totalFilteredData, isMobile], () => {
@@ -298,7 +395,7 @@ showOptimizePanel.value = true;
 watch(
   () => selectedCourses.value,
   () => {
-    scheduleRenderChart();
+    renderChart();
   },
   { deep: true }
 );
@@ -308,7 +405,7 @@ watch(
   () => isDark.value,
   () => {
     if (!loading.value && pagedData.value.length > 0) {
-      scheduleRenderChart();
+      renderChart();
     }
   }
 );
@@ -322,21 +419,27 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div class="efficient-layout flex flex-col gap-6">
+        <el-empty
+          v-if="!efficientData.length"
+          description="暂无可展示的课程效率指标"
+          class="py-16"
+        />
+        <div v-else class="flex flex-col gap-6">
           <!-- 筛选控制区域 -->
           <div
-            v-if="efficientData.length"
-            class="efficient-filter flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
+            class="efficient-filter-panel flex flex-col md:flex-row items-start md:items-center gap-6 p-6 bg-gradient-to-br from-blue-50/60 to-sky-50/40 dark:from-[var(--el-bg-color-overlay)] dark:to-[var(--el-bg-color-overlay)] rounded-2xl border border-blue-100/50 dark:border-blue-500/20 shadow-lg backdrop-blur-md"
           >
-            <div class="flex items-center gap-4 shrink-0">
+            <div
+              class="efficient-filter-brand flex items-center gap-4 shrink-0"
+            >
               <div
-                class="efficient-filter-icon w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
+                class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/30"
               >
                 <ChartIcon class="w-7 h-7 [&_path]:!fill-white" />
               </div>
               <div class="flex flex-col">
                 <span
-                  class="efficient-filter-title text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                  class="text-xl font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider"
                   >筛选分析课程</span
                 >
                 <span
@@ -353,7 +456,7 @@ onMounted(() => {
             <div class="flex-1 w-full overflow-hidden">
               <el-checkbox-group
                 v-model="selectedCourses"
-                class="efficient-course-checks flex flex-wrap gap-x-10 gap-y-4"
+                class="efficient-course-options flex flex-wrap gap-x-10 gap-y-4"
                 @change="handleCoursesChange"
               >
                 <el-checkbox
@@ -378,7 +481,7 @@ onMounted(() => {
             <div
               ref="chartRef"
               class="chart-container"
-              :style="{ width: '100%', height: isMobile ? '360px' : '600px' }"
+              style="width: 100%; height: 600px"
             />
 
             <!-- 分页部件 -->
@@ -403,9 +506,7 @@ onMounted(() => {
             v-if="optimizeSuggestions.length"
             class="optimize-suggestions mt-4"
           >
-            <div
-              class="efficient-suggestion-head flex items-center justify-between mb-6"
-            >
+            <div class="flex items-center justify-between mb-6">
               <h3
                 class="flex items-center text-lg font-bold text-gray-800 dark:text-gray-200"
               >
@@ -437,7 +538,7 @@ onMounted(() => {
                     class="mb-6"
                   >
                     <div
-                      class="efficient-suggestion-card suggestion-card-new p-5 h-full flex flex-col justify-between bg-white dark:bg-[var(--el-bg-color-overlay)] border border-slate-100 dark:border-gray-800"
+                      class="suggestion-card-new p-5 h-full flex flex-col justify-between bg-white dark:bg-[var(--el-bg-color-overlay)] border border-slate-100 dark:border-gray-800"
                     >
                       <div>
                         <div class="flex items-center gap-2 mb-4">
@@ -571,7 +672,8 @@ onMounted(() => {
 }
 
 :deep(.el-checkbox) {
-  height: 32px;
+  min-height: 44px;
+  height: auto;
   margin-right: 0;
 }
 
@@ -599,100 +701,35 @@ onMounted(() => {
   justify-content: center;
 }
 
-@media screen and (max-width: 768px) {
-  .efficient-layout {
-    gap: 12px;
+@media screen and (max-width: 991px) {
+  .efficient-filter-panel {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    border-radius: 16px !important;
   }
 
-  .efficient-filter {
-    gap: 10px;
-    padding: 12px !important;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgb(37 99 235 / 8%);
-  }
-
-  .efficient-filter-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
-
-    :deep(svg) {
-      width: 18px;
-      height: 18px;
-    }
-  }
-
-  .efficient-filter-title {
-    font-size: 16px !important;
-    line-height: 1.25 !important;
-  }
-
-  .efficient-course-checks {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px !important;
-    width: 100%;
-  }
-
-  :deep(.efficient-course-checks .el-checkbox) {
-    width: 100%;
-    height: auto;
-    min-height: 30px;
-    margin: 0;
-  }
-
-  :deep(.efficient-course-checks .el-checkbox__label) {
+  .efficient-filter-brand {
     min-width: 0;
-    overflow: hidden;
-    font-size: 13px;
-    line-height: 1.35;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  }
+
+  .efficient-course-options {
+    gap: 4px 16px !important;
   }
 
   .efficient-chart-panel {
-    padding: 14px !important;
-    border-radius: 20px;
+    padding: 6px !important;
+    border-radius: 12px !important;
   }
 
   .chart-container {
     height: 360px !important;
   }
 
-  .optimize-suggestions {
-    margin-top: 0;
-  }
-
-  .efficient-suggestion-head {
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 12px;
-
-    h3 {
-      min-width: 0;
-      font-size: 16px;
-      line-height: 1.35;
-    }
-
-    :deep(.el-button) {
-      flex: 0 0 auto;
-    }
-  }
-
-  :deep(.suggestion-row) {
-    margin-right: 0 !important;
-    margin-left: 0 !important;
-  }
-
-  :deep(.suggestion-row .el-col) {
-    padding-right: 0 !important;
-    padding-left: 0 !important;
-    margin-bottom: 12px !important;
-  }
-
-  .efficient-suggestion-card {
-    padding: 14px !important;
-    border-radius: 16px;
+  :deep(.optimize-suggestions .el-button),
+  :deep(.suggestion-card-new .el-button) {
+    min-height: 44px;
   }
 
   :deep(.efficient-pagination) {
@@ -704,16 +741,23 @@ onMounted(() => {
   :deep(.efficient-pagination .btn-next),
   :deep(.efficient-pagination .number),
   :deep(.efficient-pagination .more) {
-    min-width: 24px;
-    height: 24px;
+    min-width: 44px;
+    height: 44px;
     margin: 0;
     font-size: 12px;
-    line-height: 24px;
+    line-height: 44px;
   }
 
   :deep(.efficient-pagination .btn-prev),
   :deep(.efficient-pagination .btn-next) {
-    padding: 0 6px;
+    padding: 0 10px;
+  }
+}
+
+@media screen and (max-width: 359px) {
+  :deep(.efficient-pagination .number:not(.is-active)),
+  :deep(.efficient-pagination .more) {
+    display: none;
   }
 }
 </style>

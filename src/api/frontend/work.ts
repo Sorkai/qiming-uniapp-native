@@ -214,9 +214,7 @@ const buildDemoQuestions = () => [
   }
 ];
 
-const nativeDemoExamDetail = (
-  params: ExamDetailParams
-): ExamDetailResult => {
+const nativeDemoExamDetail = (params: ExamDetailParams): ExamDetailResult => {
   const now = Date.now();
 
   return {

@@ -2,16 +2,37 @@ import { http } from "@/utils/http";
 import type { ApiResponse } from "./types";
 
 /** 视频分析任务信息 */
-export interface VideoAnalyzeTask {
-  taskId: string;
-  status: string;
-  progress: number;
-  message: string;
+export type VideoAnalyzeTaskStatus =
+  | "completed"
+  | "processing"
+  | "submitted"
+  | "pending"
+  | "failed"
+  | "cancelled"
+  | string;
+
+export interface GetVideoAnalyzeTaskParams {
   courseId: number;
   chapterId: number;
+  hourId: number;
+  /** 仅用于旧数据兼容，正常学生端请求不传。 */
+  filePath?: string;
+  /** 仅用于旧数据兼容，正常学生端请求不传。 */
+  fileName?: string;
+}
+
+export interface VideoAnalyzeTask {
+  taskId: string;
+  status: VideoAnalyzeTaskStatus;
+  progress: number;
+  message?: string | null;
+  courseId: number;
+  chapterId: number;
+  hourId?: number;
+  filePath?: string | null;
   fileName: string;
   createdAt: string;
-  completedAt: string;
+  completedAt?: string | null;
 }
 
 /** 视频分析完整结果 */
@@ -62,7 +83,7 @@ export interface VideoAnalyzeModuleResult {
   chapterId: number;
   fileName: string;
   createdAt: string;
-  completedAt: string;
+  completedAt?: string | null;
   schemaVersion: string;
   modules: string[];
   moduleStatus: Record<string, string>;
@@ -70,7 +91,10 @@ export interface VideoAnalyzeModuleResult {
   summary?: { text: string };
   chapters?: ChapterItem[];
   qaItems?: QaItem[];
-  mindMap?: { url?: string; tree?: any };
+  mindMap?: any;
+  mindMapUrl?: string;
+  mindmapUrl?: string;
+  mind_map_url?: string;
   pptPages?: PptPage[];
   meeting?: {
     keywords: string[];
@@ -78,35 +102,41 @@ export interface VideoAnalyzeModuleResult {
   };
 }
 
-/** 获取课程章节对应的视频分析任务 */
-export const getVideoAnalyzeTask = (params: {
-  courseId: number;
-  chapterId: number;
-}) => {
+/** 获取当前视频课时对应的分析任务 */
+export const getVideoAnalyzeTask = (
+  params: GetVideoAnalyzeTaskParams,
+  signal?: AbortSignal
+) => {
   return http.request<ApiResponse<VideoAnalyzeTask>>(
     "get",
     "/edu/frontend/v1/video/analyze/task",
-    { params }
+    { params, signal }
   );
 };
 
 /** 学生查看视频分析结果 */
-export const getVideoAnalyzeResult = (params: { taskId: string }) => {
+export const getVideoAnalyzeResult = (
+  params: { taskId: string },
+  signal?: AbortSignal
+) => {
   return http.request<ApiResponse<VideoAnalyzeFullResult>>(
     "get",
     "/edu/frontend/v1/video/analyze/result",
-    { params }
+    { params, signal }
   );
 };
 
 /** 按模块查看视频分析结果 */
-export const getVideoAnalyzeModules = (params: {
-  taskId: string;
-  modules?: string;
-}) => {
+export const getVideoAnalyzeModules = (
+  params: {
+    taskId: string;
+    modules?: string;
+  },
+  signal?: AbortSignal
+) => {
   return http.request<ApiResponse<VideoAnalyzeModuleResult>>(
     "get",
     "/edu/frontend/v1/video/analyze/result/modules",
-    { params }
+    { params, signal }
   );
 };

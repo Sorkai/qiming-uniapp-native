@@ -155,7 +155,7 @@ export interface NormalizedWrongQuestion {
 
 const props = defineProps<{
   modelValue: boolean;
-  courseId: number | string;
+  courseId: number | string | undefined;
   currentTheme?: string;
   wrong: NormalizedWrongQuestion | null;
   initialAnalysis?: WrongExerciseAnalyzeResponse | null;
@@ -242,6 +242,10 @@ const toggleExplain = (i: number) =>
 
 const doAnalyze = async () => {
   if (!props.wrong) return;
+  if (!props.courseId) {
+    ElMessage.warning("当前错题缺少课程上下文，暂不能进行 AI 分析");
+    return;
+  }
   analyzing.value = true;
   try {
     const original_exercise_id = String(

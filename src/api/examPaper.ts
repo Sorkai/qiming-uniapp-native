@@ -1,4 +1,11 @@
 import { http } from "@/utils/http";
+import type { AxiosRequestConfig } from "axios";
+import type {
+  PureHttpRequestConfig,
+  RequestMethods
+} from "@/utils/http/types.d";
+import { normalizeExamPaperResponse } from "./examPaperResponse";
+import { adaptBackendCourseListToPaperOptions } from "./mobileApiAdapters";
 
 //==================== 类型定义 ====================
 
@@ -88,6 +95,37 @@ export interface ApiResponse<T = any> {
   msg: string;
   data: T;
 }
+
+/** 试卷筛选使用的课程选项参数 */
+export interface PaperCourseListParams {
+  pageNum?: number;
+  pageSize?: number;
+  courseName?: string;
+}
+
+type BackendCourseListData = {
+  courseList?: Array<{
+    courseId: number;
+    title: string;
+  }>;
+};
+
+type BackendCourseListResponse = ApiResponse<BackendCourseListData>;
+
+// AiEdu uses 200 for business success while legacy exam services use 0.
+// Normalize both at this API boundary so every exam-paper consumer has one contract.
+const examPaperHttp = {
+  request<T extends ApiResponse<any>>(
+    method: RequestMethods,
+    url: string,
+    param?: AxiosRequestConfig,
+    axiosConfig?: PureHttpRequestConfig
+  ): Promise<T> {
+    return http
+      .request<T>(method, url, param, axiosConfig)
+      .then(normalizeExamPaperResponse);
+  }
+};
 
 /** 分页参数 */
 export interface PageParams {
@@ -346,6 +384,9 @@ export interface Paper {
   questionGroups?: QuestionGroup[];
 }
 
+/** 教师阅卷使用的冻结试卷详情 */
+export type TeacherPaperDetail = Paper;
+
 /** 试卷列表项 */
 export interface PaperListItem {
   paperId: number;
@@ -465,6 +506,8 @@ export interface StudentSubmission {
   gradeTime?: string;
   /** 学生答案列表 */
   answers?: StudentAnswer[];
+  /** 本次答卷对应的冻结试卷快照（仅教师/管理员阅卷接口返回） */
+  paperSnapshot?: TeacherPaperDetail;
 }
 
 /** 批改数据 */
@@ -519,6 +562,8 @@ export interface PaperStatistics {
 export interface GetPaperListParams extends PageParams {
   /** 课程ID */
   courseId?: number;
+  /** 文件夹ID（教师/管理员“我的试卷”筛选） */
+  folderId?: number;
   /** 试卷状态 */
   status?: PaperStatus;
   /** 关键词搜索 */
@@ -620,7 +665,7 @@ export interface MyPaperStatistics {
  * 获取我的试卷统计数据
  */
 export const getMyPaperStatistics = () => {
-  return http.request<ApiResponse<MyPaperStatistics>>(
+  return examPaperHttp.request<ApiResponse<MyPaperStatistics>>(
     "get",
     "/edu/backend/v1/paper/my/statistics"
   );
@@ -630,7 +675,7 @@ export const getMyPaperStatistics = () => {
  * 获取总览统计数据
  */
 export const getOverviewStatistics = () => {
-  return http.request<ApiResponse<OverviewStatistics>>(
+  return examPaperHttp.request<ApiResponse<OverviewStatistics>>(
     "get",
     "/edu/backend/v1/paper/overview/statistics"
   );
@@ -640,7 +685,7 @@ export const getOverviewStatistics = () => {
  * 获取最近编辑的试卷
  */
 export const getRecentPapers = (limit = 5) => {
-  return http.request<ApiResponse<RecentPaperItem[]>>(
+  return examPaperHttp.request<ApiResponse<RecentPaperItem[]>>(
     "get",
     "/edu/backend/v1/paper/recent",
     { params: { limit } }
@@ -651,7 +696,7 @@ export const getRecentPapers = (limit = 5) => {
  * 获取试卷列表（教师/管理员）
  */
 export const getPaperList = (params: GetPaperListParams) => {
-  return http.request<ApiResponse<PageResult<PaperListItem>>>(
+  return examPaperHttp.request<ApiResponse<PageResult<PaperListItem>>>(
     "get",
     "/edu/backend/v1/paper/list",
     { params }
@@ -662,7 +707,7 @@ export const getPaperList = (params: GetPaperListParams) => {
  * 获取试卷详情
  */
 export const getPaperDetail = (paperId: number) => {
-  return http.request<ApiResponse<Paper>>(
+  return examPaperHttp.request<ApiResponse<Paper>>(
     "get",
     `/edu/backend/v1/paper/detail/${paperId}`
   );
@@ -672,7 +717,7 @@ export const getPaperDetail = (paperId: number) => {
  * 创建试卷
  */
 export const createPaper = (data: CreatePaperParams) => {
-  return http.request<ApiResponse<{ paperId: number }>>(
+  return examPaperHttp.request<ApiResponse<{ paperId: number }>>(
     "post",
     "/edu/backend/v1/paper/create",
     { data }
@@ -683,43 +728,59 @@ export const createPaper = (data: CreatePaperParams) => {
  * 更新试卷
  */
 export const updatePaper = (data: UpdatePaperParams) => {
-  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/update", {
-    data
-  });
+  return examPaperHttp.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/update",
+    {
+      data
+    }
+  );
 };
 
 /**
  * 删除试卷
  */
 export const deletePaper = (paperId: number) => {
-  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/delete", {
-    data: { paperId }
-  });
+  return examPaperHttp.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/delete",
+    {
+      data: { paperId }
+    }
+  );
 };
 
 /**
  * 发布试卷
  */
 export const publishPaper = (data: PublishPaperParams) => {
-  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/publish", {
-    data
-  });
+  return examPaperHttp.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/publish",
+    {
+      data
+    }
+  );
 };
 
 /**
  * 撤回发布
  */
 export const unpublishPaper = (paperId: number) => {
-  return http.request<ApiResponse>("post", "/edu/backend/v1/paper/unpublish", {
-    data: { paperId }
-  });
+  return examPaperHttp.request<ApiResponse>(
+    "post",
+    "/edu/backend/v1/paper/unpublish",
+    {
+      data: { paperId }
+    }
+  );
 };
 
 /**
  * 获取可发布的班级列表
  */
 export const getPublishClasses = (courseId: number) => {
-  return http.request<ApiResponse<ClassInfo[]>>(
+  return examPaperHttp.request<ApiResponse<ClassInfo[]>>(
     "get",
     "/edu/backend/v1/paper/publish/classes",
     { params: { courseId } }
@@ -734,7 +795,7 @@ export const getPublishStudents = (params: {
   classId?: number;
   keyword?: string;
 }) => {
-  return http.request<ApiResponse<PublishTargetStudent[]>>(
+  return examPaperHttp.request<ApiResponse<PublishTargetStudent[]>>(
     "get",
     "/edu/backend/v1/paper/publish/students",
     { params }
@@ -789,7 +850,7 @@ export interface GetGradingPaperListParams extends PageParams {
  * 获取阅卷统计数据
  */
 export const getGradingStatistics = () => {
-  return http.request<ApiResponse<GradingStatistics>>(
+  return examPaperHttp.request<ApiResponse<GradingStatistics>>(
     "get",
     "/edu/backend/v1/paper/grading/statistics"
   );
@@ -799,7 +860,7 @@ export const getGradingStatistics = () => {
  * 获取待阅卷试卷列表（按试卷分组）
  */
 export const getGradingPaperList = (params: GetGradingPaperListParams) => {
-  return http.request<ApiResponse<PageResult<GradingPaperItem>>>(
+  return examPaperHttp.request<ApiResponse<PageResult<GradingPaperItem>>>(
     "get",
     "/edu/backend/v1/paper/grading/list",
     { params }
@@ -810,7 +871,7 @@ export const getGradingPaperList = (params: GetGradingPaperListParams) => {
  * 获取答卷列表（阅卷用）
  */
 export const getSubmissionList = (params: GetSubmissionListParams) => {
-  return http.request<ApiResponse<PageResult<StudentSubmission>>>(
+  return examPaperHttp.request<ApiResponse<PageResult<StudentSubmission>>>(
     "get",
     "/edu/backend/v1/paper/submission/list",
     { params }
@@ -821,7 +882,7 @@ export const getSubmissionList = (params: GetSubmissionListParams) => {
  * 获取答卷详情（阅卷用）
  */
 export const getSubmissionDetail = (submissionId: number) => {
-  return http.request<ApiResponse<StudentSubmission>>(
+  return examPaperHttp.request<ApiResponse<StudentSubmission>>(
     "get",
     `/edu/backend/v1/paper/submission/detail/${submissionId}`
   );
@@ -831,7 +892,7 @@ export const getSubmissionDetail = (submissionId: number) => {
  * 提交批改
  */
 export const submitGrade = (data: GradeData) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/paper/grade/submit",
     { data }
@@ -842,7 +903,7 @@ export const submitGrade = (data: GradeData) => {
  * 批量自动批改（客观题）
  */
 export const autoGradeObjective = (paperId: number) => {
-  return http.request<ApiResponse<{ gradedCount: number }>>(
+  return examPaperHttp.request<ApiResponse<{ gradedCount: number }>>(
     "post",
     "/edu/backend/v1/paper/grade/auto",
     { data: { paperId } }
@@ -853,7 +914,7 @@ export const autoGradeObjective = (paperId: number) => {
  * 发布成绩
  */
 export const releaseScores = (paperId: number) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/paper/score/release",
     { data: { paperId } }
@@ -864,7 +925,7 @@ export const releaseScores = (paperId: number) => {
  * 获取试卷统计数据
  */
 export const getPaperStatistics = (paperId: number) => {
-  return http.request<ApiResponse<PaperStatistics>>(
+  return examPaperHttp.request<ApiResponse<PaperStatistics>>(
     "get",
     `/edu/backend/v1/paper/statistics/${paperId}`
   );
@@ -942,7 +1003,7 @@ export interface GetLearningAnalyticsParams {
  * 获取学情分析数据
  */
 export const getLearningAnalytics = (params?: GetLearningAnalyticsParams) => {
-  return http.request<ApiResponse<LearningAnalyticsData>>(
+  return examPaperHttp.request<ApiResponse<LearningAnalyticsData>>(
     "get",
     "/edu/backend/v1/paper/learning-analytics",
     { params }
@@ -950,13 +1011,25 @@ export const getLearningAnalytics = (params?: GetLearningAnalyticsParams) => {
 };
 
 /**
- * 获取课程列表（用于筛选）
+ * 获取课程列表（用于筛选）。
+ *
+ * The paper-specific endpoint is not available in the deployed backend. The
+ * canonical backend course list is equivalent for teacher/admin filters, so
+ * adapt its `{ courseId, title }` payload to the `{ id, name }` contract used
+ * by the exam-paper views.
  */
-export const getCourseList = () => {
-  return http.request<ApiResponse<Array<{ id: number; name: string }>>>(
-    "get",
-    "/edu/backend/v1/paper/course/list"
-  );
+export const getCourseList = (params: PaperCourseListParams = {}) => {
+  const requestParams = {
+    pageNum: params.pageNum ?? 1,
+    pageSize: params.pageSize ?? 1000,
+    ...(params.courseName ? { courseName: params.courseName } : {})
+  };
+
+  return examPaperHttp
+    .request<BackendCourseListResponse>("get", "/edu/backend/v1/course/list", {
+      params: requestParams
+    })
+    .then(adaptBackendCourseListToPaperOptions);
 };
 
 // ==================== 题库和题目助手API ====================
@@ -965,7 +1038,7 @@ export const getCourseList = () => {
  * 搜索题库题目
  */
 export const searchQuestionBank = (params: SearchQuestionBankParams) => {
-  return http.request<ApiResponse<PageResult<QuestionBankItem>>>(
+  return examPaperHttp.request<ApiResponse<PageResult<QuestionBankItem>>>(
     "get",
     "/edu/backend/v1/question-bank/search",
     { params }
@@ -976,7 +1049,7 @@ export const searchQuestionBank = (params: SearchQuestionBankParams) => {
  * AI 生成题目
  */
 export const aiGenerateQuestion = (data: AIGenerateQuestionParams) => {
-  return http.request<ApiResponse<AIGeneratedQuestion[]>>(
+  return examPaperHttp.request<ApiResponse<AIGeneratedQuestion[]>>(
     "post",
     "/edu/backend/v1/ai/generate-question",
     { data }
@@ -987,7 +1060,7 @@ export const aiGenerateQuestion = (data: AIGenerateQuestionParams) => {
  * 获取知识点列表
  */
 export const getKnowledgePoints = () => {
-  return http.request<ApiResponse<KnowledgePoint[]>>(
+  return examPaperHttp.request<ApiResponse<KnowledgePoint[]>>(
     "get",
     "/edu/backend/v1/knowledge-points"
   );
@@ -997,7 +1070,7 @@ export const getKnowledgePoints = () => {
  * AI 分析试卷
  */
 export const aiAnalyzePaper = (data: AIPaperAnalyzeParams) => {
-  return http.request<ApiResponse<AIPaperAnalyzeResult>>(
+  return examPaperHttp.request<ApiResponse<AIPaperAnalyzeResult>>(
     "post",
     "/edu/backend/v1/ai/paper/analyze",
     { data }
@@ -1047,7 +1120,7 @@ export interface QuestionBankStatistics {
  * 获取题库列表
  */
 export const getQuestionBankList = (params: GetQuestionBankListParams) => {
-  return http.request<ApiResponse<PageResult<QuestionBankFullItem>>>(
+  return examPaperHttp.request<ApiResponse<PageResult<QuestionBankFullItem>>>(
     "get",
     "/edu/backend/v1/question-bank/list",
     { params }
@@ -1058,7 +1131,7 @@ export const getQuestionBankList = (params: GetQuestionBankListParams) => {
  * 获取题库统计数据
  */
 export const getQuestionBankStatistics = () => {
-  return http.request<ApiResponse<QuestionBankStatistics>>(
+  return examPaperHttp.request<ApiResponse<QuestionBankStatistics>>(
     "get",
     "/edu/backend/v1/question-bank/statistics"
   );
@@ -1068,7 +1141,7 @@ export const getQuestionBankStatistics = () => {
  * 创建题目
  */
 export const createQuestion = (data: Partial<QuestionBankFullItem>) => {
-  return http.request<ApiResponse<{ id: number }>>(
+  return examPaperHttp.request<ApiResponse<{ id: number }>>(
     "post",
     "/edu/backend/v1/question-bank/create",
     { data }
@@ -1079,7 +1152,7 @@ export const createQuestion = (data: Partial<QuestionBankFullItem>) => {
  * 更新题目
  */
 export const updateQuestion = (data: Partial<QuestionBankFullItem>) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/question-bank/update",
     { data }
@@ -1090,7 +1163,7 @@ export const updateQuestion = (data: Partial<QuestionBankFullItem>) => {
  * 删除题目
  */
 export const deleteQuestion = (id: number) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/question-bank/delete",
     { data: { id } }
@@ -1101,7 +1174,7 @@ export const deleteQuestion = (id: number) => {
  * 批量删除题目
  */
 export const batchDeleteQuestions = (ids: number[]) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/question-bank/batch-delete",
     { data: { ids } }
@@ -1116,7 +1189,7 @@ export const importQuestions = (data: {
   questions?: Partial<QuestionBankFullItem>[];
   folderId?: number;
 }) => {
-  return http.request<
+  return examPaperHttp.request<
     ApiResponse<{ importedCount: number; failedCount: number }>
   >("post", "/edu/backend/v1/question-bank/import", { data });
 };
@@ -1129,7 +1202,7 @@ export const exportQuestions = (params: {
   folderId?: number;
   format?: "json" | "excel" | "word";
 }) => {
-  return http.request<ApiResponse<{ downloadUrl: string }>>(
+  return examPaperHttp.request<ApiResponse<{ downloadUrl: string }>>(
     "get",
     "/edu/backend/v1/question-bank/export",
     { params }
@@ -1140,7 +1213,7 @@ export const exportQuestions = (params: {
  * 获取题库文件夹列表
  */
 export const getQuestionFolders = () => {
-  return http.request<ApiResponse<QuestionFolder[]>>(
+  return examPaperHttp.request<ApiResponse<QuestionFolder[]>>(
     "get",
     "/edu/backend/v1/question-bank/folders"
   );
@@ -1153,7 +1226,7 @@ export const createQuestionFolder = (data: {
   name: string;
   parentId?: number;
 }) => {
-  return http.request<ApiResponse<{ id: number }>>(
+  return examPaperHttp.request<ApiResponse<{ id: number }>>(
     "post",
     "/edu/backend/v1/question-bank/folders/create",
     { data }
@@ -1164,7 +1237,7 @@ export const createQuestionFolder = (data: {
  * 更新题库文件夹
  */
 export const updateQuestionFolder = (data: { id: number; name: string }) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/question-bank/folders/update",
     { data }
@@ -1175,7 +1248,7 @@ export const updateQuestionFolder = (data: { id: number; name: string }) => {
  * 删除题库文件夹
  */
 export const deleteQuestionFolder = (id: number) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/question-bank/folders/delete",
     { data: { id } }
@@ -1189,7 +1262,7 @@ export const moveQuestionsToFolder = (data: {
   questionIds: number[];
   folderId: number;
 }) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/question-bank/move-to-folder",
     { data }
@@ -1202,7 +1275,7 @@ export const moveQuestionsToFolder = (data: {
 export const archiveQuestionToBank = (data: {
   questions: Array<Partial<QuestionBankFullItem>>;
 }) => {
-  return http.request<ApiResponse<{ archivedCount: number }>>(
+  return examPaperHttp.request<ApiResponse<{ archivedCount: number }>>(
     "post",
     "/edu/backend/v1/question-bank/archive",
     { data }
@@ -1215,7 +1288,7 @@ export const archiveQuestionToBank = (data: {
 export const batchArchiveToBank = (data: {
   questions: Array<Partial<QuestionBankFullItem>>;
 }) => {
-  return http.request<ApiResponse<{ archivedCount: number }>>(
+  return examPaperHttp.request<ApiResponse<{ archivedCount: number }>>(
     "post",
     "/edu/backend/v1/question-bank/batch-archive",
     { data }
@@ -1238,7 +1311,7 @@ export interface PaperFolder {
  * 获取试卷文件夹列表
  */
 export const getPaperFolders = () => {
-  return http.request<ApiResponse<PaperFolder[]>>(
+  return examPaperHttp.request<ApiResponse<PaperFolder[]>>(
     "get",
     "/edu/backend/v1/paper/folders"
   );
@@ -1251,7 +1324,7 @@ export const createPaperFolder = (data: {
   name: string;
   parentId?: number;
 }) => {
-  return http.request<ApiResponse<{ id: number }>>(
+  return examPaperHttp.request<ApiResponse<{ id: number }>>(
     "post",
     "/edu/backend/v1/paper/folders/create",
     { data }
@@ -1262,7 +1335,7 @@ export const createPaperFolder = (data: {
  * 更新试卷文件夹
  */
 export const updatePaperFolder = (data: { id: number; name: string }) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/paper/folders/update",
     { data }
@@ -1273,7 +1346,7 @@ export const updatePaperFolder = (data: { id: number; name: string }) => {
  * 删除试卷文件夹
  */
 export const deletePaperFolder = (id: number) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/paper/folders/delete",
     { data: { id } }
@@ -1287,7 +1360,7 @@ export const movePapersToFolder = (data: {
   paperIds: number[];
   folderId: number;
 }) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/paper/move-to-folder",
     { data }
@@ -1302,7 +1375,7 @@ export const saveAsTemplate = (data: {
   description?: string;
   questionGroups: any[];
 }) => {
-  return http.request<ApiResponse<{ templateId: number }>>(
+  return examPaperHttp.request<ApiResponse<{ templateId: number }>>(
     "post",
     "/edu/backend/v1/paper/save-as-template",
     { data }
@@ -1313,7 +1386,7 @@ export const saveAsTemplate = (data: {
  * 获取我的模板列表
  */
 export const getMyTemplates = () => {
-  return http.request<
+  return examPaperHttp.request<
     ApiResponse<
       Array<{
         id: number;
@@ -1332,7 +1405,7 @@ export const getMyTemplates = () => {
  * 获取模板详情
  */
 export const getTemplateDetail = (templateId: string) => {
-  return http.request<ApiResponse<any>>(
+  return examPaperHttp.request<ApiResponse<any>>(
     "get",
     `/edu/backend/v1/paper/template/${templateId}`
   );
@@ -1345,7 +1418,7 @@ export const createTemplate = (data: {
   name: string;
   description?: string;
 }) => {
-  return http.request<ApiResponse<{ templateId: number }>>(
+  return examPaperHttp.request<ApiResponse<{ templateId: number }>>(
     "post",
     "/edu/backend/v1/paper/template/create",
     { data }
@@ -1356,7 +1429,7 @@ export const createTemplate = (data: {
  * 删除模板
  */
 export const deleteTemplate = (templateId: number) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/paper/template/delete",
     { data: { templateId } }
@@ -1399,7 +1472,7 @@ export interface SystemTemplatePreview {
  * 获取系统模板预览（题目结构详情）
  */
 export const getSystemTemplatePreview = (templateKey: string) => {
-  return http.request<ApiResponse<SystemTemplatePreview>>(
+  return examPaperHttp.request<ApiResponse<SystemTemplatePreview>>(
     "get",
     "/edu/backend/v1/paper/template/system/preview",
     { params: { templateKey } }
@@ -1412,7 +1485,7 @@ export const getSystemTemplatePreview = (templateKey: string) => {
  * 此接口仅返回动态统计数据：题数、分值、使用人数
  */
 export const getSystemTemplateStats = () => {
-  return http.request<ApiResponse<SystemTemplateStats[]>>(
+  return examPaperHttp.request<ApiResponse<SystemTemplateStats[]>>(
     "get",
     "/edu/backend/v1/paper/template/system/stats"
   );
@@ -1428,7 +1501,7 @@ export const exportSubmissions = (params: {
   includeAnswer?: boolean;
   includeScore?: boolean;
 }) => {
-  return http.request<ApiResponse<{ downloadUrl: string }>>(
+  return examPaperHttp.request<ApiResponse<{ downloadUrl: string }>>(
     "get",
     "/edu/backend/v1/paper/submission/export",
     { params }
@@ -1479,7 +1552,7 @@ export const publishPaperAdvanced = (data: {
   paperId: number;
   config: AdvancedPublishConfig;
 }) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/backend/v1/paper/publish-advanced",
     { data }
@@ -1516,9 +1589,9 @@ export interface StudentPaperItem {
     | "expired"
     | "retake";
   /** 提交ID（已提交时） */
-  submissionId?: number | null;
+  submissionId?: number;
   /** 得分（已完成且成绩发布后） */
-  score?: number | null;
+  score?: number;
   /** 是否允许补考 */
   allowRetake?: boolean;
   /** 剩余补考次数 */
@@ -1614,7 +1687,7 @@ export interface ExamSessionSnapshot {
  * 获取学生试卷列表（试题试卷中心）
  */
 export const getStudentPaperList = (params: GetStudentPaperListParams) => {
-  return http.request<
+  return examPaperHttp.request<
     ApiResponse<
       PageResult<StudentPaperItem> & { statistics?: StudentPaperStatistics }
     >
@@ -1625,7 +1698,7 @@ export const getStudentPaperList = (params: GetStudentPaperListParams) => {
  * 获取学生试卷详情（脱敏）
  */
 export const getStudentPaperDetail = (paperId: number) => {
-  return http.request<ApiResponse<StudentPaperDetail>>(
+  return examPaperHttp.request<ApiResponse<StudentPaperDetail>>(
     "get",
     `/edu/frontend/v1/paper/detail/${paperId}`
   );
@@ -1635,7 +1708,7 @@ export const getStudentPaperDetail = (paperId: number) => {
  * 获取学生考试列表
  */
 export const getStudentExamList = (params: GetStudentExamListParams) => {
-  return http.request<
+  return examPaperHttp.request<
     ApiResponse<
       PageResult<{
         paperId: number;
@@ -1660,7 +1733,7 @@ export const getStudentExamList = (params: GetStudentExamListParams) => {
  * 开始考试
  */
 export const startExam = (paperId: number) => {
-  return http.request<ApiResponse<StartExamResult>>(
+  return examPaperHttp.request<ApiResponse<StartExamResult>>(
     "post",
     "/edu/frontend/v1/exam/start",
     { data: { paperId } }
@@ -1676,9 +1749,13 @@ export const saveAnswer = (data: {
   answer: StudentAnswerValue;
   duration?: number; // 该题累计答题时长（秒）
 }) => {
-  return http.request<ApiResponse>("post", "/edu/frontend/v1/exam/save", {
-    data
-  });
+  return examPaperHttp.request<ApiResponse>(
+    "post",
+    "/edu/frontend/v1/exam/save",
+    {
+      data
+    }
+  );
 };
 
 /**
@@ -1691,7 +1768,7 @@ export const saveAnswersBatch = (data: {
     answer: StudentAnswerValue;
   }>;
 }) => {
-  return http.request<ApiResponse<{ savedCount: number }>>(
+  return examPaperHttp.request<ApiResponse<{ savedCount: number }>>(
     "post",
     "/edu/frontend/v1/exam/save-batch",
     { data }
@@ -1707,7 +1784,7 @@ export const saveDuration = (data: {
   enterTime: number; // 进入该题的时间戳（毫秒）
   leaveTime: number; // 离开该题的时间戳（毫秒）
 }) => {
-  return http.request<ApiResponse<{ duration: number }>>(
+  return examPaperHttp.request<ApiResponse<{ duration: number }>>(
     "post",
     "/edu/frontend/v1/exam/save-duration",
     { data }
@@ -1721,7 +1798,7 @@ export const getQuestionDuration = (data: {
   submissionId: number;
   questionId: number;
 }) => {
-  return http.request<ApiResponse<{ duration: number }>>(
+  return examPaperHttp.request<ApiResponse<{ duration: number }>>(
     "post",
     "/edu/frontend/v1/exam/question-duration",
     { data }
@@ -1732,7 +1809,7 @@ export const getQuestionDuration = (data: {
  * 获取考试会话快照（断线恢复）
  */
 export const getExamSession = (submissionId: number) => {
-  return http.request<ApiResponse<ExamSessionSnapshot>>(
+  return examPaperHttp.request<ApiResponse<ExamSessionSnapshot>>(
     "get",
     `/edu/frontend/v1/exam/session/${submissionId}`
   );
@@ -1745,7 +1822,7 @@ export const examHeartbeat = (data: {
   submissionId: number;
   clientTime: number;
 }) => {
-  return http.request<ApiResponse<{ serverTime: number }>>(
+  return examPaperHttp.request<ApiResponse<{ serverTime: number }>>(
     "post",
     "/edu/frontend/v1/exam/heartbeat",
     { data }
@@ -1761,7 +1838,7 @@ export const reportAntiCheatEvent = (data: {
   eventTime: number;
   detail?: string;
 }) => {
-  return http.request<ApiResponse>(
+  return examPaperHttp.request<ApiResponse>(
     "post",
     "/edu/frontend/v1/exam/anti-cheat/event",
     {
@@ -1774,7 +1851,7 @@ export const reportAntiCheatEvent = (data: {
  * 提交试卷
  */
 export const submitExam = (submissionId: number) => {
-  return http.request<
+  return examPaperHttp.request<
     ApiResponse<{
       score?: number;
       showScore: boolean;
@@ -1786,7 +1863,7 @@ export const submitExam = (submissionId: number) => {
  * 查看考试结果
  */
 export const getExamResult = (submissionId: number) => {
-  return http.request<ApiResponse<StudentSubmission>>(
+  return examPaperHttp.request<ApiResponse<StudentSubmission>>(
     "get",
     `/edu/frontend/v1/exam/result/${submissionId}`
   );
@@ -1794,27 +1871,41 @@ export const getExamResult = (submissionId: number) => {
 
 // ==================== 工具函数 ====================
 
+export const PAPER_STATUS_OPTIONS: ReadonlyArray<{
+  value: PaperStatus;
+  label: string;
+}> = [
+  { value: PaperStatus.DRAFT, label: "草稿" },
+  { value: PaperStatus.PUBLISHED, label: "已发布" },
+  { value: PaperStatus.IN_PROGRESS, label: "考试中" },
+  { value: PaperStatus.ENDED, label: "已结束" },
+  { value: PaperStatus.GRADING, label: "批改中" },
+  { value: PaperStatus.GRADED, label: "已批改" },
+  { value: PaperStatus.SCORE_RELEASED, label: "已发布成绩" }
+];
+
+export type PaperStatusTagType =
+  | "success"
+  | "warning"
+  | "info"
+  | "primary"
+  | "danger";
+
 /**
  * 获取试卷状态文本
  */
 export const getPaperStatusText = (status: PaperStatus): string => {
-  const statusMap: Record<PaperStatus, string> = {
-    [PaperStatus.DRAFT]: "草稿",
-    [PaperStatus.PUBLISHED]: "已发布",
-    [PaperStatus.IN_PROGRESS]: "考试中",
-    [PaperStatus.ENDED]: "已结束",
-    [PaperStatus.GRADING]: "批改中",
-    [PaperStatus.GRADED]: "已批改",
-    [PaperStatus.SCORE_RELEASED]: "已发布成绩"
-  };
-  return statusMap[status] || "未知";
+  return (
+    PAPER_STATUS_OPTIONS.find(option => option.value === status)?.label ||
+    "未知"
+  );
 };
 
 /**
  * 获取试卷状态标签类型
  */
-export const getPaperStatusType = (status: PaperStatus): string => {
-  const typeMap: Record<PaperStatus, string> = {
+export const getPaperStatusType = (status: PaperStatus): PaperStatusTagType => {
+  const typeMap: Record<PaperStatus, PaperStatusTagType> = {
     [PaperStatus.DRAFT]: "info",
     [PaperStatus.PUBLISHED]: "primary",
     [PaperStatus.IN_PROGRESS]: "warning",

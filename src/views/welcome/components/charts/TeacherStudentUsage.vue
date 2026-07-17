@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, computed, watch } from "vue";
-import { useDark, useECharts } from "@pureadmin/utils";
-import { useAppStoreHook } from "@/store/modules/app";
+import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { getTeacherUsage, getStudentUsage } from "@/api/statistics";
+import { useAppStoreHook } from "@/store/modules/app";
 
 defineOptions({
   name: "TeacherStudentUsage"
@@ -11,18 +11,19 @@ defineOptions({
 const loading = ref(true);
 const teacherData = ref<{ date: string; usageNum: number }[]>([]);
 const studentData = ref<{ date: string; usageNum: number }[]>([]);
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
-const appStore = useAppStoreHook();
-const isMobile = computed(
-  () => appStore.getDevice === "mobile" || appStore.getViewportWidth <= 768
-);
-const chartHeight = computed(() => (isMobile.value ? "250px" : "350px"));
 
 const chartRef = ref();
-const { setOptions } = useECharts(chartRef, {
+const { setOptions, resize } = useECharts(chartRef, {
   theme
+});
+
+useResizeObserver(chartRef, () => resize(), {
+  time: 80
 });
 
 // 获取教师和学生使用情况数据
@@ -56,11 +57,6 @@ const renderChart = () => {
   const dates = teacherData.value.map(item => item.date);
   const teacherUsage = teacherData.value.map(item => item.usageNum);
   const studentUsage = studentData.value.map(item => item.usageNum);
-  const formatMobileDate = (value: string) => {
-    if (!isMobile.value || !value) return value;
-    const parts = value.split("-");
-    return parts.length >= 3 ? `${parts[1]}-${parts[2]}` : value;
-  };
 
   setOptions({
     tooltip: {
@@ -88,16 +84,15 @@ const renderChart = () => {
       icon: "circle",
       itemGap: isMobile.value ? 12 : 24,
       textStyle: {
-        color: isDark.value ? "#fafafa" : "#4b5563",
-        fontSize: isMobile.value ? 11 : 12
+        color: isDark.value ? "#fafafa" : "#4b5563"
       }
     },
     grid: {
-      top: isMobile.value ? 18 : 30,
-      left: isMobile.value ? 22 : 40,
-      right: isMobile.value ? 24 : 20,
-      bottom: isMobile.value ? 44 : 50,
-      containLabel: true
+      top: isMobile.value ? 24 : 30,
+      left: isMobile.value ? 8 : 40,
+      right: isMobile.value ? 8 : 20,
+      bottom: isMobile.value ? 64 : 50,
+      containLabel: isMobile.value
     },
     xAxis: [
       {
@@ -111,10 +106,7 @@ const renderChart = () => {
         },
         axisLabel: {
           color: isDark.value ? "#cbd5e1" : "#94a3b8",
-          fontSize: isMobile.value ? 10 : 11,
-          hideOverlap: true,
-          margin: isMobile.value ? 10 : 8,
-          formatter: formatMobileDate
+          fontSize: 11
         },
         axisTick: {
           show: false
@@ -132,7 +124,7 @@ const renderChart = () => {
         },
         axisLabel: {
           color: isDark.value ? "#cbd5e1" : "#94a3b8",
-          fontSize: isMobile.value ? 10 : 11
+          fontSize: 11
         }
       }
     ],
@@ -219,8 +211,21 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" :style="{ width: '100%', height: chartHeight }" />
+        <div
+          ref="chartRef"
+          class="usage-chart"
+          style="width: 100%; height: 350px"
+        />
       </template>
     </el-skeleton>
   </div>
 </template>
+
+<style scoped>
+@media screen and (max-width: 768px),
+  screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .usage-chart {
+    height: 320px !important;
+  }
+}
+</style>

@@ -55,6 +55,30 @@
     </view>
     <!-- #endif -->
 
+    <!-- #ifdef MP-WEIXIN -->
+    <web-view
+      v-if="miniProgramWebviewSrc"
+      id="qiming-wechat-webview"
+      class="qiming-webview"
+      :src="miniProgramWebviewSrc"
+      @load="handleLoad"
+      @error="handleError"
+      @message="handleMessage"
+    />
+    <view v-else class="wechat-shell">
+      <view class="brand-mark">
+        <text class="brand-mark__text">启</text>
+      </view>
+      <text class="wechat-kicker">微信小程序</text>
+      <text class="shell-title">IntellEdu</text>
+      <text class="shell-subtitle">{{ miniProgramFallbackText }}</text>
+      <view class="wechat-status">
+        <text class="wechat-status__label">入口</text>
+        <text class="wechat-status__value">{{ miniProgramEntryLabel }}</text>
+      </view>
+    </view>
+    <!-- #endif -->
+
     <!-- #ifdef APP-PLUS -->
     <web-view
       id="qiming-webview"
@@ -83,21 +107,15 @@ type WebMessage = {
   timestamp?: number;
 };
 
-const defaultEntryRoute = "/welcome/index";
-const loaded = ref(false);
-const loadError = ref(false);
-const webviewVersion = ref(0);
-const lastMessage = ref<WebMessage | null>(null);
-const previewMode = ref<"phone" | "full">("phone");
-const appEntryRoute = ref(defaultEntryRoute);
-const appDevServer = ref("");
-const appDemoRole = ref<PreviewRole | "">("");
-const appNativeStatusTop = ref(0);
-let loadFallbackTimer: ReturnType<typeof setTimeout> | null = null;
-
+const defaultEntryRoute = "/home";
+const defaultMiniProgramOrigin = "https://aiedu-mp.intelledu.cn";
 let isH5DevPreview = false;
 // #ifdef H5
 isH5DevPreview = import.meta.env.DEV;
+// #endif
+let isMiniProgramRuntime = false;
+// #ifdef MP-WEIXIN
+isMiniProgramRuntime = true;
 // #endif
 
 const localAppEntryBase = "./hybrid/html/index.html";
@@ -217,22 +235,62 @@ function appendNativeQuery(url: string) {
   return output;
 }
 
+function appendMiniProgramQuery(url: string) {
+  return appendQuery(appendNativeQuery(url), "qimingMiniProgram", "1");
+}
+
+function appendOriginQueryBeforeHash(url: string, key: string, value: string) {
+  const hashIndex = url.indexOf("#");
+  if (hashIndex < 0) return appendQuery(url, key, value);
+  const originPart = url.slice(0, hashIndex);
+  const hashPart = url.slice(hashIndex);
+  return `${appendQuery(originPart, key, value)}${hashPart}`;
+}
+
 function normalizeDevServer(url: string | null | undefined) {
-  const value = url?.trim();
+  let value = String(url || "").trim();
   if (!value) return "";
   try {
-    const parsed = new URL(value);
-    if (!["http:", "https:"].includes(parsed.protocol)) return "";
-    return parsed.origin;
+    value = decodeURIComponent(value);
   } catch {
     return "";
   }
+  const match = value.match(/^(https?):\/\/([^/?#]+)/i);
+  if (!match?.[1] || !match?.[2]) return "";
+  return `${match[1].toLowerCase()}://${match[2]}`;
 }
 
 function normalizeDemoRole(role: string | null | undefined): PreviewRole | "" {
   const value = role || "";
   return isPreviewRole(value) ? value : "";
 }
+
+const loaded = ref(false);
+const loadError = ref(false);
+const webviewVersion = ref(0);
+const lastMessage = ref<WebMessage | null>(null);
+const previewMode = ref<"phone" | "full">("phone");
+const defaultMiniProgramDevServer =
+  normalizeDevServer(import.meta.env.VITE_QIMING_MINIPROGRAM_WEBVIEW_ORIGIN) ||
+  (isMiniProgramRuntime ? defaultMiniProgramOrigin : "");
+const defaultMiniProgramRole: PreviewRole | "" =
+  normalizeDemoRole(import.meta.env.VITE_QIMING_MINIPROGRAM_ROLE) ||
+  (isMiniProgramRuntime ? "" : "");
+const defaultMiniProgramEntry = resolveEntryForRole(
+  import.meta.env.VITE_QIMING_MINIPROGRAM_ENTRY,
+  defaultMiniProgramRole
+);
+const appEntryRoute = ref(
+  isMiniProgramRuntime ? defaultMiniProgramEntry : defaultEntryRoute
+);
+const appDevServer = ref(
+  isMiniProgramRuntime ? defaultMiniProgramDevServer : ""
+);
+const appDemoRole = ref<PreviewRole | "">(
+  isMiniProgramRuntime ? defaultMiniProgramRole : ""
+);
+const appNativeStatusTop = ref(0);
+let loadFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
 const previewRole = computed(() => {
   if (!isH5DevPreview || typeof window === "undefined") return "teacher";
@@ -295,19 +353,51 @@ const webviewSrc = computed(() => {
         String(webviewVersion.value)
       );
     }
-    return `${localAppEntryBase}?v=${webviewVersion.value}#${appEntryRoute.value}`;
+    let localHash = `#${appEntryRoute.value}`;
+    if (appDemoRole.value) {
+      localHash = appendQuery(localHash, "demoRole", appDemoRole.value);
+    }
+    localHash = appendNativeQuery(localHash);
+    return `${localAppEntryBase}?v=${webviewVersion.value}${localHash}`;
   }
 
   const separator = h5DevEntryPath.value.includes("?") ? "&" : "?";
   return `${h5DevEntryPath.value}${separator}v=${webviewVersion.value}`;
 });
 
+const miniProgramWebviewSrc = computed(() => {
+  if (!isMiniProgramRuntime || !appDevServer.value) return "";
+  const base = `${appDevServer.value}/#${appEntryRoute.value}`;
+  const withRole = appDemoRole.value
+    ? appendQuery(base, "demoRole", appDemoRole.value)
+    : base;
+  return appendOriginQueryBeforeHash(
+    appendMiniProgramQuery(withRole),
+    "v",
+    String(webviewVersion.value)
+  );
+});
+
+const miniProgramEntryLabel = computed(() => {
+  const roleLabel = appDemoRole.value
+    ? previewRoleLabels[appDemoRole.value as PreviewRole]
+    : "默认";
+  return `${roleLabel} / ${appEntryRoute.value || defaultEntryRoute}`;
+});
+
+const miniProgramFallbackText = computed(() =>
+  appDevServer.value ? "正在打开 H5 业务页" : "未配置 H5 页面地址"
+);
+
 const isPhonePreview = computed(
   () => isH5DevPreview && previewMode.value === "phone"
 );
 
 const showShellState = computed(
-  () => !isH5DevPreview && (!loaded.value || loadError.value)
+  () =>
+    !isH5DevPreview &&
+    !isMiniProgramRuntime &&
+    (!loaded.value || loadError.value)
 );
 
 const webviewStyles = {
@@ -521,14 +611,21 @@ onLoad(options => {
     devServer?: string;
     demoRole?: string;
   };
-  appDemoRole.value = normalizeDemoRole(pageOptions?.demoRole);
-  appEntryRoute.value = resolveEntryForRole(
-    pageOptions?.entry,
-    appDemoRole.value
-  );
-  appDevServer.value = normalizeDevServer(pageOptions?.devServer);
+  const demoRole =
+    pageOptions?.demoRole !== undefined
+      ? normalizeDemoRole(pageOptions.demoRole)
+      : appDemoRole.value;
+  appDemoRole.value = demoRole;
+  if (pageOptions?.entry !== undefined) {
+    appEntryRoute.value = resolveEntryForRole(pageOptions.entry, demoRole);
+  }
+  if (pageOptions?.devServer !== undefined) {
+    appDevServer.value = normalizeDevServer(pageOptions.devServer);
+  }
   scheduleLoadFallback();
-  uni.setNavigationBarTitle({ title: "IntellEdu" });
+  if (!isMiniProgramRuntime) {
+    uni.setNavigationBarTitle({ title: "IntellEdu" });
+  }
 });
 
 onShow(() => {
@@ -537,6 +634,9 @@ onShow(() => {
 });
 
 onBackPress(() => {
+  if (isMiniProgramRuntime) {
+    return false;
+  }
   if (!dispatchBackToInnerWebview()) {
     resetToRoleRoot();
   }
@@ -752,6 +852,54 @@ onBackPress(() => {
   font-size: 28rpx;
   line-height: 1.5;
   text-align: center;
+}
+
+.wechat-shell {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: calc(64rpx + env(safe-area-inset-top, 0px)) 48rpx
+    calc(64rpx + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fc 100%);
+}
+
+.wechat-kicker {
+  margin-bottom: 10rpx;
+  color: #2f7dff;
+  font-size: 24rpx;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.wechat-status {
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+  max-width: 620rpx;
+  margin-top: 28rpx;
+  padding: 18rpx 24rpx;
+  border: 1rpx solid rgba(203, 213, 225, 0.82);
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 16rpx 44rpx rgba(47, 67, 103, 0.1);
+}
+
+.wechat-status__label {
+  flex: 0 0 auto;
+  color: #7a869a;
+  font-size: 24rpx;
+}
+
+.wechat-status__value {
+  min-width: 0;
+  color: #172033;
+  font-size: 24rpx;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .retry-button {

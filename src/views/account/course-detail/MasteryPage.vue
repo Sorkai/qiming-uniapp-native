@@ -406,7 +406,7 @@ import {
   onMounted,
   onUnmounted
 } from "vue";
-import * as echarts from "echarts";
+import echarts from "@/plugins/echarts";
 import CourseHeader from "./CourseHeader.vue";
 
 // Props
@@ -912,7 +912,7 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 1280px) {
+@media (width <= 1280px) {
   .chapters-grid {
     grid-template-columns: 1fr;
   }
@@ -1244,7 +1244,7 @@ onUnmounted(() => {
   opacity: 1;
 }
 
-@media (max-width: 1100px) {
+@media (width <= 1100px) {
   .mastery-page-content {
     .mastery-summary-left,
     .mastery-summary-charts {
@@ -1254,7 +1254,7 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .mastery-page-content {
     min-height: 100vh;
     overflow: visible;
@@ -1262,7 +1262,7 @@ onUnmounted(() => {
     .left-scroll {
       height: auto;
       min-height: 100vh;
-        padding: var(--course-mobile-top-offset, 176px) 14px
+      padding: var(--course-mobile-top-offset, 156px) 14px
         calc(24px + env(safe-area-inset-bottom));
       overflow: visible;
     }
@@ -1384,10 +1384,10 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .mastery-page-content {
     .left-scroll {
-        padding: var(--course-mobile-top-offset, 176px) 10px
+      padding: var(--course-mobile-top-offset, 156px) 10px
         calc(20px + env(safe-area-inset-bottom));
     }
 

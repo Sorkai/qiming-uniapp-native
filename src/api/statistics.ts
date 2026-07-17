@@ -1,4 +1,4 @@
-import { http, resolveApiURL } from "@/utils/http";
+import { http } from "@/utils/http";
 
 // 接口返回数据类型定义
 interface TeacherUsageResult {
@@ -88,6 +88,7 @@ interface CourseUsersExamInfoResult {
 
 interface EfficientIndexResult {
   efficientIndexList: Array<{
+    courseId?: number | string; // 课程ID（后端可选返回，用于过滤已删除课程）
     courseName: string; // 课程名称
     planTime: number; // 备课耗时(分钟)
     correctPlanTime: number; // 备课修正耗时(分钟)
@@ -99,16 +100,6 @@ interface EfficientIndexResult {
   }>;
 }
 
-export interface PlatformStatsResult {
-  stats: Array<{
-    title: string;
-    value: string | number;
-    unit: string;
-    trend: number;
-    icon: string;
-  }>;
-}
-
 interface ApiResponse<T = any> {
   code: number;
   msg: string;
@@ -116,50 +107,13 @@ interface ApiResponse<T = any> {
   list?: any[];
 }
 
-async function requestWithNativeFetchFallback<T>(
-  path: string,
-  request: () => Promise<ApiResponse<T>>
-) {
-  try {
-    return await request();
-  } catch (error) {
-    const tokenInfo = (() => {
-      try {
-        return JSON.parse(localStorage.getItem("user-info") || "{}");
-      } catch {
-        return {};
-      }
-    })();
-    const token = tokenInfo.accessToken || tokenInfo.refreshToken;
-    const isNativePreview =
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("qiming-native-webview");
-
-    if (!isNativePreview || !token) throw error;
-
-    const response = await fetch(resolveApiURL(path), {
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) throw error;
-    return (await response.json()) as ApiResponse<T>;
-  }
-}
-
 /**
  * 获取最近7天老师使用情况【管理端统计】
  */
 export const getTeacherUsage = () => {
-  return requestWithNativeFetchFallback(
-    "/edu/backend/v1/statistics/teacher/usage",
-    () =>
-      http.request<ApiResponse<TeacherUsageResult>>(
-        "get",
-        "/edu/backend/v1/statistics/teacher/usage"
-      )
+  return http.request<ApiResponse<TeacherUsageResult>>(
+    "get",
+    "/edu/backend/v1/statistics/teacher/usage"
   );
 };
 
@@ -167,13 +121,9 @@ export const getTeacherUsage = () => {
  * 获取最近7天学生使用情况【管理端统计】
  */
 export const getStudentUsage = () => {
-  return requestWithNativeFetchFallback(
-    "/edu/backend/v1/statistics/student/usage",
-    () =>
-      http.request<ApiResponse<StudentUsageResult>>(
-        "get",
-        "/edu/backend/v1/statistics/student/usage"
-      )
+  return http.request<ApiResponse<StudentUsageResult>>(
+    "get",
+    "/edu/backend/v1/statistics/student/usage"
   );
 };
 
@@ -181,13 +131,9 @@ export const getStudentUsage = () => {
  * 获取一周内学生、老师的总使用情况【管理端统计】
  */
 export const getWeekUsage = () => {
-  return requestWithNativeFetchFallback(
-    "/edu/backend/v1/statistics/week/usage",
-    () =>
-      http.request<ApiResponse<WeekUsageResult>>(
-        "get",
-        "/edu/backend/v1/statistics/week/usage"
-      )
+  return http.request<ApiResponse<WeekUsageResult>>(
+    "get",
+    "/edu/backend/v1/statistics/week/usage"
   );
 };
 
@@ -218,15 +164,5 @@ export const getEfficientIndex = () => {
   return http.request<ApiResponse<EfficientIndexResult>>(
     "get",
     "/edu/backend/v1/statistics/efficient/index"
-  );
-};
-
-/**
- * 获取平台概览数据统计（顶部四个卡片）
- */
-export const getPlatformStats = () => {
-  return http.request<ApiResponse<PlatformStatsResult>>(
-    "get",
-    "/edu/backend/v1/statistics/platform/overview"
   );
 };

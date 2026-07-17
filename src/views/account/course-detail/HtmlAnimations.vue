@@ -664,14 +664,14 @@ const openHtmlAnimInNew = () => {
   opacity: 0.8;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .course-materials-wrapper {
     min-height: 100vh;
 
     .materials-container {
       height: auto;
       min-height: 100vh;
-      padding: var(--course-mobile-top-offset, 176px) 14px
+      padding: var(--course-mobile-top-offset, 156px) 14px
         calc(24px + env(safe-area-inset-bottom));
       overflow: visible;
     }
@@ -707,10 +707,10 @@ const openHtmlAnimInNew = () => {
   }
 }
 
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .course-materials-wrapper {
     .materials-container {
-      padding: var(--course-mobile-top-offset, 176px) 10px
+      padding: var(--course-mobile-top-offset, 156px) 10px
         calc(20px + env(safe-area-inset-bottom));
     }
   }

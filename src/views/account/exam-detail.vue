@@ -234,7 +234,7 @@
     <el-dialog
       v-model="showResultDialog"
       :title="resultDialogTitle"
-      width="400px"
+      width="min(400px, calc(100vw - 24px))"
     >
       <div class="result-content">
         <div v-if="submissionResult" class="score-info">
@@ -567,9 +567,11 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .exam-detail-container {
   min-height: 100vh;
-  padding: 70px 0 30px;
-  padding-top: calc(var(--pure-safe-area-top, 0px) + 70px);
-  padding-bottom: calc(var(--pure-safe-area-bottom, 0px) + 30px);
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: calc(70px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    0
+    calc(30px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
   background-color: #f5f7fa;
   transition: background-color 0.3s;
 
@@ -584,8 +586,11 @@ onBeforeUnmount(() => {
     right: 0;
     left: 0;
     z-index: 1000;
-    height: calc(var(--pure-safe-area-top, 0px) + 60px);
-    padding-top: var(--pure-safe-area-top, 0px);
+    height: calc(
+      60px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+    );
+    box-sizing: border-box;
+    padding-top: var(--pure-safe-area-top, env(safe-area-inset-top, 0));
     background-color: #fff;
     box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: background-color 0.3s;
@@ -598,17 +603,16 @@ onBeforeUnmount(() => {
     .header-content {
       display: flex;
       align-items: center;
-      display: grid;
-      grid-template-columns: minmax(72px, 1fr) auto minmax(72px, 1fr);
+      justify-content: space-between;
       max-width: 1200px;
-      height: 100%;
+      height: 60px;
+      box-sizing: border-box;
       padding: 0 32px;
       margin: 0 auto;
 
       .back-btn {
         display: flex;
         align-items: center;
-        justify-self: start;
         min-width: 60px;
         font-size: 14px;
         cursor: pointer;
@@ -619,14 +623,13 @@ onBeforeUnmount(() => {
       }
 
       .title {
-        justify-self: center;
+        flex: 1;
         font-size: 18px;
         font-weight: bold;
         text-align: center;
       }
 
       .timer {
-        justify-self: end;
         min-width: 100px;
         font-size: 16px;
         font-weight: bold;
@@ -772,8 +775,6 @@ onBeforeUnmount(() => {
             .question-title {
               display: flex;
               align-items: center;
-              flex-wrap: wrap;
-              gap: 8px;
               font-size: 16px;
               font-weight: bold;
 
@@ -877,8 +878,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(var(--pure-safe-area-bottom, 0px) + 60px);
-  padding: 0 20px var(--pure-safe-area-bottom, 0px);
+  height: 60px;
+  padding: 0 20px;
   background-color: #fff;
   box-shadow: 0 -2px 8px rgb(0 0 0 / 10%);
   transition: background-color 0.3s;
@@ -889,4 +890,154 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (width <= 768px) {
+  .exam-detail-container {
+    padding: calc(
+        68px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      0
+      calc(
+        84px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+      );
+    margin: 0 !important;
+  }
+
+  .exam-detail-container .header .header-content {
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .exam-detail-container .header .header-content .back-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .exam-detail-container .header .header-content .title {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .exam-detail-container .header .header-content .timer {
+    min-width: 0;
+    max-width: 132px;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .exam-detail-container .main-content {
+    width: 100%;
+    max-width: calc(100vw - 12px) !important;
+    min-width: 0;
+    padding: 0 6px;
+    margin: 0 6px !important;
+  }
+
+  .exam-detail-container .main-content :deep(.el-card__header),
+  .exam-detail-container .main-content :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .exam-detail-container .main-content .card-header .meta-info {
+    gap: 6px 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .exam-detail-container .main-content .questions-container .description,
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    min-width: 0;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow-wrap: anywhere;
+  }
+
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-type,
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-score {
+    margin-left: 0;
+  }
+
+  .exam-detail-container .question-content {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-wrap: anywhere;
+  }
+
+  .exam-detail-container :deep(.el-radio-group),
+  .exam-detail-container :deep(.el-checkbox-group) {
+    display: grid;
+    gap: 8px;
+  }
+
+  .exam-detail-container :deep(.el-radio),
+  .exam-detail-container :deep(.el-checkbox) {
+    min-height: 44px;
+    height: auto;
+    margin-right: 0;
+    white-space: normal;
+  }
+
+  .exam-detail-container .start-exam-btn :deep(.el-button),
+  .exam-detail-container .footer-actions :deep(.el-button) {
+    min-height: 44px;
+  }
+
+  .exam-detail-container .footer-actions {
+    gap: 8px;
+    height: auto;
+    min-height: 60px;
+    padding: 8px 8px
+      calc(8px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
+    flex-wrap: wrap;
+  }
+
+  .exam-detail-container :deep(.el-dialog) {
+    width: calc(100vw - 16px) !important;
+    max-width: 420px;
+  }
+}
+
+@media (width <= 380px) {
+  .exam-detail-container .header .header-content,
+  .exam-detail-container .main-content {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .exam-detail-container .main-content :deep(.el-card__header),
+  .exam-detail-container .main-content :deep(.el-card__body),
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    padding: 6px;
+  }
+}
 </style>

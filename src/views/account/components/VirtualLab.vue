@@ -51,7 +51,12 @@
         :key="item.id"
         class="lab-card"
         :class="{ 'is-featured': item.featured }"
+        role="button"
+        tabindex="0"
+        :aria-label="`开始体验：${item.title}`"
         @click="openLab(item)"
+        @keydown.enter="openLab(item)"
+        @keydown.space.prevent="openLab(item)"
       >
         <div class="card-preview" :style="{ background: item.gradient }">
           <div class="preview-icon">{{ item.icon }}</div>
@@ -80,10 +85,10 @@
           </div>
         </div>
         <div class="card-actions">
-          <el-button type="primary" size="small" round>
+          <span class="card-action-label">
             开始体验
             <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-          </el-button>
+          </span>
         </div>
       </div>
     </div>
@@ -98,14 +103,17 @@
     <el-dialog
       v-model="labDialogVisible"
       :title="currentLab?.title"
-      width="90%"
-      class="student-lab-dialog lab-dialog"
+      width="min(1100px, calc(100vw - 24px))"
+      top="3vh"
+      class="lab-dialog"
+      destroy-on-close
       :before-close="handleDialogClose"
     >
       <div class="lab-iframe-container">
         <iframe
           v-if="currentLab"
           :src="currentLab.url"
+          :title="`${currentLab.title}实验内容`"
           frameborder="0"
           allowfullscreen
           class="lab-iframe"
@@ -310,13 +318,9 @@ const handleDialogClose = () => {
     .header-left {
       h2 {
         margin: 0 0 8px;
-        overflow: visible;
         font-size: 24px;
         font-weight: 700;
-        line-height: 1.25;
         color: #1a2a4a;
-        white-space: normal;
-        word-break: keep-all;
       }
 
       p {
@@ -432,6 +436,11 @@ const handleDialogClose = () => {
       }
     }
 
+    &:focus-visible {
+      outline: 3px solid var(--el-color-primary-light-5);
+      outline-offset: 2px;
+    }
+
     &.is-featured {
       border: 2px solid #f59e0b;
     }
@@ -525,6 +534,20 @@ const handleDialogClose = () => {
 
     .card-actions {
       padding: 0 16px 16px;
+
+      .card-action-label {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #fff;
+        background: var(--el-color-primary);
+        border-radius: 999px;
+      }
     }
   }
 }
@@ -535,7 +558,7 @@ const handleDialogClose = () => {
   }
 
   .lab-iframe-container {
-    height: 70vh;
+    height: min(70vh, calc(100dvh - 140px));
 
     .lab-iframe {
       width: 100%;
@@ -546,27 +569,32 @@ const handleDialogClose = () => {
 
 @media (max-width: 767px) {
   .virtual-lab {
+    min-width: 0;
+
     .lab-header {
-      padding: 18px;
-      margin-bottom: 18px;
-      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border-radius: 8px;
 
       .header-content {
-        display: grid;
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 16px;
+        align-items: stretch;
       }
 
       .header-left {
+        min-width: 0;
+
         h2 {
-          margin-bottom: 8px;
-          font-size: clamp(20px, 5.6vw, 24px);
-          line-height: 1.28;
+          display: flex;
+          align-items: center;
+          margin-bottom: 6px;
+          font-size: 20px;
         }
 
         p {
-          font-size: 13px;
-          line-height: 1.55;
+          line-height: 1.6;
+          overflow-wrap: anywhere;
         }
       }
 
@@ -574,143 +602,97 @@ const handleDialogClose = () => {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
+        width: 100%;
 
         .stat-item {
           min-width: 0;
-          padding: 10px 6px;
-          background: rgb(255 255 255 / 32%);
-          border: 1px solid rgb(255 255 255 / 28%);
-          border-radius: 14px;
+          padding: 8px 4px;
+          background: rgb(255 255 255 / 28%);
+          border-radius: 6px;
 
           .stat-value {
             font-size: 22px;
-            line-height: 1.1;
           }
 
           .stat-label {
             display: block;
-            margin-top: 4px;
-            font-size: 11px;
-            line-height: 1.2;
+            overflow-wrap: anywhere;
           }
         }
       }
     }
 
     .category-tabs {
-      margin-bottom: 18px;
-      overflow: hidden;
+      margin-bottom: 16px;
 
       :deep(.el-radio-group) {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding-bottom: 2px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-
-        &::-webkit-scrollbar {
-          display: none;
-        }
+        width: 100%;
 
         .el-radio-button {
-          flex: 0 0 auto;
+          width: 100%;
 
           .el-radio-button__inner {
-            padding: 9px 18px;
-            font-size: 13px;
-            border-radius: 18px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 44px;
+            padding: 8px;
+            white-space: normal;
           }
         }
       }
     }
 
     .lab-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 16px;
     }
 
     .lab-card {
-      border-radius: 18px;
+      min-width: 0;
+      border-radius: 8px;
 
       &:hover {
         transform: none;
       }
 
-      .card-preview {
-        height: 118px;
-
-        .preview-icon {
-          font-size: 38px;
-        }
-      }
-
-      .card-content {
-        padding: 14px;
-
-        p {
-          height: auto;
-          min-height: 0;
-        }
-      }
-
-      .card-actions {
-        padding: 0 14px 14px;
+      .card-actions .card-action-label {
+        width: 100%;
       }
     }
   }
 
   .lab-dialog {
-    :deep(.el-dialog) {
-      display: flex;
-      flex-direction: column;
-      width: calc(100vw - 24px) !important;
-      max-height: calc(100vh - 24px);
-      max-height: calc(100dvh - 24px);
-      margin: 12px auto !important;
-      border-radius: 20px;
-    }
-
-    :deep(.el-dialog__body) {
-      flex: 1 1 auto;
-      min-height: 0;
-      padding: 0 !important;
-    }
-
-    .lab-iframe-container {
-      height: min(calc(100vh - 132px), 560px);
-      height: min(calc(100dvh - 132px), 560px);
-    }
-  }
-}
-</style>
-
-<style lang="scss">
-@media (max-width: 768px) {
-  .student-lab-dialog {
-    width: calc(100vw - 24px) !important;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 24px);
+    max-width: calc(100vw - 24px);
     max-height: calc(100dvh - 24px);
-    margin: 12px auto !important;
-    overflow: hidden;
-    border-radius: 20px;
+    margin-bottom: 12px;
 
-    .el-dialog__header {
-      padding: 16px 18px 12px;
+    :deep(.el-dialog__header) {
+      min-height: 52px;
+      padding: 12px 52px 12px 16px;
+      margin-right: 0;
     }
 
-    .el-dialog__body {
-      flex: 1 1 auto;
-      min-height: 0;
-      padding: 0 !important;
+    :deep(.el-dialog__title) {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    :deep(.el-dialog__headerbtn) {
+      width: 44px;
+      height: 44px;
     }
 
     .lab-iframe-container {
-      height: min(calc(100vh - 132px), 560px);
-      height: min(calc(100dvh - 132px), 560px);
+      height: calc(100dvh - 108px);
+      min-height: 320px;
+      max-height: 720px;
     }
   }
 }

@@ -1,69 +1,103 @@
-# Qiming iOS Native Simulator Shell
+# Qiming iOS Native Shell
 
-This is a thin UIKit/WKWebView shell used to validate the existing
-`native-app/src/hybrid/html` offline bundle on Apple Silicon iOS simulators.
+This directory contains a thin UIKit/WKWebView shell for the offline business
+bundle in `native-app/src/hybrid/html`. The shared Vue application remains the
+business source; this shell only supplies the iOS container, safe-area handling,
+permission prompts, and local asset serving.
 
-This directory is the iOS native line for simulator and Xcode-driven
-validation. It is intentionally separate from `native-app/`, the HBuilderX /
-App-Plus native container line used for Android packaging and HBuilderX cloud or
-local packaging flows.
+The shell does not inject demo users or replace the real login flow. Bundle id,
+version, build number, and privacy descriptions come from
+`native-app/src/manifest.json`. App Transport Security remains strict, so
+production API traffic must use HTTPS.
 
-Repository-level rule:
+## Validation levels
 
-- Shared product pages live in the repo root `src/` tree.
-- iOS shell behavior, WKWebView loading, iOS safe areas, iOS diagnostics, and
-  simulator automation belong here or in `scripts/ios-native-simulator.mjs`.
-- Android container behavior belongs in `native-app/`.
-- Platform-specific CSS or runtime changes must use explicit iOS markers such
-  as `html.qiming-native-webview.qiming-native-ios`; do not solve an iOS-only
-  issue by changing broad shared mobile selectors unless the same behavior has
-  been accepted for Android too.
+These checks intentionally report different levels of evidence:
 
-HBuilderX 5.07 ships an x86_64-only standard iOS simulator base in
-`Pandora_simulator.app`, which cannot be installed on arm64 simulators. This
-native shell keeps the business UI in the generated uni-app/H5 bundle while
-letting Xcode build a real arm64 simulator `.app`.
+- `check` validates manifest metadata, required privacy text, generated
+  `Info.plist`, offline resources, the native bridge, and Swift syntax. It does
+  not link UIKit or prove Simulator/device runtime behavior.
+- `doctor --target simulator` requires full Xcode, the Simulator SDK, and
+  `simctl`.
+- `doctor --target device` additionally requires an Apple signing identity and
+  a non-expired provisioning profile matching `cn.intelledu.qiming`.
+- `doctor --target app-plus` checks the separate HBuilderX/DCloud packaging
+  path. The committed `__UNI__QIMING` value is an intentional placeholder and
+  cannot produce an App-Plus package.
 
-Run from the repo root:
+Run from the repository root:
+
+```bash
+node scripts/ios-native.mjs self-test
+node scripts/ios-native.mjs check
+node scripts/ios-native.mjs doctor --target simulator
+node scripts/ios-native.mjs doctor --target device
+node scripts/ios-native.mjs doctor --target app-plus
+```
+
+`doctor` defaults to `--target all`. A machine with only Apple Command Line
+Tools will fail simulator/device preflight with an explicit full-Xcode message;
+the script does not treat `swiftc -parse` as an iOS build.
+
+## Simulator
+
+Refresh the shared offline bundle before building:
 
 ```bash
 pnpm native:prepare
-pnpm native:run:ios -- --device-id <SIMULATOR_UDID> --demo-role teacher --entry /welcome/index
+node scripts/ios-native.mjs build-simulator
+node scripts/ios-native.mjs run-simulator --device-id <SIMULATOR_UDID> --entry /login
+node scripts/ios-native.mjs package-simulator --output-dir artifacts/ios-native/release
 ```
 
-Screenshots:
+The zip contains an ad-hoc-signed Simulator `.app`. It cannot be installed on a
+physical iPhone or uploaded to TestFlight.
+
+## Physical device IPA
+
+List installed profiles, then select one explicitly if more than one is usable:
 
 ```bash
-pnpm native:ios:screenshot -- --device-id <SIMULATOR_UDID> --output artifacts/ios-simulator/teacher.png
+node scripts/ios-native.mjs profiles
+node scripts/ios-native.mjs package-device \
+  --profile /path/to/profile.mobileprovision \
+  --identity "Apple Distribution: Company (TEAMID)"
 ```
 
-Simulator release package:
+`--profile` may be omitted only when exactly one usable installed profile
+matches the bundle id. `IOS_PROVISIONING_PROFILE` and
+`IOS_CODE_SIGN_IDENTITY` provide local environment alternatives.
+
+Before signing, the script verifies the profile platform, expiry, App ID
+wildcard scope, Team ID, certificate SHA-1 membership, and identity type. It
+expands wildcard `application-identifier` and keychain entitlements to the
+concrete bundle id. Development profiles require
+`--allow-development-profile` and are for local device testing only, not
+TestFlight or App Store distribution.
+
+No certificate, provisioning profile, DCloud AppID, or account credential is
+generated or committed by this tooling. Simulator and device artifacts are
+written under the ignored `artifacts/ios-native/` directory.
+
+## HBuilderX App-Plus
+
+The standalone UIKit shell does not require a DCloud AppID. HBuilderX/App-Plus
+packaging does. Keep the public placeholder in Git and provide the real value
+only through local packaging configuration or `QIMING_DCLOUD_APPID`:
 
 ```bash
-pnpm native:prepare
-pnpm native:ios:package -- --output-dir artifacts/ios-release
+QIMING_DCLOUD_APPID="$REAL_DCLOUD_APPID" \
+  node scripts/ios-native.mjs app-plus-check
 ```
 
-The simulator package is an ad-hoc signed `.app` zip for Simulator installs.
+The preflight also requires the HBuilderX CLI to return a signed-in DCloud
+account identity. It does not log in, upload, or package automatically.
 
-Real-device / TestFlight package:
+## Legacy simulator and test harness
 
-```bash
-pnpm native:prepare
-pnpm native:ios:ipa -- --profile /path/to/AppStore_cn.intelledu.qiming.mobileprovision --output-dir artifacts/ios-release
-```
-
-The device package requires an Apple Distribution signing identity in Keychain
-and an App Store or Ad Hoc provisioning profile for `cn.intelledu.qiming`.
-When `--profile` is omitted, the command looks for a single matching
-distribution profile in `~/Library/MobileDevice/Provisioning Profiles`.
-You can inspect installed matching profiles with:
-
-```bash
-pnpm native:ios:ipa profiles
-```
-
-The command validates the profile bundle id before building and stops early when
-the signing identity or profile is missing. For local device experiments only,
-pass `--allow-development-profile` with an Apple Development identity and a
-development profile.
+The repository keeps the earlier simulator/device helpers and route test files
+under `scripts/ios-native-simulator.mjs`, `scripts/ios-native-device-package.mjs`,
+and `scripts/ios-test-scripts/` for reproducible historical checks. Their
+package aliases remain available as `pnpm native:ios:*`; they are test tooling
+only. The production UIKit shell always starts at `/login` and never injects a
+demo identity.

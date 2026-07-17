@@ -26,8 +26,8 @@ export default {
       meta: {
         title: "试卷详情",
         showLink: false,
-        activePath: "/student-exam-center",
-        roles: ["student"]
+        roles: ["student"],
+        activePath: "/student-exam-center"
       }
     }
   ]

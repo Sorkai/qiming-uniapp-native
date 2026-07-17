@@ -19,10 +19,12 @@ import { vitePluginFakeServer } from "vite-plugin-fake-server";
 export function getPluginsList(
   VITE_CDN: boolean,
   VITE_COMPRESSION: ViteCompression,
-  VITE_MOCK_SCOPE = "all"
+  VITE_MOCK_SCOPE = "all",
+  isAppMode = false
 ): PluginOption[] {
   const lifecycle = process.env.npm_lifecycle_event;
   const isDevServer = lifecycle === "dev" || lifecycle === "serve";
+  const isEdgeOneWechatH5 = process.env.QIMING_EDGEONE_WECHAT_H5 === "1";
   const mockInclude =
     VITE_MOCK_SCOPE === "exam-paper-only" ? "mock/exam-paper-only" : "mock";
   return [
@@ -59,13 +61,15 @@ export function getPluginsList(
      */
     isDevServer ? removeNoMatch() : null,
     // mock支持
-    vitePluginFakeServer({
-      logger: true,
-      include: mockInclude,
-      infixName: false,
-      enableProd: true,
-      basename: "/api"
-    }),
+    isEdgeOneWechatH5 || isAppMode
+      ? null
+      : vitePluginFakeServer({
+          logger: true,
+          include: mockInclude,
+          infixName: false,
+          enableProd: true,
+          basename: "/api"
+        }),
     // svg组件化支持
     svgLoader(),
     // 自动按需加载图标
@@ -73,10 +77,12 @@ export function getPluginsList(
       compiler: "vue3",
       scale: 1
     }),
-    VITE_CDN ? cdn : null,
+    VITE_CDN ? cdn() : null,
     configCompressPlugin(VITE_COMPRESSION),
     // 线上环境删除console
-    removeConsole({ external: ["src/assets/iconfont/iconfont.js"] }),
+    isEdgeOneWechatH5
+      ? null
+      : removeConsole({ external: ["src/assets/iconfont/iconfont.js"] }),
     // 打包分析
     lifecycle === "report"
       ? visualizer({ open: true, brotliSize: true, filename: "report.html" })

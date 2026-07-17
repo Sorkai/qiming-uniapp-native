@@ -1259,7 +1259,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .user-reputation-page {
     padding-bottom: calc(
       var(--pure-mobile-tab-height) + var(--pure-safe-area-bottom) + 28px
@@ -1387,7 +1387,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 420px) {
+@media (width <= 420px) {
   .user-reputation-page {
     .reputation-stats-grid,
     .mobile-user-card__meta,

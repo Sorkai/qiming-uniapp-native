@@ -98,7 +98,7 @@ defineExpose({ open });
     <el-dialog
       v-model="visible"
       title="LaTeX 公式编辑器"
-      width="700px"
+      width="min(700px, calc(100vw - 24px))"
       destroy-on-close
       :close-on-click-modal="false"
     >

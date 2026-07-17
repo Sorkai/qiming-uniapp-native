@@ -1,14 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { type IconifyIcon } from "@iconify/vue";
 import { useDark } from "../utils";
 import { ReNormalCountTo } from "@/components/ReCountTo";
-import {
-  getPlatformStats,
-  getStudentUsage,
-  getTeacherUsage,
-  getWeekUsage
-} from "@/api/statistics";
+import { getCourseStats, type CourseStatsResult } from "@/api/course";
 
 const { isDark } = useDark();
 const loading = ref(true);
@@ -17,7 +11,6 @@ interface StatItem {
   title: string;
   value: string | number;
   unit: string;
-  trend: number;
   icon: string;
   color: string;
   bgColor: string;
@@ -32,98 +25,55 @@ const darkBgColors = [
   "rgba(232, 104, 74, 0.15)"
 ];
 
-const stats = ref<StatItem[]>([]);
+const toNumber = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
-function withCardStyle(items: Omit<StatItem, "color" | "bgColor">[]) {
-  return items.map((item, index) => ({
+const buildStats = (data?: CourseStatsResult): StatItem[] => {
+  const completionRate = data?.avgCompletionRate ?? data?.completionRate ?? 0;
+  const values = [
+    {
+      title: "课程总数",
+      value: toNumber(data?.totalCourses),
+      unit: "门",
+      icon: "ep:collection"
+    },
+    {
+      title: "累计课时",
+      value: toNumber(data?.totalHours),
+      unit: data?.totalHoursUnit || "分钟",
+      icon: "ep:timer"
+    },
+    {
+      title: "活跃学生",
+      value: toNumber(data?.activeStudents),
+      unit: "人",
+      icon: "ep:user"
+    },
+    {
+      title: "平均完成率",
+      value: toNumber(completionRate),
+      unit: "%",
+      icon: "ep:finished"
+    }
+  ];
+
+  return values.map((item, index) => ({
     ...item,
     color: colors[index % colors.length],
     bgColor: bgColors[index % bgColors.length]
   }));
-}
+};
 
-function sumUsage(list?: Array<{ usageNum?: number }>) {
-  return (list || []).reduce(
-    (total, item) => total + Number(item.usageNum || 0),
-    0
-  );
-}
-
-function usageTrend(list?: Array<{ usageNum?: number }>) {
-  const data = list || [];
-  if (data.length < 2) return 0;
-  const current = Number(data[0]?.usageNum || 0);
-  const previous = Number(data[1]?.usageNum || 0);
-  if (previous <= 0) return current > 0 ? 100 : 0;
-  return Math.round(((current - previous) / previous) * 100);
-}
-
-async function loadUsageFallbackStats() {
-  const [teacherRes, studentRes, weekRes] = await Promise.all([
-    getTeacherUsage().catch(() => null),
-    getStudentUsage().catch(() => null),
-    getWeekUsage().catch(() => null)
-  ]);
-
-  const teacherList = teacherRes?.data?.usageInfoList || [];
-  const studentList = studentRes?.data?.usageInfoList || [];
-  const teacherTotal =
-    Number(weekRes?.data?.teacherTotalNum ?? sumUsage(teacherList)) || 0;
-  const studentTotal =
-    Number(weekRes?.data?.studentTotalNum ?? sumUsage(studentList)) || 0;
-  const totalUsage = teacherTotal + studentTotal;
-
-  return withCardStyle([
-    {
-      title: "本周总互动",
-      value: totalUsage,
-      unit: "次",
-      trend: usageTrend([...teacherList, ...studentList]),
-      icon: "ep:data-analysis"
-    },
-    {
-      title: "教师教研活跃",
-      value: teacherTotal,
-      unit: "次",
-      trend: usageTrend(teacherList),
-      icon: "ep:reading"
-    },
-    {
-      title: "学生学习活跃",
-      value: studentTotal,
-      unit: "次",
-      trend: usageTrend(studentList),
-      icon: "ep:user-filled"
-    },
-    {
-      title: "日均教学互动",
-      value: Math.round((totalUsage / 7) * 10) / 10,
-      unit: "次",
-      trend: 0,
-      icon: "ep:trend-charts"
-    }
-  ]);
-}
+const stats = ref<StatItem[]>(buildStats());
 
 onMounted(async () => {
   try {
-    const { data } = await getPlatformStats();
-    if (data && data.stats) {
-      stats.value = withCardStyle(data.stats);
-      return;
-    }
+    const { data } = await getCourseStats();
+    if (data) stats.value = buildStats(data);
   } catch (error) {
-    console.info(
-      "Platform overview endpoint unavailable, using usage fallback.",
-      error
-    );
-  }
-
-  try {
-    stats.value = await loadUsageFallbackStats();
-  } catch (error) {
-    console.warn("Failed to load platform usage fallback stats:", error);
-    stats.value = [];
+    console.error("Failed to fetch course overview:", error);
   } finally {
     loading.value = false;
   }
@@ -131,10 +81,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <el-row v-loading="loading" :gutter="20" class="stats-overview-grid">
+  <el-row v-loading="loading" :gutter="20" class="stats-overview-row">
     <el-col
       v-for="(item, index) in stats"
       :key="index"
+      class="stat-col"
       :xs="24"
       :sm="12"
       :md="6"
@@ -148,9 +99,11 @@ onMounted(async () => {
           :style="{ backgroundColor: item.color }"
         />
 
-        <div class="flex justify-between items-start mb-6 relative z-10">
+        <div
+          class="stat-icon-row flex justify-between items-start mb-6 relative z-10"
+        >
           <div
-            class="icon-wrapper w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-transparent group-hover:shadow-current"
+            class="stat-icon w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-transparent group-hover:shadow-current"
             :style="{
               backgroundColor: isDark
                 ? darkBgColors[stats.indexOf(item) % darkBgColors.length]
@@ -161,30 +114,17 @@ onMounted(async () => {
           >
             <IconifyIconOnline :icon="item.icon" />
           </div>
-          <div
-            class="trend-tag px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 backdrop-blur-md"
-            :class="
-              item.trend >= 0
-                ? 'bg-green-50/80 dark:bg-green-500/10 text-green-600'
-                : 'bg-red-50/80 dark:bg-red-500/10 text-red-600'
-            "
-          >
-            {{ item.trend >= 0 ? "+" : "" }}{{ item.trend }}%
-            <IconifyIconOnline
-              :icon="item.trend >= 0 ? 'ep:caret-top' : 'ep:caret-bottom'"
-            />
-          </div>
         </div>
 
-        <div class="relative z-10">
+        <div class="stat-copy relative z-10">
           <p
-            class="text-gray-500 dark:text-gray-300 text-sm mb-2 font-semibold tracking-wide uppercase"
+            class="stat-title text-gray-500 dark:text-gray-300 text-sm mb-2 font-semibold tracking-wide uppercase"
           >
             {{ item.title }}
           </p>
           <div class="flex items-baseline gap-2">
             <span
-              class="text-3xl font-black text-gray-900 dark:text-white tabular-nums"
+              class="stat-value text-3xl font-black text-gray-900 dark:text-white tabular-nums"
             >
               <ReNormalCountTo
                 :startVal="0"
@@ -194,7 +134,7 @@ onMounted(async () => {
               />
             </span>
             <span
-              class="text-gray-400 dark:text-gray-300 text-sm font-medium"
+              class="stat-unit text-gray-400 dark:text-gray-300 text-sm font-medium"
               >{{ item.unit }}</span
             >
           </div>
@@ -231,86 +171,60 @@ onMounted(async () => {
     transparent 100%
   );
 }
-</style>
 
-<style>
-html.qiming-native-webview.ua-mobile .stats-overview-grid {
-  --el-row-gutter: 10px;
-}
+@media screen and (max-width: 768px),
+  screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .stats-overview-row {
+    margin-right: -4px !important;
+    margin-left: -4px !important;
+  }
 
-html.qiming-native-webview.ua-mobile .stats-overview-grid > .el-col {
-  flex: 0 0 50%;
-  max-width: 50%;
-  padding-right: 5px !important;
-  padding-left: 5px !important;
-}
+  .stat-col {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+  }
 
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card {
-  min-height: 112px;
-  padding: 14px !important;
-  margin-bottom: 10px !important;
-  border-radius: 18px !important;
-  transform: none !important;
-}
+  .stat-card {
+    min-height: 132px;
+    padding: 12px !important;
+    margin-bottom: 8px !important;
+    border-radius: 12px !important;
+    transform: none !important;
+  }
 
-html.qiming-native-webview.ua-mobile
-  .stats-overview-grid
-  .stat-card
-  .icon-wrapper {
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 12px !important;
-  font-size: 18px !important;
-}
+  .stat-icon-row {
+    margin-bottom: 12px !important;
+  }
 
-html.qiming-native-webview.ua-mobile
-  .stats-overview-grid
-  .stat-card
-  .trend-tag {
-  padding: 3px 7px !important;
-  font-size: 10px !important;
-}
+  .stat-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    font-size: 20px !important;
+    transform: none !important;
+  }
 
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card p {
-  margin-bottom: 5px !important;
-  font-size: 11px !important;
-  line-height: 1.25 !important;
-  letter-spacing: 0 !important;
-}
+  .stat-title {
+    margin-bottom: 4px !important;
+    font-size: 13px !important;
+    line-height: 1.35;
+    letter-spacing: 0 !important;
+  }
 
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card .text-3xl {
-  font-size: 22px !important;
-  line-height: 1.05 !important;
-}
+  .stat-value {
+    font-size: 24px !important;
+    line-height: 1.15;
+  }
 
-html.qiming-native-webview.ua-mobile .stats-overview-grid .stat-card .mb-6 {
-  margin-bottom: 12px !important;
-}
+  .stat-unit {
+    font-size: 12px !important;
+  }
 
-html.qiming-native-webview.ua-mobile.dark .stats-overview-grid .stat-card {
-  background: var(--qiming-native-surface-bg) !important;
-  border-color: var(--qiming-native-border-color) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark .stats-overview-grid .stat-card p {
-  color: rgb(203 213 225 / 92%) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card
-  .text-3xl,
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card
-  .text-gray-400 {
-  color: rgb(248 250 252 / 96%) !important;
-}
-
-html.qiming-native-webview.ua-mobile.dark
-  .stats-overview-grid
-  .stat-card
-  .absolute.-right-4 {
-  opacity: 0.08 !important;
+  .stat-card > :first-child,
+  .stat-card::before {
+    display: none;
+  }
 }
 </style>

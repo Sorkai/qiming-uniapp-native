@@ -6,6 +6,33 @@
       <span>正在加载视频分析数据...</span>
     </div>
 
+    <!-- 请求错误状态 -->
+    <div v-else-if="taskError" class="panel-error">
+      <div class="error-icon">
+        <svg
+          viewBox="0 0 24 24"
+          width="42"
+          height="42"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <line x1="12" y1="7" x2="12" y2="13" />
+          <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      </div>
+      <span>{{ taskError.message }}</span>
+      <button
+        v-if="taskError.retryable"
+        type="button"
+        class="retry-button"
+        @click="fetchAnalysis()"
+      >
+        重新加载
+      </button>
+    </div>
+
     <!-- 无任务状态 -->
     <div v-else-if="!taskData" class="panel-empty">
       <div class="empty-icon">
@@ -25,7 +52,7 @@
           <line x1="16" y1="17" x2="8" y2="17" />
         </svg>
       </div>
-      <span>暂无视频分析数据</span>
+      <span>{{ emptyMessage }}</span>
     </div>
 
     <!-- 处理中状态 -->
@@ -43,7 +70,7 @@
           :style="{ width: `${taskData.progress ?? 0}%` }"
         />
       </div>
-      <p class="processing-msg">{{ taskData.message || "正在分析中..." }}</p>
+      <p class="processing-msg">{{ taskData.message || statusMessage }}</p>
     </div>
 
     <!-- 分析结果展示 -->
@@ -146,15 +173,17 @@
           @click="$emit('seek-video', ch.startTime)"
         >
           <div class="chapter-time">
-            <span class="time-badge">{{ formatTime(ch.startTime) }}</span>
-            <span v-if="ch.endTime" class="time-range"
-              >~ {{ formatTime(ch.endTime) }}</span
-            >
+            <span class="time-badge">
+              {{ formatTime(ch.startTime) }}
+              <template v-if="ch.endTime != null">
+                ~ {{ formatTime(ch.endTime) }}
+              </template>
+            </span>
           </div>
           <div class="chapter-info">
             <h4 class="chapter-title">{{ ch.title }}</h4>
             <p class="chapter-summary">{{ ch.summary }}</p>
-            <span v-if="ch.endTime" class="chapter-duration"
+            <span v-if="ch.endTime != null" class="chapter-duration"
               >时长 {{ formatDuration(ch.startTime, ch.endTime) }}</span
             >
           </div>
@@ -238,89 +267,148 @@
 
       <!-- 思维导图 -->
       <div v-if="activeTab === 'mindmap'" class="module-content">
-        <div v-if="mindmapNodes.length" class="mindmap-block">
+        <div v-if="hasMindmapContent" class="mindmap-block">
           <div class="mindmap-toolbar">
-            <button class="mindmap-action" @click="resetMindmapLayout">
+            <div v-if="mindmapFlowNodes.length" class="mindmap-tools-group">
+              <button class="mindmap-action" @click="centerMindmap">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="15"
+                  height="15"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M12 2v4" />
+                  <path d="M12 18v4" />
+                  <path d="M2 12h4" />
+                  <path d="M18 12h4" />
+                </svg>
+                居中
+              </button>
+              <button class="mindmap-action" @click="fitMindmap">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="15"
+                  height="15"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                  <path d="M16 3h3a2 2 0 0 1 2 2v3" />
+                  <path d="M8 21H5a2 2 0 0 1-2-2v-3" />
+                  <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                </svg>
+                适配
+              </button>
+            </div>
+            <a
+              v-if="mindmapResourceUrl"
+              class="mindmap-action mindmap-source"
+              :href="mindmapResourceUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <svg
                 viewBox="0 0 24 24"
-                width="16"
-                height="16"
+                width="15"
+                height="15"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2"
               >
-                <polyline points="1 4 1 10 7 10" />
-                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-              </svg>
-              重置布局
-            </button>
-          </div>
-          <div
-            ref="mindmapContainerRef"
-            class="mindmap-canvas"
-            @mousedown="onCanvasDragStart"
-            @mousemove="onCanvasDragMove"
-            @mouseup="onCanvasDragEnd"
-            @mouseleave="onCanvasDragEnd"
-            @wheel.prevent="onCanvasWheel"
-          >
-            <svg
-              class="mindmap-svg"
-              :style="{
-                transform: `translate(${canvasPan.x}px, ${canvasPan.y}px) scale(${canvasScale})`
-              }"
-            >
-              <!-- 连线 -->
-              <line
-                v-for="(edge, idx) in mindmapEdges"
-                :key="'e' + idx"
-                :x1="edge.x1"
-                :y1="edge.y1"
-                :x2="edge.x2"
-                :y2="edge.y2"
-                class="mindmap-edge"
-                :class="'edge-depth-' + edge.depth"
-              />
-              <!-- 节点 -->
-              <g
-                v-for="node in mindmapNodes"
-                :key="node.id"
-                :transform="`translate(${node.x}, ${node.y})`"
-                class="mindmap-node"
-                :class="[
-                  'node-depth-' + node.depth,
-                  { 'node-dragging': draggingNodeId === node.id }
-                ]"
-                @mousedown.stop="onNodeDragStart($event, node)"
-              >
-                <circle
-                  :r="node.depth === 0 ? 42 : node.depth === 1 ? 34 : 26"
-                  class="node-circle"
+                <path
+                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
                 />
-                <text dy="0.35em" text-anchor="middle" class="node-label">
-                  <template v-if="node.label.length <= 5">
-                    {{ node.label }}
-                  </template>
-                  <template v-else>
-                    <tspan
-                      v-for="(line, li) in wrapText(
-                        node.label,
-                        node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3
-                      )"
-                      :key="li"
-                      x="0"
-                      :dy="
-                        li === 0
-                          ? `${-(wrapText(node.label, node.depth === 0 ? 4 : node.depth === 1 ? 3 : 3).length - 1) * 0.6}em`
-                          : '1.2em'
-                      "
-                    >
-                      {{ line }}
-                    </tspan>
-                  </template>
-                </text>
-              </g>
-            </svg>
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              打开源文件
+            </a>
+          </div>
+          <div ref="mindmapCanvasRef" class="mindmap-canvas">
+            <VueFlow
+              v-if="mindmapFlowNodes.length"
+              v-model:nodes="mindmapFlowNodes"
+              v-model:edges="mindmapFlowEdges"
+              class="mindmap-viewer"
+              :min-zoom="0.35"
+              :max-zoom="1.8"
+              :nodes-draggable="true"
+              :nodes-connectable="false"
+              :elements-selectable="false"
+              :pan-on-scroll="false"
+              :zoom-on-scroll="true"
+              :zoom-on-pinch="true"
+              :zoom-on-double-click="false"
+              :prevent-scrolling="true"
+              :fit-view-on-init="true"
+              @nodes-initialized="onMindmapNodesInitialized"
+            >
+              <template #node-mindmap="{ data }">
+                <div
+                  class="mindmap-flow-node"
+                  :class="`depth-${data.depth}`"
+                  :style="{ width: `${data.width}px` }"
+                  :title="data.rawLabel"
+                >
+                  <Handle
+                    v-if="data.depth > 0"
+                    id="target"
+                    type="target"
+                    :position="
+                      data.side === 'left' ? Position.Right : Position.Left
+                    "
+                  />
+                  <Handle
+                    id="source-left"
+                    type="source"
+                    :position="Position.Left"
+                  />
+                  <Handle
+                    id="source-right"
+                    type="source"
+                    :position="Position.Right"
+                  />
+                  <span>{{ data.label }}</span>
+                </div>
+              </template>
+            </VueFlow>
+            <div v-else-if="mindmapResourceUrl" class="mindmap-resource-stage">
+              <img
+                v-if="isMindmapImage && !mindmapResourceLoadError"
+                class="mindmap-resource-image"
+                :src="mindmapResourceUrl"
+                alt="思维导图"
+                draggable="false"
+                @error="onMindmapResourceError"
+              />
+              <iframe
+                v-else-if="!isMindmapJson && !mindmapResourceLoadError"
+                class="mindmap-resource-frame"
+                :src="mindmapResourceUrl"
+                title="思维导图"
+                @error="onMindmapResourceError"
+              />
+              <div v-else class="mindmap-resource-error">
+                <span>
+                  {{
+                    isMindmapJson
+                      ? "思维导图数据暂时无法解析"
+                      : "源文件暂时无法内嵌预览"
+                  }}
+                </span>
+                <a
+                  :href="mindmapResourceUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  打开源文件
+                </a>
+              </div>
+            </div>
           </div>
         </div>
         <div v-else class="module-empty">暂无思维导图</div>
@@ -357,20 +445,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed, h, nextTick } from "vue";
+import { ref, watch, computed, h, nextTick, onBeforeUnmount } from "vue";
+import { getToken, formatToken, hasManageAccess } from "@/utils/auth";
+import "@vue-flow/core/dist/style.css";
+import "@vue-flow/core/dist/theme-default.css";
+import {
+  Handle,
+  Position,
+  VueFlow,
+  useVueFlow,
+  type Edge,
+  type Node
+} from "@vue-flow/core";
 import {
   getVideoAnalyzeTask,
   getVideoAnalyzeModules,
   getVideoAnalyzeResult,
   type VideoAnalyzeTask,
-  type VideoAnalyzeModuleResult
+  type VideoAnalyzeModuleResult,
+  type VideoAnalyzeFullResult,
+  type ChapterItem,
+  type QaItem,
+  type PptPage
 } from "@/api/frontend/videoAnalysis";
+import {
+  getVideoAnalysisList,
+  type VideoAnalysisTask
+} from "@/api/videoAnalysis";
 
 const props = defineProps<{
   courseId: number;
   chapterId: number;
   currentTheme: string;
+  currentHourId?: number;
   currentHourTitle?: string;
+  currentHourFileUrl?: string;
 }>();
 
 defineEmits(["seek-video"]);
@@ -379,184 +488,780 @@ const loading = ref(false);
 const taskData = ref<VideoAnalyzeTask | null>(null);
 const moduleData = ref<VideoAnalyzeModuleResult | null>(null);
 const activeTab = ref("chapters");
-const mindmapZoomed = ref(false);
+const emptyMessage = ref("本节暂无视频分析任务");
 
-// ---- 思维导图交互 ----
+interface TaskErrorState {
+  message: string;
+  retryable: boolean;
+}
+
+class VideoAnalysisScopeError extends Error {}
+
+const taskError = ref<TaskErrorState | null>(null);
+
 interface MindmapNodeData {
   id: string;
   label: string;
   children?: MindmapNodeData[];
 }
-interface MindmapNode {
-  id: string;
+interface MindmapViewNode {
   label: string;
+  rawLabel: string;
   depth: number;
-  x: number;
-  y: number;
-  parentId: string | null;
-}
-interface MindmapEdge {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  depth: number;
+  width: number;
+  side: "left" | "right" | "root";
 }
 
-const mindmapContainerRef = ref<HTMLElement | null>(null);
-const mindmapNodes = ref<MindmapNode[]>([]);
-const draggingNodeId = ref<string | null>(null);
-const dragOffset = reactive({ x: 0, y: 0 });
-const canvasPan = reactive({ x: 0, y: 0 });
-const canvasScale = ref(1);
-const isPanningCanvas = ref(false);
-const panStart = reactive({ x: 0, y: 0 });
+const mindmapCanvasRef = ref<HTMLElement | null>(null);
+const mindmapFlowNodes = ref<Node<MindmapViewNode>[]>([]);
+const mindmapFlowEdges = ref<Edge[]>([]);
+const mindmapResourceLoadError = ref(false);
+const { fitView, setCenter } = useVueFlow();
 
-const mindmapEdges = computed<MindmapEdge[]>(() => {
-  const nodeMap = new Map(mindmapNodes.value.map(n => [n.id, n]));
-  const edges: MindmapEdge[] = [];
-  for (const node of mindmapNodes.value) {
-    if (node.parentId) {
-      const parent = nodeMap.get(node.parentId);
-      if (parent) {
-        edges.push({
-          x1: parent.x,
-          y1: parent.y,
-          x2: node.x,
-          y2: node.y,
-          depth: node.depth
-        });
-      }
-    }
+const apiBaseURL = () =>
+  (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+
+const mindmapFileProxyPrefix = "/mindmap-file";
+const mindmapFileProxyTarget =
+  import.meta.env.VITE_MINDMAP_FILE_PROXY_TARGET || "";
+
+const isAbsoluteUrl = (url: string) => /^https?:\/\//i.test(url);
+
+const buildMindmapResourceUrl = (url: string) => {
+  const value = String(url || "").trim();
+  if (!value) return "";
+  if (isAbsoluteUrl(value)) return value;
+  if (value.startsWith("//")) return `${window.location.protocol}${value}`;
+  if (value.startsWith("/api/")) return value;
+
+  const objectKey = value.replace(/^\/+/, "");
+  if (mindmapFileProxyTarget) {
+    return import.meta.env.DEV
+      ? `${mindmapFileProxyPrefix}/${objectKey}`
+      : `${mindmapFileProxyTarget.replace(/\/$/, "")}/${objectKey}`;
   }
-  return edges;
+  return `${apiBaseURL()}/${objectKey}`;
+};
+
+const isSameOriginResource = (url: string) => {
+  if (!isAbsoluteUrl(url)) return true;
+
+  try {
+    return new URL(url).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
+
+const isMindmapFileProxyUrl = (url: string) =>
+  url === mindmapFileProxyPrefix ||
+  url.startsWith(`${mindmapFileProxyPrefix}/`);
+
+const buildMindmapFetchUrl = (resourceUrl: string) => {
+  if (
+    !import.meta.env.DEV ||
+    !isAbsoluteUrl(resourceUrl) ||
+    !mindmapFileProxyTarget
+  ) {
+    return resourceUrl;
+  }
+
+  try {
+    const resource = new URL(resourceUrl);
+    const proxyTarget = new URL(mindmapFileProxyTarget);
+
+    if (resource.origin !== proxyTarget.origin) return resourceUrl;
+
+    return `${mindmapFileProxyPrefix}${resource.pathname}${resource.search}`;
+  } catch {
+    return resourceUrl;
+  }
+};
+
+const isMindmapUrlLike = (value: unknown) => {
+  if (typeof value !== "string") return false;
+  const text = value.trim();
+  if (!text) return false;
+  return (
+    /^(https?:)?\/\//i.test(text) ||
+    /^\/[^/]/.test(text) ||
+    /\.(json|png|jpe?g|webp|gif|svg|html?|pdf)(\?|#|$)/i.test(text)
+  );
+};
+
+const buildMindmapFetchOptions = (url: string): RequestInit => {
+  if (!isSameOriginResource(url) || isMindmapFileProxyUrl(url)) {
+    return {
+      method: "GET",
+      mode: "cors",
+      credentials: "omit",
+      headers: {
+        Accept: "application/json, text/plain, */*"
+      }
+    };
+  }
+
+  const token = getToken();
+  const headers: Record<string, string> = {
+    Accept: "application/json, text/plain, */*",
+    "X-Requested-With": "XMLHttpRequest"
+  };
+
+  if (token?.accessToken) {
+    headers.Authorization = formatToken(token.accessToken);
+  }
+
+  return {
+    method: "GET",
+    headers,
+    credentials: "include"
+  };
+};
+
+const parseMaybeJson = (value: unknown): unknown => {
+  if (typeof value !== "string") return value;
+
+  const text = value.trim();
+  if (!text || !/^[\[{]/.test(text)) return value;
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return value;
+  }
+};
+
+const getField = (source: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    if (key in source) return source[key];
+
+    const matchedKey = Object.keys(source).find(
+      item => item.toLowerCase() === key.toLowerCase()
+    );
+    if (matchedKey) return source[matchedKey];
+  }
+
+  return undefined;
+};
+
+const pickText = (source: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = getField(source, [key]);
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number") return String(value);
+  }
+  return "";
+};
+
+const pickChildren = (source: Record<string, unknown>) => {
+  const childKeys = [
+    "children",
+    "childNodes",
+    "childrenNodes",
+    "subTopics",
+    "subtopics",
+    "topics",
+    "nodes",
+    "subNodes",
+    "sub_nodes",
+    "items",
+    "points",
+    "list"
+  ];
+
+  for (const key of childKeys) {
+    const value = parseMaybeJson(getField(source, [key]));
+    if (Array.isArray(value)) return value;
+  }
+
+  return [];
+};
+
+const normalizeMindmapNode = (
+  value: unknown,
+  path = "root",
+  fallbackLabel = "思维导图"
+): MindmapNodeData | null => {
+  const parsed = parseMaybeJson(value);
+
+  if (Array.isArray(parsed)) {
+    const children = parsed
+      .map((item, index) =>
+        normalizeMindmapNode(item, `${path}-${index}`, fallbackLabel)
+      )
+      .filter(Boolean) as MindmapNodeData[];
+
+    return children.length
+      ? {
+          id: path,
+          label: fallbackLabel,
+          children
+        }
+      : null;
+  }
+
+  if (!parsed || typeof parsed !== "object") {
+    return typeof parsed === "string" &&
+      parsed.trim() &&
+      !isMindmapUrlLike(parsed)
+      ? {
+          id: path,
+          label: parsed.trim()
+        }
+      : null;
+  }
+
+  const source = parsed as Record<string, unknown>;
+  const label =
+    pickText(source, [
+      "label",
+      "title",
+      "name",
+      "text",
+      "topic",
+      "value",
+      "content",
+      "summary",
+      "key"
+    ]) || "";
+  const rawChildren = pickChildren(source);
+  const children = rawChildren
+    .map((item, index) =>
+      normalizeMindmapNode(item, `${path}-${index}`, fallbackLabel)
+    )
+    .filter(Boolean) as MindmapNodeData[];
+
+  if (!label && !children.length) return null;
+
+  return {
+    id: path,
+    label: label || (path === "root" ? fallbackLabel : "分支"),
+    children: children.length ? children : undefined
+  };
+};
+
+const extractMindmapTree = (payload: unknown): MindmapNodeData | null => {
+  const raw = parseMaybeJson(payload) as any;
+  if (!raw) return null;
+
+  const candidates = [
+    raw?.data?.mindMap?.tree,
+    raw?.data?.mindmap?.tree,
+    raw?.data?.mind_map?.tree,
+    raw?.data?.mindMapTree,
+    raw?.data?.mind_map_tree,
+    raw?.data?.tree,
+    raw?.data?.root,
+    raw?.mindMap?.tree,
+    raw?.mindmap?.tree,
+    raw?.mind_map?.tree,
+    raw?.mindMapTree,
+    raw?.mind_map_tree,
+    raw?.tree,
+    raw?.root,
+    raw?.data?.mindMap,
+    raw?.data?.mindmap,
+    raw?.data?.mind_map,
+    raw?.mindMap,
+    raw?.mindmap,
+    raw?.mind_map,
+    raw?.data,
+    raw
+  ];
+
+  for (const candidate of candidates) {
+    const tree = normalizeMindmapNode(candidate);
+    if (tree) return tree;
+  }
+
+  return null;
+};
+
+const normalizeKeyName = (key: string) =>
+  key.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const collectMindmapUrlCandidates = (
+  value: unknown,
+  contextKey = "",
+  depth = 0,
+  result: Array<{ value: string; score: number }> = []
+) => {
+  if (depth > 5 || value == null) return result;
+
+  const parsed = parseMaybeJson(value);
+
+  if (typeof parsed === "string") {
+    const text = parsed.trim();
+    if (!isMindmapUrlLike(text)) return result;
+
+    const key = normalizeKeyName(contextKey);
+    const lowerUrl = text.toLowerCase();
+    const hasMindKey = key.includes("mind") || key.includes("map");
+    const hasUrlKey = key.includes("url") || key.includes("path");
+    const hasMindPath =
+      lowerUrl.includes("mind_map") || lowerUrl.includes("mindmap");
+
+    result.push({
+      value: text,
+      score:
+        (hasMindKey && hasUrlKey ? 100 : 0) +
+        (hasMindPath ? 40 : 0) +
+        (hasMindKey ? 20 : 0) +
+        (hasUrlKey ? 10 : 0) -
+        depth
+    });
+    return result;
+  }
+
+  if (Array.isArray(parsed)) {
+    parsed.forEach((item, index) => {
+      collectMindmapUrlCandidates(
+        item,
+        `${contextKey}_${index}`,
+        depth + 1,
+        result
+      );
+    });
+    return result;
+  }
+
+  if (typeof parsed !== "object") return result;
+
+  Object.entries(parsed as Record<string, unknown>).forEach(([key, item]) => {
+    const normalized = normalizeKeyName(key);
+    const parent = normalizeKeyName(contextKey);
+    const nextContext =
+      parent.includes("mind") || normalized.includes("mind")
+        ? `${contextKey}_${key}`
+        : key;
+
+    if (
+      normalized === "mindmapurl" ||
+      normalized === "mindmapfileurl" ||
+      normalized === "mindmapjsonurl" ||
+      (normalized.includes("mind") &&
+        (normalized.includes("url") || normalized.includes("path")))
+    ) {
+      collectMindmapUrlCandidates(item, nextContext, depth, result);
+      return;
+    }
+
+    if (parent.includes("mind") || normalized.includes("mind")) {
+      collectMindmapUrlCandidates(item, nextContext, depth + 1, result);
+    } else if (depth < 3 && typeof item === "object" && item !== null) {
+      collectMindmapUrlCandidates(item, key, depth + 1, result);
+    }
+  });
+
+  return result;
+};
+
+const extractMindmapUrl = (payload: unknown) => {
+  const raw = parseMaybeJson(payload) as any;
+  const candidates = [
+    raw,
+    raw?.mindMap?.url,
+    raw?.mindMap?.fileUrl,
+    raw?.mindMap?.jsonUrl,
+    raw?.mindMap?.path,
+    raw?.mindmap?.url,
+    raw?.mindmap?.fileUrl,
+    raw?.mindmap?.jsonUrl,
+    raw?.mindmap?.path,
+    raw?.mind_map?.url,
+    raw?.mind_map?.file_url,
+    raw?.mind_map?.json_url,
+    raw?.mind_map?.path,
+    raw?.mindMapUrl,
+    raw?.mindmapUrl,
+    raw?.mind_map_url,
+    raw?.mindMapFileUrl,
+    raw?.mindMapJsonUrl,
+    raw?.mindMapPath,
+    raw?.data?.mindMap?.url,
+    raw?.data?.mindMap?.fileUrl,
+    raw?.data?.mindMap?.jsonUrl,
+    raw?.data?.mindMap?.path,
+    raw?.data?.mindmap?.url,
+    raw?.data?.mindmap?.fileUrl,
+    raw?.data?.mindmap?.jsonUrl,
+    raw?.data?.mindmap?.path,
+    raw?.data?.mind_map?.url,
+    raw?.data?.mind_map?.file_url,
+    raw?.data?.mind_map?.json_url,
+    raw?.data?.mind_map?.path,
+    raw?.data?.mindMapUrl,
+    raw?.data?.mindmapUrl,
+    raw?.data?.mind_map_url,
+    raw?.data?.mindMapFileUrl,
+    raw?.data?.mindMapJsonUrl,
+    raw?.data?.mindMapPath
+  ];
+
+  const direct = candidates.find(isMindmapUrlLike) as string | undefined;
+  if (direct) return direct.trim();
+
+  const deepCandidates = collectMindmapUrlCandidates(raw)
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return deepCandidates[0]?.value;
+};
+
+const normalizeMindmapPayload = (payload: unknown) => {
+  const tree = extractMindmapTree(payload);
+  const url = extractMindmapUrl(payload);
+
+  if (!tree && !url) return null;
+
+  return {
+    ...(url ? { url } : {}),
+    ...(tree ? { tree } : {})
+  };
+};
+
+const fetchMindmapTreeFromUrl = async (url: string) => {
+  const resourceUrl = buildMindmapResourceUrl(url);
+  if (!resourceUrl) return null;
+
+  const fetchUrl = buildMindmapFetchUrl(resourceUrl);
+
+  const response = await fetch(fetchUrl, buildMindmapFetchOptions(fetchUrl));
+
+  if (!response.ok) {
+    throw new Error(`Mindmap resource request failed: ${response.status}`);
+  }
+
+  const text = await response.text();
+  const payload = parseMaybeJson(text);
+  return extractMindmapTree(payload);
+};
+
+const mindmapResourceUrl = computed(() => {
+  const url = moduleData.value?.mindMap?.url;
+  return url ? buildMindmapResourceUrl(url) : "";
 });
 
-const wrapText = (text: string, charsPerLine: number): string[] => {
-  const lines: string[] = [];
-  for (let i = 0; i < text.length; i += charsPerLine) {
-    lines.push(text.slice(i, i + charsPerLine));
-  }
-  return lines;
+const isMindmapImage = computed(() =>
+  /\.(png|jpe?g|webp|gif|svg)(\?|#|$)/i.test(mindmapResourceUrl.value)
+);
+
+const isMindmapJson = computed(() =>
+  /\.json(\?|#|$)/i.test(mindmapResourceUrl.value)
+);
+
+const hasMindmapContent = computed(
+  () => mindmapFlowNodes.value.length > 0 || Boolean(mindmapResourceUrl.value)
+);
+
+const onMindmapResourceError = () => {
+  mindmapResourceLoadError.value = true;
 };
 
-const flattenTree = (
-  tree: MindmapNodeData,
-  depth: number,
-  parentId: string | null,
-  cx: number,
-  cy: number,
-  angleStart: number,
-  angleEnd: number,
-  result: MindmapNode[]
+const hydrateMindmapTree = async (
+  requestId: number,
+  requestCourseId: number,
+  requestChapterId: number,
+  requestHourId: number
 ) => {
-  result.push({
-    id: tree.id,
-    label: tree.label,
-    depth,
-    x: cx,
-    y: cy,
-    parentId
+  const mindMap = moduleData.value?.mindMap;
+  if (!mindMap || mindMap.tree || !mindMap.url) return;
+
+  try {
+    const tree = await fetchMindmapTreeFromUrl(mindMap.url);
+    if (
+      isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
+    )
+      return;
+    if (tree && moduleData.value?.mindMap) {
+      moduleData.value.mindMap = {
+        ...moduleData.value.mindMap,
+        tree
+      };
+    }
+  } catch (error) {
+    console.warn("[VideoAnalysisPanel] mindmap url load failed", {
+      url: mindMap.url,
+      error
+    });
+  }
+};
+
+const splitMindmapLabel = (label: string, maxChars: number) => {
+  const normalized = String(label || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (normalized.length <= maxChars) return [normalized];
+
+  const lines: string[] = [];
+  let rest = normalized;
+  const preferredBreaks = ["：", "，", "、", "；", ":", ",", ";", "，", " "];
+
+  while (rest.length > maxChars && lines.length < 4) {
+    const windowText = rest.slice(0, maxChars + 1);
+    let breakIndex = -1;
+
+    for (const mark of preferredBreaks) {
+      const index = windowText.lastIndexOf(mark);
+      if (index >= Math.floor(maxChars * 0.45)) {
+        breakIndex = index + (mark === " " ? 0 : 1);
+        break;
+      }
+    }
+
+    if (breakIndex <= 0) breakIndex = maxChars;
+
+    lines.push(rest.slice(0, breakIndex).trim());
+    rest = rest.slice(breakIndex).trim();
+  }
+
+  if (rest) lines.push(rest);
+  return lines.filter(Boolean);
+};
+
+const formatMindmapLabel = (label: string, depth: number) => {
+  const maxChars = depth === 0 ? 18 : depth === 1 ? 12 : 14;
+  return splitMindmapLabel(label, maxChars).join("\n");
+};
+
+const estimateMindmapNodeWidth = (depth: number) => {
+  if (depth === 0) return 260;
+  if (depth === 1) return 220;
+  return 245;
+};
+
+const estimateMindmapNodeHeight = (label: string, depth: number) => {
+  const lineCount = formatMindmapLabel(label, depth).split("\n").length;
+  return Math.max(depth === 0 ? 58 : 50, lineCount * 22 + 26);
+};
+
+const estimateMindmapSubtreeHeight = (
+  node: MindmapNodeData,
+  depth: number
+): number => {
+  const ownHeight = estimateMindmapNodeHeight(node.label, depth);
+  const children = node.children || [];
+  if (!children.length) return ownHeight;
+
+  const childHeights = children.map(child =>
+    estimateMindmapSubtreeHeight(child, depth + 1)
+  );
+  const childrenHeight =
+    childHeights.reduce((sum, height) => sum + height, 0) +
+    Math.max(0, childHeights.length - 1) * 18;
+
+  return Math.max(ownHeight, childrenHeight);
+};
+
+const mindmapNodeX = (
+  side: MindmapViewNode["side"],
+  depth: number,
+  width: number
+) => {
+  if (side === "root") return -width / 2;
+
+  const gap = depth === 1 ? 260 : 300;
+  const offset = 150 + (depth - 1) * gap;
+  return side === "left" ? -offset - width : offset;
+};
+
+const createMindmapFlowNode = (
+  source: MindmapNodeData,
+  depth: number,
+  side: MindmapViewNode["side"],
+  yCenter: number,
+  nodes: Node<MindmapViewNode>[],
+  path: string
+) => {
+  const width = estimateMindmapNodeWidth(depth);
+  const height = estimateMindmapNodeHeight(source.label, depth);
+  const id = path;
+
+  nodes.push({
+    id,
+    type: "mindmap",
+    position: {
+      x: mindmapNodeX(side, depth, width),
+      y: yCenter - height / 2
+    },
+    data: {
+      label: formatMindmapLabel(source.label, depth),
+      rawLabel: source.label,
+      depth,
+      side,
+      width
+    },
+    draggable: true,
+    selectable: false,
+    connectable: false
   });
-  const children = tree.children || [];
+
+  return id;
+};
+
+const createMindmapEdge = (
+  parentId: string,
+  childId: string,
+  side: MindmapViewNode["side"]
+): Edge => ({
+  id: `${parentId}-${childId}`,
+  source: parentId,
+  target: childId,
+  sourceHandle: side === "left" ? "source-left" : "source-right",
+  targetHandle: "target",
+  type: "default",
+  pathOptions: {
+    curvature: 0.28
+  },
+  selectable: false,
+  class: "mindmap-flow-edge",
+  style: {
+    stroke: "rgba(99, 102, 241, 0.38)",
+    strokeWidth: 2.4
+  }
+});
+
+const layoutMindmapSubtree = (
+  node: MindmapNodeData,
+  depth: number,
+  side: "left" | "right",
+  yCenter: number,
+  parentId: string,
+  path: string,
+  nodes: Node<MindmapViewNode>[],
+  edges: Edge[]
+) => {
+  const nodeId = createMindmapFlowNode(node, depth, side, yCenter, nodes, path);
+
+  edges.push(createMindmapEdge(parentId, nodeId, side));
+
+  const children = node.children || [];
   if (!children.length) return;
-  const radiusMap = [0, 180, 140, 110];
-  const radius = radiusMap[Math.min(depth + 1, 3)];
-  const spread = angleEnd - angleStart;
-  children.forEach((child, i) => {
-    const frac = children.length === 1 ? 0.5 : i / (children.length - 1);
-    const angle = angleStart + spread * frac;
-    const rad = (angle * Math.PI) / 180;
-    const childX = cx + radius * Math.cos(rad);
-    const childY = cy + radius * Math.sin(rad);
-    const childSpread = spread / children.length;
-    flattenTree(
+
+  const childHeights = children.map(child =>
+    estimateMindmapSubtreeHeight(child, depth + 1)
+  );
+  const totalHeight =
+    childHeights.reduce((sum, height) => sum + height, 0) +
+    Math.max(0, childHeights.length - 1) * 18;
+  let cursor = yCenter - totalHeight / 2;
+
+  children.forEach((child, index) => {
+    const childHeight = childHeights[index];
+    const childCenter = cursor + childHeight / 2;
+
+    layoutMindmapSubtree(
       child,
       depth + 1,
-      tree.id,
-      childX,
-      childY,
-      angle - childSpread / 2,
-      angle + childSpread / 2,
-      result
+      side,
+      childCenter,
+      nodeId,
+      `${path}-${index}`,
+      nodes,
+      edges
     );
+
+    cursor += childHeight + 18;
   });
 };
 
-const buildMindmapFromData = () => {
+const buildMindmapFlow = (tree: MindmapNodeData) => {
+  const nodes: Node<MindmapViewNode>[] = [];
+  const edges: Edge[] = [];
+  const rootId = createMindmapFlowNode(tree, 0, "root", 0, nodes, "root");
+  const children = tree.children || [];
+  const splitIndex = Math.ceil(children.length / 2);
+  const leftChildren = children.slice(splitIndex);
+  const rightChildren = children.slice(0, splitIndex);
+
+  const layoutSide = (
+    sideChildren: MindmapNodeData[],
+    side: "left" | "right"
+  ) => {
+    const heights = sideChildren.map(child =>
+      estimateMindmapSubtreeHeight(child, 1)
+    );
+    const totalHeight =
+      heights.reduce((sum, height) => sum + height, 0) +
+      Math.max(0, heights.length - 1) * 26;
+    let cursor = -totalHeight / 2;
+
+    sideChildren.forEach((child, index) => {
+      const childHeight = heights[index];
+      const childCenter = cursor + childHeight / 2;
+
+      layoutMindmapSubtree(
+        child,
+        1,
+        side,
+        childCenter,
+        rootId,
+        `${side}-${index}`,
+        nodes,
+        edges
+      );
+
+      cursor += childHeight + 26;
+    });
+  };
+
+  layoutSide(rightChildren, "right");
+  layoutSide(leftChildren, "left");
+
+  return { nodes, edges };
+};
+
+const fitMindmap = () => {
+  nextTick(() => {
+    fitView({ padding: 0.18, maxZoom: 1, duration: 180 });
+  });
+};
+
+const centerMindmap = () => {
+  setCenter(0, 0, { zoom: 0.9, duration: 180 });
+};
+
+const onMindmapNodesInitialized = () => {
+  fitMindmap();
+};
+
+const buildMindmapFromData = async () => {
   const tree = moduleData.value?.mindMap?.tree as MindmapNodeData | undefined;
   if (!tree) {
-    mindmapNodes.value = [];
+    mindmapFlowNodes.value = [];
+    mindmapFlowEdges.value = [];
     return;
   }
-  const nodes: MindmapNode[] = [];
-  flattenTree(tree, 0, null, 450, 300, 0, 360, nodes);
-  mindmapNodes.value = nodes;
-  canvasPan.x = 0;
-  canvasPan.y = 0;
-  canvasScale.value = 1;
-};
 
-const resetMindmapLayout = () => {
-  buildMindmapFromData();
-};
-
-// Node drag
-const onNodeDragStart = (e: MouseEvent, node: MindmapNode) => {
-  draggingNodeId.value = node.id;
-  const rect = mindmapContainerRef.value?.getBoundingClientRect();
-  if (!rect) return;
-  dragOffset.x =
-    (e.clientX - rect.left - canvasPan.x) / canvasScale.value - node.x;
-  dragOffset.y =
-    (e.clientY - rect.top - canvasPan.y) / canvasScale.value - node.y;
-  e.preventDefault();
-};
-
-// Canvas pan / node move
-const onCanvasDragStart = (e: MouseEvent) => {
-  if (draggingNodeId.value) return;
-  isPanningCanvas.value = true;
-  panStart.x = e.clientX - canvasPan.x;
-  panStart.y = e.clientY - canvasPan.y;
-};
-
-const onCanvasDragMove = (e: MouseEvent) => {
-  if (draggingNodeId.value) {
-    const rect = mindmapContainerRef.value?.getBoundingClientRect();
-    if (!rect) return;
-    const node = mindmapNodes.value.find(n => n.id === draggingNodeId.value);
-    if (node) {
-      node.x =
-        (e.clientX - rect.left - canvasPan.x) / canvasScale.value -
-        dragOffset.x;
-      node.y =
-        (e.clientY - rect.top - canvasPan.y) / canvasScale.value - dragOffset.y;
-    }
-    return;
-  }
-  if (isPanningCanvas.value) {
-    canvasPan.x = e.clientX - panStart.x;
-    canvasPan.y = e.clientY - panStart.y;
-  }
-};
-
-const onCanvasDragEnd = () => {
-  draggingNodeId.value = null;
-  isPanningCanvas.value = false;
-};
-
-const onCanvasWheel = (e: WheelEvent) => {
-  const delta = e.deltaY > 0 ? -0.08 : 0.08;
-  canvasScale.value = Math.max(0.3, Math.min(2.5, canvasScale.value + delta));
+  const { nodes, edges } = buildMindmapFlow(tree);
+  mindmapFlowNodes.value = nodes;
+  mindmapFlowEdges.value = edges;
+  await nextTick();
+  fitMindmap();
 };
 
 const statusText = computed(() => {
   const s = taskData.value?.status;
   if (s === "processing") return "处理中";
+  if (s === "submitted") return "已提交";
   if (s === "pending") return "等待中";
   if (s === "failed") return "处理失败";
+  if (s === "cancelled") return "任务已取消";
   return s || "未知";
+});
+
+const statusMessage = computed(() => {
+  const status = taskData.value?.status;
+  if (status === "failed") return "本节视频分析失败";
+  if (status === "cancelled") return "本节视频分析任务已取消";
+  if (status === "submitted") return "任务已提交，等待开始分析";
+  if (status === "pending") return "任务正在排队";
+  return "正在分析中...";
 });
 
 // Tab 图标用 render function
@@ -744,6 +1449,7 @@ const normalizeLessonText = (value: string) => {
   return String(value || "")
     .toLowerCase()
     .trim()
+    .replace(/^.*\//, "")
     .replace(/\.[a-z0-9]{2,6}$/i, "")
     .replace(/[\s_\-—–()（）\[\]【】《》:：'"`·]/g, "")
     .replace(/^第?\d+(\.\d+)?[章节课讲]?/, "");
@@ -751,6 +1457,14 @@ const normalizeLessonText = (value: string) => {
 
 const extractLessonIndex = (value: string): string | null => {
   const raw = String(value || "").toLowerCase();
+
+  // 1.1.1 / 1-1-1 / 1_1_1
+  const triple = raw.match(
+    /(\d{1,3})\s*[._\-]\s*(\d{1,3})\s*[._\-]\s*(\d{1,3})/
+  );
+  if (triple) {
+    return `${Number(triple[1])}.${Number(triple[2])}.${Number(triple[3])}`;
+  }
 
   // 1.2 / 1-2 / 1_2
   const pair = raw.match(/(\d{1,2})\s*[._\-]\s*(\d{1,2})/);
@@ -765,13 +1479,31 @@ const extractLessonIndex = (value: string): string | null => {
   return null;
 };
 
+const normalizeVideoPath = (value: string) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    return decodeURIComponent(new URL(raw).pathname).replace(/^\/+/, "");
+  } catch {
+    return raw.split(/[?#]/, 1)[0].replace(/^\/+/, "");
+  }
+};
+
 const isLikelySameLesson = (fileName: string, hourTitle: string) => {
   const fileIndex = extractLessonIndex(fileName);
   const hourIndex = extractLessonIndex(hourTitle);
 
-  // 如果两边都能提取出课时序号，则必须完全一致
+  // 优先匹配三级课时编号；旧文件名只有两级编号时兼容前两级。
   if (fileIndex && hourIndex) {
-    return fileIndex === hourIndex;
+    if (fileIndex === hourIndex) return true;
+    const fileParts = fileIndex.split(".");
+    const hourParts = hourIndex.split(".");
+    if (fileParts.length !== hourParts.length) {
+      return (
+        fileParts.slice(0, 2).join(".") === hourParts.slice(0, 2).join(".")
+      );
+    }
+    return false;
   }
 
   const fileNorm = normalizeLessonText(fileName);
@@ -784,164 +1516,501 @@ const isLikelySameLesson = (fileName: string, hourTitle: string) => {
   );
 };
 
+const pickPreferredLessonTask = <
+  T extends { fileName: string; status: string }
+>(
+  tasks: T[]
+) => {
+  const currentPath = normalizeVideoPath(props.currentHourFileUrl || "");
+  const tasksWithPath = currentPath
+    ? tasks.filter(task => {
+        const candidate = normalizeVideoPath(
+          String((task as T & { filePath?: string }).filePath || "")
+        );
+        if (!candidate) return false;
+        return (
+          candidate === currentPath ||
+          candidate.endsWith(`/${currentPath}`) ||
+          currentPath.endsWith(`/${candidate}`)
+        );
+      })
+    : [];
+  const titleMatches = props.currentHourTitle
+    ? tasks.filter(task =>
+        isLikelySameLesson(task.fileName || "", props.currentHourTitle || "")
+      )
+    : tasks;
+  const matching = tasksWithPath.length ? tasksWithPath : titleMatches;
+  const statusOrder = [
+    "completed",
+    "processing",
+    "submitted",
+    "pending",
+    "failed",
+    "cancelled"
+  ];
+
+  for (const status of statusOrder) {
+    const task = matching.find(item => item.status === status);
+    if (task) return task;
+  }
+  return matching[0] || null;
+};
+
+const parseArrayValue = (value: unknown): unknown[] => {
+  const parsed = parseMaybeJson(value);
+  return Array.isArray(parsed) ? parsed : [];
+};
+
+const normalizeChapterItems = (value: unknown): ChapterItem[] =>
+  parseArrayValue(value)
+    .map(item => {
+      const source = item as Record<string, unknown>;
+      return {
+        title: String(source?.title || ""),
+        summary: String(source?.summary || ""),
+        startTime: Number(source?.startTime ?? source?.start_time ?? 0),
+        endTime: Number(source?.endTime ?? source?.end_time ?? 0)
+      };
+    })
+    .filter(item => item.title || item.summary);
+
+const normalizeQaItems = (value: unknown): QaItem[] =>
+  parseArrayValue(value)
+    .map(item => {
+      const source = item as Record<string, unknown>;
+      return {
+        question: String(source?.question || ""),
+        answer: String(source?.answer || "")
+      };
+    })
+    .filter(item => item.question || item.answer);
+
+const normalizePptPages = (value: unknown): PptPage[] =>
+  parseArrayValue(value)
+    .map(item => {
+      const source = item as Record<string, unknown>;
+      return {
+        pageIndex: Number(source?.pageIndex ?? source?.page_index ?? 0),
+        imageUrl: String(source?.imageUrl ?? source?.image_url ?? ""),
+        summary: String(source?.summary || ""),
+        startTime: Number(source?.startTime ?? source?.start_time ?? 0),
+        endTime: Number(source?.endTime ?? source?.end_time ?? 0)
+      };
+    })
+    .filter(item => item.imageUrl || item.summary);
+
+const mergeAnalysisResults = (
+  task: VideoAnalyzeTask,
+  moduleResult?: VideoAnalyzeModuleResult | null,
+  fullResult?: VideoAnalyzeFullResult | null
+): VideoAnalyzeModuleResult => {
+  const full = (fullResult || {}) as any;
+  const summaryText =
+    typeof full.summary === "string"
+      ? full.summary
+      : String(full.summary?.text || "");
+  const transcriptionText = String(
+    full.transcriptionText || full.transcription?.text || ""
+  );
+  const chapters = normalizeChapterItems(
+    full.chaptersJson || full.chapters || full.chapterList
+  );
+  const qaItems = normalizeQaItems(full.qaJson || full.qaItems || full.qaList);
+  const pptPages = normalizePptPages(full.pptJson || full.pptPages);
+  const normalizedMindMap = normalizeMindmapPayload(fullResult);
+
+  const merged: VideoAnalyzeModuleResult = {
+    ...(moduleResult || ({} as VideoAnalyzeModuleResult)),
+    taskId: moduleResult?.taskId || full.taskId || task.taskId,
+    status: moduleResult?.status || full.status || task.status,
+    courseId: Number(moduleResult?.courseId || full.courseId || task.courseId),
+    chapterId: Number(
+      moduleResult?.chapterId || full.chapterId || task.chapterId
+    ),
+    fileName: moduleResult?.fileName || full.fileName || task.fileName,
+    createdAt: moduleResult?.createdAt || full.createdAt || task.createdAt,
+    completedAt:
+      moduleResult?.completedAt || full.completedAt || task.completedAt,
+    schemaVersion: moduleResult?.schemaVersion || "videoAnalysis.v1",
+    modules: moduleResult?.modules?.length
+      ? moduleResult.modules
+      : allTabs.map(tab => tab.key),
+    moduleStatus: { ...(moduleResult?.moduleStatus || {}) }
+  };
+
+  if (!merged.summary?.text && summaryText) {
+    merged.summary = { text: summaryText };
+  }
+  if (!merged.transcription?.text && transcriptionText) {
+    merged.transcription = { text: transcriptionText };
+  }
+  if (!merged.chapters?.length && chapters.length) merged.chapters = chapters;
+  if (!merged.qaItems?.length && qaItems.length) merged.qaItems = qaItems;
+  if (!merged.pptPages?.length && pptPages.length) merged.pptPages = pptPages;
+
+  const moduleMindMap = normalizeMindmapPayload(moduleResult);
+  const mindMap = moduleMindMap || normalizedMindMap;
+  if (mindMap) {
+    merged.mindMap = {
+      ...merged.mindMap,
+      ...mindMap
+    };
+  }
+
+  return merged;
+};
+
 const requestSeq = ref(0);
+let requestController: AbortController | null = null;
+let taskPollTimer: ReturnType<typeof setTimeout> | null = null;
+
+const clearTaskPollTimer = () => {
+  if (!taskPollTimer) return;
+  clearTimeout(taskPollTimer);
+  taskPollTimer = null;
+};
 
 const isStaleRequest = (
   requestId: number,
   requestCourseId: number,
-  requestChapterId: number
+  requestChapterId: number,
+  requestHourId: number
 ) => {
   return (
     requestId !== requestSeq.value ||
     requestCourseId !== props.courseId ||
-    requestChapterId !== props.chapterId
+    requestChapterId !== props.chapterId ||
+    requestHourId !== Number(props.currentHourId || 0)
   );
 };
 
-const fetchAnalysis = async () => {
-  if (!props.courseId || !props.chapterId) return;
+const asFrontendTask = (task: VideoAnalysisTask): VideoAnalyzeTask => ({
+  taskId: task.taskId,
+  status: task.status,
+  progress: task.progress,
+  message: task.message,
+  courseId: Number(task.courseId),
+  chapterId: Number(task.chapterId),
+  filePath: task.filePath,
+  fileName: task.fileName,
+  createdAt: task.createdAt,
+  completedAt: task.completedAt
+});
 
+const loadCurrentLessonTask = async (
+  courseId: number,
+  chapterId: number,
+  hourId: number,
+  signal: AbortSignal
+): Promise<VideoAnalyzeTask | null> => {
+  // 管理端列表接口会返回本章全部视频任务；前端据此为当前课时选择唯一 taskId。
+  if (hasManageAccess()) {
+    try {
+      const listRes = await getVideoAnalysisList({ courseId, chapterId });
+      if (signal.aborted) return null;
+      const matched = pickPreferredLessonTask(listRes.data?.tasks || []);
+      if (matched) return asFrontendTask(matched);
+    } catch {
+      // 管理端列表不可用时继续使用前台任务接口。
+    }
+  }
+
+  if (signal.aborted) return null;
+
+  const taskRes = await getVideoAnalyzeTask(
+    {
+      courseId,
+      chapterId,
+      hourId
+    },
+    signal
+  );
+  const task = taskRes.data;
+  if (!task) return null;
+
+  const returnedCourseId = Number(task.courseId);
+  const returnedChapterId = Number(task.chapterId);
+  const returnedHourId = Number(task.hourId || 0);
+  if (returnedHourId <= 0) {
+    // 旧服务会忽略 hourId 并返回章内任一任务。仅在文件名/路径能确认
+    // 属于当前课时时展示，否则按本节无任务处理，避免把别节结果串过来。
+    const legacyMatchedTask = pickPreferredLessonTask([task]);
+    if (!legacyMatchedTask) {
+      emptyMessage.value = "本节视频分析结果暂不可用";
+      console.warn(
+        "[VideoAnalysisPanel] legacy task response does not match current hour",
+        {
+          requestedHourId: hourId,
+          currentHourTitle: props.currentHourTitle,
+          returnedFileName: task.fileName
+        }
+      );
+      return null;
+    }
+    return legacyMatchedTask;
+  }
+  if (
+    returnedCourseId !== courseId ||
+    returnedChapterId !== chapterId ||
+    returnedHourId !== hourId
+  ) {
+    throw new VideoAnalysisScopeError("返回的视频分析任务不属于当前课时");
+  }
+
+  return task;
+};
+
+const isCancelledRequest = (error: unknown) => {
+  const source = error as any;
+  return (
+    source?.code === "ERR_CANCELED" ||
+    source?.name === "CanceledError" ||
+    source?.isCancelRequest === true
+  );
+};
+
+const applyTaskRequestError = (error: unknown) => {
+  const source = error as any;
+  const status = Number(source?.response?.status || 0);
+  const payload = source?.response?.data as
+    | { code?: number; msg?: string }
+    | undefined;
+  const message = String(payload?.msg || "").trim();
+
+  if (error instanceof VideoAnalysisScopeError) {
+    taskError.value = {
+      message: error.message,
+      retryable: false
+    };
+    return;
+  }
+
+  if (status === 404) {
+    emptyMessage.value = message || "本节暂无视频分析任务";
+    return;
+  }
+
+  if (status === 403) {
+    taskError.value = {
+      message: message || "无权查看该课程的视频分析结果",
+      retryable: false
+    };
+    return;
+  }
+
+  if (status === 400 || status === 409) {
+    taskError.value = {
+      message: message || "当前课时与视频分析任务绑定异常",
+      retryable: false
+    };
+    return;
+  }
+
+  taskError.value = {
+    message: message || "视频分析加载失败，请稍后重试",
+    retryable: true
+  };
+};
+
+interface FetchAnalysisOptions {
+  background?: boolean;
+}
+
+const fetchAnalysis = async (options: FetchAnalysisOptions = {}) => {
+  clearTaskPollTimer();
   const requestCourseId = props.courseId;
   const requestChapterId = props.chapterId;
+  const requestHourId = Number(props.currentHourId || 0);
   const requestId = ++requestSeq.value;
+  const background = options.background === true && Boolean(taskData.value);
+  requestController?.abort();
+  requestController = null;
 
-  loading.value = true;
-  taskData.value = null;
-  moduleData.value = null;
+  loading.value = !background;
+  if (!background) {
+    taskData.value = null;
+    moduleData.value = null;
+  }
+  taskError.value = null;
+  emptyMessage.value = "本节暂无视频分析任务";
+
+  if (requestCourseId <= 0 || requestChapterId <= 0 || requestHourId <= 0) {
+    loading.value = false;
+    if (props.currentHourTitle && requestHourId <= 0) {
+      taskError.value = {
+        message: "当前视频课时缺少 hourId，无法查询视频分析",
+        retryable: false
+      };
+    }
+    return;
+  }
+
+  const controller = new AbortController();
+  requestController = controller;
 
   try {
-    // 1. 获取任务
-    const taskRes = await getVideoAnalyzeTask({
-      courseId: requestCourseId,
-      chapterId: requestChapterId
-    });
-
-    if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-      return;
-    }
-
-    if (!taskRes.data) {
-      taskData.value = null;
-      return;
-    }
+    const task = await loadCurrentLessonTask(
+      requestCourseId,
+      requestChapterId,
+      requestHourId,
+      controller.signal
+    );
 
     if (
-      taskRes.data.courseId &&
-      taskRes.data.chapterId &&
-      (taskRes.data.courseId !== requestCourseId ||
-        taskRes.data.chapterId !== requestChapterId)
-    ) {
-      console.warn("[VideoAnalysisPanel] task course/chapter mismatch", {
+      isStaleRequest(
+        requestId,
         requestCourseId,
         requestChapterId,
-        taskCourseId: taskRes.data.courseId,
-        taskChapterId: taskRes.data.chapterId,
-        taskId: taskRes.data.taskId
-      });
+        requestHourId
+      )
+    ) {
       return;
     }
 
-    // 仅做宽松一致性校验，不再因文件名格式差异直接拦截展示
+    if (!task) return;
+    taskData.value = task;
+
+    if (String(task.status).toLowerCase() !== "completed" || !task.taskId) {
+      if (["processing", "submitted", "pending"].includes(task.status)) {
+        taskPollTimer = setTimeout(() => {
+          void fetchAnalysis({ background: true });
+        }, 8000);
+      }
+      return;
+    }
+
+    const [moduleResult, fullResult] = await Promise.allSettled([
+      getVideoAnalyzeModules(
+        {
+          taskId: task.taskId,
+          modules: "summary,chapters,qa,transcription,meeting,mindmap,ppt"
+        },
+        controller.signal
+      ),
+      getVideoAnalyzeResult({ taskId: task.taskId }, controller.signal)
+    ]);
+
     if (
-      props.currentHourTitle &&
-      taskRes.data.fileName &&
-      !isLikelySameLesson(taskRes.data.fileName, props.currentHourTitle)
+      isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
     ) {
-      console.warn("[VideoAnalysisPanel] fileName/title mismatch", {
-        fileName: taskRes.data.fileName,
-        currentHourTitle: props.currentHourTitle
-      });
+      return;
+    }
+
+    const moduleDataResult =
+      moduleResult.status === "fulfilled" ? moduleResult.value.data : null;
+    const fullDataResult =
+      fullResult.status === "fulfilled" ? fullResult.value.data : null;
+
+    if (!moduleDataResult && !fullDataResult) {
+      throw (
+        (moduleResult.status === "rejected" && moduleResult.reason) ||
+        (fullResult.status === "rejected" && fullResult.reason) ||
+        new Error("视频分析结果为空")
+      );
+    }
+
+    moduleData.value = mergeAnalysisResults(
+      task,
+      moduleDataResult,
+      fullDataResult
+    );
+
+    await hydrateMindmapTree(
+      requestId,
+      requestCourseId,
+      requestChapterId,
+      requestHourId
+    );
+
+    if (
+      !isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
+    ) {
+      await nextTick();
+      await buildMindmapFromData();
+    }
+  } catch (error) {
+    if (
+      !isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      ) &&
+      !isCancelledRequest(error)
+    ) {
       taskData.value = null;
       moduleData.value = null;
-      return;
-    }
-
-    taskData.value = taskRes.data;
-
-    // 2. 如果任务已完成，获取模块化结果
-    if (taskRes.data.status === "completed" && taskRes.data.taskId) {
-      const moduleRes = await getVideoAnalyzeModules({
-        taskId: taskRes.data.taskId,
-        modules: "summary,chapters,qa,transcription,meeting,mindmap,ppt"
-      });
-
-      if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-        return;
-      }
-
-      if (moduleRes.data) {
-        if (
-          moduleRes.data.courseId &&
-          moduleRes.data.chapterId &&
-          (moduleRes.data.courseId !== requestCourseId ||
-            moduleRes.data.chapterId !== requestChapterId)
-        ) {
-          console.warn("[VideoAnalysisPanel] modules course/chapter mismatch", {
-            requestCourseId,
-            requestChapterId,
-            moduleCourseId: moduleRes.data.courseId,
-            moduleChapterId: moduleRes.data.chapterId,
-            taskId: taskRes.data.taskId
-          });
-          return;
-        }
-
-        // 兼容后端直接返回 mindMapUrl 字符串而非 mindMap 对象的情况
-        const raw = moduleRes.data as any;
-        if (!moduleRes.data.mindMap?.url && raw.mindMapUrl) {
-          moduleRes.data.mindMap = { url: raw.mindMapUrl };
-        }
-        moduleData.value = moduleRes.data;
-        nextTick(() => buildMindmapFromData());
-      }
-
-      // 如果模块化接口未返回思维导图，尝试从完整结果接口获取
-      if (!moduleData.value?.mindMap?.url) {
-        try {
-          const fullRes = await getVideoAnalyzeResult({
-            taskId: taskRes.data.taskId
-          });
-
-          if (isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-            return;
-          }
-
-          if (fullRes.data?.mindMapUrl) {
-            if (!moduleData.value) {
-              moduleData.value = {} as VideoAnalyzeModuleResult;
-            }
-            moduleData.value.mindMap = { url: fullRes.data.mindMapUrl };
-          }
-        } catch {
-          // 忽略回退请求失败
-        }
-      }
-    }
-  } catch {
-    if (!isStaleRequest(requestId, requestCourseId, requestChapterId)) {
-      taskData.value = null;
+      applyTaskRequestError(error);
+      console.warn("[VideoAnalysisPanel] load lesson analysis failed", error);
     }
   } finally {
-    if (!isStaleRequest(requestId, requestCourseId, requestChapterId)) {
+    if (
+      !isStaleRequest(
+        requestId,
+        requestCourseId,
+        requestChapterId,
+        requestHourId
+      )
+    ) {
       loading.value = false;
+      if (requestController === controller) requestController = null;
     }
   }
 };
 
 watch(
-  () => [props.courseId, props.chapterId, props.currentHourTitle],
+  () => [
+    props.courseId,
+    props.chapterId,
+    props.currentHourId,
+    props.currentHourTitle,
+    props.currentHourFileUrl
+  ],
   () => {
     activeTab.value = "chapters";
     fetchAnalysis();
   },
   { immediate: true }
 );
+
+watch(
+  () => activeTab.value,
+  tab => {
+    if (tab === "mindmap" && mindmapFlowNodes.value.length) {
+      fitMindmap();
+    }
+  }
+);
+
+watch(mindmapResourceUrl, () => {
+  mindmapResourceLoadError.value = false;
+});
+
+onBeforeUnmount(() => {
+  requestSeq.value += 1;
+  clearTaskPollTimer();
+  requestController?.abort();
+  requestController = null;
+});
 </script>
 
 <style scoped lang="scss">
 $primary: #6366f1;
 $primary-light: #818cf8;
 $accent: #f43f5e;
+$ai-pink: #b94f62;
+$ai-pink-light: #e68a99;
 $success: #10b981;
 
 $gray-50: #f8fafc;
@@ -1015,6 +2084,46 @@ $radius-lg: 16px;
 
   .dark & {
     color: $gray-500;
+  }
+}
+
+/* 请求错误态 */
+.panel-error {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #dc2626;
+  font-size: 14px;
+  text-align: center;
+
+  .error-icon {
+    opacity: 0.72;
+  }
+
+  .retry-button {
+    padding: 6px 14px;
+    color: #fff;
+    font-size: 13px;
+    background: $primary;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background: #4f46e5;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $primary-light;
+      outline-offset: 2px;
+    }
+  }
+
+  .dark & {
+    color: #f87171;
   }
 }
 
@@ -1208,14 +2317,14 @@ $radius-lg: 16px;
     transition: all 0.2s ease;
 
     &:hover {
-      color: $primary;
-      background: rgb(99 102 241 / 5%);
+      color: $ai-pink;
+      background: rgb(185 79 98 / 6%);
     }
 
     &.active {
-      color: $primary;
-      background: rgb(99 102 241 / 10%);
-      border-color: rgb(99 102 241 / 20%);
+      color: $ai-pink;
+      background: rgb(185 79 98 / 10%);
+      border-color: rgb(185 79 98 / 20%);
       font-weight: 600;
     }
 
@@ -1223,14 +2332,14 @@ $radius-lg: 16px;
       color: $gray-400;
 
       &:hover {
-        color: $primary-light;
-        background: rgb(99 102 241 / 10%);
+        color: $ai-pink-light;
+        background: rgb(230 138 153 / 12%);
       }
 
       &.active {
-        color: $primary-light;
-        background: rgb(99 102 241 / 15%);
-        border-color: rgb(99 102 241 / 25%);
+        color: $ai-pink-light;
+        background: rgb(230 138 153 / 16%);
+        border-color: rgb(230 138 153 / 24%);
       }
     }
   }
@@ -1262,8 +2371,9 @@ $radius-lg: 16px;
     padding: 4px 10px;
     font-size: 11px;
     font-weight: 600;
-    color: $accent;
-    background: rgb(244 63 94 / 10%);
+    color: $ai-pink;
+    background: rgb(240 228 227 / 74%);
+    border: 1px solid rgb(185 79 98 / 12%);
     border-radius: 20px;
   }
 
@@ -1284,14 +2394,17 @@ $radius-lg: 16px;
 /* 章节速览 */
 .chapter-item {
   display: flex;
-  gap: 14px;
-  padding: 14px 0;
+  gap: 16px;
+  padding: 14px 12px;
+  margin: 0 -12px;
   cursor: pointer;
+  overflow: hidden;
   border-bottom: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 12px;
   transition: background 0.15s;
 
   &:hover {
-    background: rgb(99 102 241 / 3%);
+    background: rgb(240 228 227 / 16%);
   }
 
   &:last-child {
@@ -1302,14 +2415,23 @@ $radius-lg: 16px;
     border-bottom-color: rgb(255 255 255 / 5%);
   }
 
+  .chapter-time {
+    flex: 0 0 148px;
+    padding-top: 1px;
+  }
+
   .time-badge {
-    display: inline-block;
-    padding: 2px 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 112px;
+    padding: 3px 8px;
     font-size: 12px;
     font-weight: 600;
     font-family: monospace;
-    color: $primary;
-    background: rgb(99 102 241 / 10%);
+    color: $ai-pink;
+    background: rgb(240 228 227 / 76%);
+    border: 1px solid rgb(185 79 98 / 10%);
     border-radius: 6px;
     white-space: nowrap;
   }
@@ -1348,17 +2470,6 @@ $radius-lg: 16px;
     .dark & {
       color: $gray-500;
       background: rgb(255 255 255 / 5%);
-    }
-  }
-
-  .time-range {
-    font-size: 11px;
-    color: $gray-400;
-    font-family: monospace;
-    margin-left: 2px;
-
-    .dark & {
-      color: $gray-500;
     }
   }
 }
@@ -1466,13 +2577,14 @@ $radius-lg: 16px;
 .keyword-tag {
   padding: 4px 12px;
   font-size: 13px;
-  color: $primary;
-  background: rgb(99 102 241 / 10%);
+  color: $ai-pink;
+  background: rgb(240 228 227 / 76%);
+  border: 1px solid rgb(185 79 98 / 10%);
   border-radius: 14px;
 
   .dark & {
-    color: $primary-light;
-    background: rgb(99 102 241 / 15%);
+    color: $ai-pink-light;
+    background: rgb(230 138 153 / 16%);
   }
 }
 
@@ -1496,28 +2608,56 @@ $radius-lg: 16px;
 .mindmap-block {
   .mindmap-toolbar {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
     margin-bottom: 12px;
+  }
+
+  .mindmap-tools-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
 
   .mindmap-action {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
+    justify-content: center;
+    gap: 5px;
+    min-height: 30px;
+    padding: 6px 11px;
     font-size: 12px;
+    font-weight: 600;
     color: $gray-500;
-    background: $gray-50;
+    background: #fff;
     border: 1px solid $gray-200;
     border-radius: 8px;
     cursor: pointer;
     text-decoration: none;
     transition: all 0.15s;
 
+    &.icon-only {
+      width: 30px;
+      padding: 0;
+    }
+
     &:hover {
-      color: $primary;
-      border-color: $primary;
-      background: rgb(99 102 241 / 5%);
+      color: $ai-pink;
+      border-color: rgb(185 79 98 / 34%);
+      background: rgb(240 228 227 / 42%);
+    }
+
+    &:disabled {
+      color: $gray-300;
+      cursor: not-allowed;
+      background: $gray-50;
+      border-color: $gray-200;
+    }
+
+    &.mindmap-source {
+      margin-left: auto;
     }
 
     .dark & {
@@ -1526,8 +2666,14 @@ $radius-lg: 16px;
       border-color: rgb(255 255 255 / 10%);
 
       &:hover {
-        color: $primary-light;
-        border-color: $primary-light;
+        color: $ai-pink-light;
+        border-color: $ai-pink-light;
+      }
+
+      &:disabled {
+        color: rgb(255 255 255 / 20%);
+        background: rgb(255 255 255 / 4%);
+        border-color: rgb(255 255 255 / 8%);
       }
     }
   }
@@ -1535,133 +2681,168 @@ $radius-lg: 16px;
   .mindmap-canvas {
     position: relative;
     width: 100%;
-    height: 520px;
+    height: 540px;
     overflow: hidden;
     border: 1px solid $gray-200;
-    border-radius: $radius-md;
-    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #fff1f2 100%);
-    cursor: grab;
-    user-select: none;
-
-    &:active {
-      cursor: grabbing;
-    }
+    border-radius: 12px;
+    background: #f8fafc;
 
     .dark & {
       border-color: rgb(255 255 255 / 8%);
-      background: linear-gradient(
-        135deg,
-        rgb(30 30 60 / 80%) 0%,
-        rgb(40 20 60 / 60%) 100%
-      );
+      background: rgb(15 23 42 / 55%);
     }
   }
 
-  .mindmap-svg {
-    width: 900px;
-    height: 600px;
-    transform-origin: 0 0;
+  .mindmap-viewer {
+    width: 100%;
+    height: 100%;
   }
 
-  .mindmap-edge {
-    stroke: $gray-300;
-    stroke-width: 2;
-    stroke-linecap: round;
-    transition: all 0.15s ease;
+  .mindmap-viewer :deep(.vue-flow__pane),
+  .mindmap-viewer :deep(.vue-flow__renderer) {
+    background:
+      linear-gradient(rgb(148 163 184 / 7%) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(148 163 184 / 7%) 1px, transparent 1px),
+      #f8fafc;
+    background-size: 26px 26px;
 
-    &.edge-depth-1 {
-      stroke: $primary;
-      stroke-width: 2.5;
-      opacity: 0.5;
+    .dark & {
+      background:
+        linear-gradient(rgb(255 255 255 / 6%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(255 255 255 / 6%) 1px, transparent 1px),
+        rgb(15 23 42 / 55%);
+      background-size: 26px 26px;
     }
-    &.edge-depth-2 {
-      stroke: $primary-light;
-      stroke-width: 2;
-      opacity: 0.4;
+  }
+
+  .mindmap-viewer :deep(.vue-flow__node) {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .mindmap-flow-node {
+    position: relative;
+    box-sizing: border-box;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.45;
+    color: #1f2a68;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    background: rgb(255 255 255 / 96%);
+    border: 1px solid rgb(148 163 184 / 34%);
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgb(15 23 42 / 8%);
+
+    &.depth-0 {
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 750;
+      color: #312e81;
+      background: #eef2ff;
+      border-color: rgb(99 102 241 / 32%);
     }
-    &.edge-depth-3 {
-      stroke: $gray-300;
-      stroke-width: 1.5;
-      opacity: 0.35;
+
+    &.depth-1 {
+      color: #27316f;
+      background: #fff;
+      border-color: rgb(99 102 241 / 24%);
+    }
+
+    &.depth-2,
+    &.depth-3,
+    &.depth-4 {
+      font-size: 12.5px;
+      color: #334155;
+      background: #fff;
+      border-color: rgb(148 163 184 / 28%);
     }
 
     .dark & {
-      stroke: rgb(255 255 255 / 15%);
-      &.edge-depth-1 {
-        stroke: $primary-light;
-        opacity: 0.4;
-      }
-      &.edge-depth-2 {
-        stroke: rgb(167 139 250 / 40%);
+      color: rgb(226 232 240 / 94%);
+      background: rgb(15 23 42 / 92%);
+      border-color: rgb(255 255 255 / 13%);
+      box-shadow: 0 10px 22px rgb(0 0 0 / 24%);
+
+      &.depth-0 {
+        color: #eef2ff;
+        background: rgb(49 46 129 / 84%);
+        border-color: rgb(129 140 248 / 32%);
       }
     }
   }
 
-  .mindmap-node {
-    cursor: grab;
-    transition: transform 0.08s ease;
+  .mindmap-viewer :deep(.vue-flow__handle) {
+    width: 1px;
+    min-width: 1px;
+    height: 1px;
+    min-height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
 
-    &.node-dragging {
-      cursor: grabbing;
-      .node-circle {
-        filter: drop-shadow(0 6px 20px rgb(99 102 241 / 40%));
-      }
-    }
+  .mindmap-viewer :deep(.vue-flow__edge-path) {
+    stroke: rgb(99 102 241 / 38%);
+    stroke-width: 2.4;
+  }
 
-    &.node-depth-0 .node-circle {
-      fill: $primary;
-      stroke: #fff;
-      stroke-width: 3;
-      filter: drop-shadow(0 4px 12px rgb(99 102 241 / 35%));
-    }
-    &.node-depth-0 .node-label {
-      fill: #fff;
-      font-size: 13px;
-      font-weight: 700;
-    }
+  .mindmap-viewer :deep(.vue-flow__edge.selected .vue-flow__edge-path) {
+    stroke: rgb(99 102 241 / 55%);
+  }
 
-    &.node-depth-1 .node-circle {
-      fill: #818cf8;
-      stroke: #fff;
-      stroke-width: 2;
-      filter: drop-shadow(0 3px 8px rgb(129 140 248 / 30%));
-    }
-    &.node-depth-1 .node-label {
-      fill: #fff;
-      font-size: 11px;
+  .mindmap-resource-stage {
+    width: 100%;
+    height: 100%;
+    padding: 18px;
+  }
+
+  .mindmap-resource-image,
+  .mindmap-resource-frame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgb(148 163 184 / 30%);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgb(15 23 42 / 10%);
+  }
+
+  .mindmap-resource-image {
+    object-fit: contain;
+    pointer-events: none;
+  }
+
+  .mindmap-resource-frame {
+    pointer-events: auto;
+  }
+
+  .mindmap-resource-error {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: $gray-500;
+    background: #fff;
+    border: 1px dashed $gray-300;
+    border-radius: 14px;
+
+    a {
+      color: $primary;
       font-weight: 600;
-    }
-
-    &.node-depth-2 .node-circle {
-      fill: #c4b5fd;
-      stroke: #fff;
-      stroke-width: 1.5;
-      filter: drop-shadow(0 2px 6px rgb(196 181 253 / 35%));
-    }
-    &.node-depth-2 .node-label {
-      fill: $gray-700;
-      font-size: 10px;
-      font-weight: 500;
-    }
-
-    &:hover .node-circle {
-      filter: drop-shadow(0 4px 16px rgb(99 102 241 / 50%)) brightness(1.1);
+      text-decoration: none;
     }
 
     .dark & {
-      &.node-depth-0 .node-circle {
-        stroke: rgb(255 255 255 / 20%);
-      }
-      &.node-depth-1 .node-circle {
-        stroke: rgb(255 255 255 / 15%);
-      }
-      &.node-depth-2 .node-circle {
-        fill: rgb(167 139 250 / 60%);
-        stroke: rgb(255 255 255 / 10%);
-      }
-      &.node-depth-2 .node-label {
-        fill: rgb(255 255 255 / 80%);
-      }
+      color: $gray-400;
+      background: rgb(15 23 42 / 82%);
+      border-color: rgb(255 255 255 / 16%);
     }
   }
 }
@@ -1670,13 +2851,16 @@ $radius-lg: 16px;
 .ppt-item {
   display: flex;
   gap: 14px;
-  padding: 12px 0;
+  padding: 12px;
+  margin: 0 -12px;
   cursor: pointer;
+  overflow: hidden;
   border-bottom: 1px solid rgb(0 0 0 / 5%);
+  border-radius: 12px;
   transition: background 0.15s;
 
   &:hover {
-    background: rgb(99 102 241 / 3%);
+    background: rgb(240 228 227 / 16%);
   }
 
   &:last-child {
@@ -1736,6 +2920,96 @@ $radius-lg: 16px;
 
     .dark & {
       color: $gray-400;
+    }
+  }
+}
+
+@media (width <= 767px) {
+  .video-analysis-panel {
+    min-width: 0;
+  }
+
+  .retry-button,
+  .module-tabs .tab-btn,
+  .mindmap-block .mindmap-action {
+    min-height: 44px;
+  }
+
+  .result-header {
+    min-width: 0;
+  }
+
+  .result-meta,
+  .result-times {
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .file-name-tag {
+    max-width: 100%;
+  }
+
+  .module-tabs {
+    margin-inline: -4px;
+    padding-inline: 4px;
+    scroll-padding-inline: 4px;
+  }
+
+  .chapter-item {
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 4px;
+    margin: 0;
+
+    .chapter-time {
+      flex: none;
+      width: 100%;
+      padding-top: 0;
+    }
+
+    .time-badge {
+      min-width: 0;
+      min-height: 32px;
+    }
+
+    .chapter-info {
+      min-width: 0;
+    }
+  }
+
+  .mindmap-block {
+    .mindmap-toolbar,
+    .mindmap-tools-group {
+      align-items: stretch;
+    }
+
+    .mindmap-tools-group {
+      display: flex;
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+    }
+
+    .mindmap-action {
+      flex: 1 1 auto;
+      padding-inline: 12px;
+
+      &.icon-only {
+        width: 44px;
+      }
+
+      &.mindmap-source {
+        flex-basis: 100%;
+        margin-left: 0;
+      }
+    }
+
+    .mindmap-canvas {
+      height: min(64vh, 480px);
+      min-height: 360px;
+    }
+
+    .mindmap-resource-stage {
+      padding: 8px;
     }
   }
 }

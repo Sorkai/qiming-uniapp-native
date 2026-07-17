@@ -97,7 +97,6 @@ const itemRefs = new Map<string, HTMLElement>();
 const isMobileView = ref(false);
 const mobileCollapsed = ref(false);
 const mobileExpandAnchor = ref(0);
-let activeScrollTarget: Window | HTMLElement | null = null;
 
 // Emits
 defineEmits<{
@@ -106,40 +105,11 @@ defineEmits<{
 
 const isMobileViewport = () => isMobileView.value;
 
-const resolveScrollTarget = (): Window | HTMLElement => {
-  if (document.documentElement.classList.contains("qiming-native-webview")) {
-    const appRoot = document.getElementById("app");
-    if (appRoot) return appRoot;
-  }
-
-  return window;
-};
-
-const getCurrentScrollTop = () => {
-  const target = activeScrollTarget || resolveScrollTarget();
-
-  if (target instanceof HTMLElement) {
-    return target.scrollTop || 0;
-  }
-
-  return (
-    window.scrollY ||
-    document.documentElement.scrollTop ||
-    document.body.scrollTop ||
-    0
-  );
-};
-
-const bindScrollTarget = () => {
-  const nextTarget = resolveScrollTarget();
-  if (nextTarget === activeScrollTarget) return;
-
-  activeScrollTarget?.removeEventListener("scroll", handleWindowScroll);
-  activeScrollTarget = nextTarget;
-  activeScrollTarget.addEventListener("scroll", handleWindowScroll, {
-    passive: true
-  });
-};
+const getWindowScrollTop = () =>
+  window.scrollY ||
+  document.documentElement.scrollTop ||
+  document.body.scrollTop ||
+  0;
 
 const setItemRef = (key: string, el: HTMLDivElement | null) => {
   if (!key) return;
@@ -156,26 +126,16 @@ const ensureActiveItemVisible = () => {
 
   const containerRect = container.getBoundingClientRect();
   const activeRect = activeItem.getBoundingClientRect();
-  const isNative = document.documentElement.classList.contains(
-    "qiming-native-webview"
-  );
-  const edgeGap = 10;
-  let targetLeft = container.scrollLeft;
+  const overflowLeft = activeRect.left < containerRect.left;
+  const overflowRight = activeRect.right > containerRect.right;
 
-  if (props.activeMenu === "course-learn" || props.activeMenu === "mastery") {
-    targetLeft = 0;
-  } else if (activeRect.left < containerRect.left + edgeGap) {
-    targetLeft += activeRect.left - containerRect.left - edgeGap;
-  } else if (activeRect.right > containerRect.right - edgeGap) {
-    targetLeft += activeRect.right - containerRect.right + edgeGap;
-  } else {
-    return;
+  if (overflowLeft || overflowRight) {
+    activeItem.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest"
+    });
   }
-
-  container.scrollTo({
-    left: Math.max(0, targetLeft),
-    behavior: isNative ? "auto" : "smooth"
-  });
 };
 
 const updateViewportState = () => {
@@ -190,7 +150,7 @@ const updateViewportState = () => {
 const handleMobileScrollState = () => {
   if (!isMobileViewport()) return;
 
-  const scrollTop = getCurrentScrollTop();
+  const scrollTop = getWindowScrollTop();
 
   if (scrollTop <= MOBILE_TOP_RESET) {
     mobileCollapsed.value = false;
@@ -211,14 +171,13 @@ const handleMobileToggle = () => {
   if (!isMobileViewport()) return;
 
   mobileCollapsed.value = false;
-  mobileExpandAnchor.value = getCurrentScrollTop();
+  mobileExpandAnchor.value = getWindowScrollTop();
 
   nextTick(() => ensureActiveItemVisible());
 };
 
 const handleViewportResize = () => {
   updateViewportState();
-  bindScrollTarget();
   nextTick(() => ensureActiveItemVisible());
   handleMobileScrollState();
 };
@@ -249,32 +208,27 @@ const activeMenuItem = computed(
 watch(
   () => props.activeMenu,
   async () => {
-    if (isMobileViewport()) {
-      mobileCollapsed.value = false;
-      mobileExpandAnchor.value = getCurrentScrollTop();
-    }
-
     await nextTick();
     ensureActiveItemVisible();
+
+    if (isMobileViewport() && !mobileCollapsed.value) {
+      mobileExpandAnchor.value = getWindowScrollTop();
+    }
   },
   { immediate: true }
 );
 
 onMounted(() => {
   updateViewportState();
-  bindScrollTarget();
   window.addEventListener("resize", handleViewportResize, { passive: true });
-  nextTick(() => {
-    bindScrollTarget();
-    ensureActiveItemVisible();
-  });
+  window.addEventListener("scroll", handleWindowScroll, { passive: true });
+  nextTick(() => ensureActiveItemVisible());
   handleMobileScrollState();
 });
 
 onBeforeUnmount(() => {
-  activeScrollTarget?.removeEventListener("scroll", handleWindowScroll);
-  activeScrollTarget = null;
   window.removeEventListener("resize", handleViewportResize);
+  window.removeEventListener("scroll", handleWindowScroll);
 });
 </script>
 
@@ -291,7 +245,7 @@ onBeforeUnmount(() => {
 
 .layout-sidebar {
   position: fixed;
-  top: 80px;
+  top: calc(80px + var(--pure-safe-area-top, 0px));
   left: 10px;
   z-index: 100;
   width: 80px;
@@ -510,10 +464,10 @@ onBeforeUnmount(() => {
 /* 侧边栏样式优化 - 独立显示，与左右保持距离 */
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .layout-sidebar {
     --mobile-sidebar-easing: cubic-bezier(0.65, 0, 0.35, 1);
-    top: calc(72px + var(--pure-safe-area-top, 0px));
+    top: calc(88px + var(--pure-safe-area-top, 0px));
     right: 12px;
     left: 12px;
     z-index: 120;
@@ -697,9 +651,9 @@ onBeforeUnmount(() => {
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .layout-sidebar {
-    top: calc(82px + var(--pure-safe-area-top, 0px));
+    top: calc(86px + var(--pure-safe-area-top, 0px));
     right: 10px;
     left: 10px;
     height: 60px;
@@ -713,7 +667,6 @@ onBeforeUnmount(() => {
 
   .layout-sidebar-scroll {
     padding: 8px 10px;
-    scroll-padding-inline: 10px;
   }
 
   .layout-sidebar {

@@ -20,23 +20,21 @@ import {
 import {
   getMyPaperStatistics,
   getPaperList,
+  getPaperDetail,
+  createPaper as createPaperApi,
+  deletePaper as deletePaperApi,
   getPaperFolders,
   createPaperFolder,
   updatePaperFolder,
   deletePaperFolder,
   movePapersToFolder,
+  getCourseList,
+  getPaperStatusText,
+  getPaperStatusType,
+  PAPER_STATUS_OPTIONS,
   type PaperStatus,
   type PaperFolder
 } from "@/api/examPaper";
-import {
-  isNativeWebViewRuntime,
-  logNativeFallback
-} from "@/utils/nativeRuntime";
-import {
-  nativeDemoMyPaperFolders,
-  nativeDemoMyPaperList,
-  type NativeDemoMyPaperItem
-} from "@/views/exam-paper/nativeDemoMyPapers";
 
 // 导入 SVG 图标组件
 import IconDocument from "@/assets/home-icons/document.svg?component";
@@ -71,22 +69,9 @@ const pagination = reactive({
 const paperList = ref<any[]>([]);
 
 const loading = ref(false);
-const isUsingNativeDemoData = ref(false);
-const nativePaperList = ref<NativeDemoMyPaperItem[]>(
-  JSON.parse(JSON.stringify(nativeDemoMyPaperList))
-);
-const nativePaperFolders = ref<PaperFolder[]>(
-  JSON.parse(JSON.stringify(nativeDemoMyPaperFolders))
-);
 
 // 课程列表
-const courseList = ref([
-  { id: 1, name: "高等数学" },
-  { id: 2, name: "嵌入式 Linux" },
-  { id: 3, name: "计算机基础" },
-  { id: 4, name: "线性代数" },
-  { id: 5, name: "概率论" }
-]);
+const courseList = ref<Array<{ id: number; name: string }>>([]);
 
 // 统计数据
 const statistics = ref({
@@ -141,8 +126,6 @@ const getPaperUpdateTime = (paper: any) => {
   return paper.updateTime || paper.updatedAt || paper.createTime || "-";
 };
 
-const deepClone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
-
 // ==================== 文件夹相关状态 ====================
 const folderList = ref<PaperFolder[]>([]);
 const folderTreeData = computed(() => {
@@ -161,82 +144,9 @@ const moveDialogVisible = ref(false);
 const targetFolderId = ref<number | null>(null);
 const selectedPaperIds = ref<number[]>([]);
 
-const refreshNativePaperFolders = () => {
-  nativePaperFolders.value = nativePaperFolders.value.map(folder => ({
-    ...folder,
-    paperCount: nativePaperList.value.filter(
-      paper => paper.folderId === folder.id
-    ).length
-  }));
-};
-
-const applyNativePaperStatistics = () => {
-  statistics.value = {
-    total: nativePaperList.value.length,
-    published: nativePaperList.value.filter(paper => paper.status === 1).length,
-    draft: nativePaperList.value.filter(paper => paper.status === 0).length,
-    recent: nativePaperList.value.filter(paper =>
-      String(paper.updateTime || paper.createTime || "").startsWith("2026-06")
-    ).length
-  };
-};
-
-const applyNativePaperList = () => {
-  const keyword = searchForm.keyword.trim().toLowerCase();
-  const status =
-    searchForm.status !== "" ? Number(searchForm.status) : undefined;
-  const courseId = searchForm.courseId ? Number(searchForm.courseId) : null;
-  const selectedCourseName = courseList.value.find(
-    course => course.id === courseId
-  )?.name;
-
-  const filtered = nativePaperList.value.filter(paper => {
-    const matchesKeyword =
-      !keyword ||
-      paper.title.toLowerCase().includes(keyword) ||
-      paper.courseName.toLowerCase().includes(keyword) ||
-      (paper.folderName || "").toLowerCase().includes(keyword);
-    const matchesStatus = status === undefined || paper.status === status;
-    const matchesCourse =
-      !selectedCourseName || paper.courseName === selectedCourseName;
-    const matchesFolder =
-      selectedFolderId.value === null ||
-      paper.folderId === selectedFolderId.value;
-
-    return matchesKeyword && matchesStatus && matchesCourse && matchesFolder;
-  });
-
-  pagination.total = filtered.length;
-  const start = (pagination.page - 1) * pagination.pageSize;
-  paperList.value = filtered.slice(start, start + pagination.pageSize);
-};
-
-const refreshNativePaperState = () => {
-  refreshNativePaperFolders();
-  applyNativePaperStatistics();
-  folderList.value = nativePaperFolders.value;
-  applyNativePaperList();
-};
-
-const applyNativeMyPapersFallback = (reason: string, error?: unknown) => {
-  if (!isNativeWebViewRuntime()) return false;
-
-  isUsingNativeDemoData.value = true;
-  logNativeFallback(reason, error);
-  refreshNativePaperState();
-  return true;
-};
-
-const resolveFolderName = (folderId?: number | null) =>
-  nativePaperFolders.value.find(folder => folder.id === folderId)?.name || "";
-
 // 搜索
 const handleSearch = () => {
   pagination.page = 1;
-  if (isUsingNativeDemoData.value) {
-    applyNativePaperList();
-    return;
-  }
   loadData();
 };
 
@@ -250,30 +160,18 @@ const handleReset = () => {
 
 // 加载统计数据
 const loadStatistics = async () => {
-  if (isUsingNativeDemoData.value) {
-    applyNativePaperStatistics();
-    return;
-  }
-
   try {
     const res = await getMyPaperStatistics();
     if (res.code === 0 && res.data) {
       statistics.value = res.data;
-    } else {
-      applyNativeMyPapersFallback("使用原生演示试卷统计", res);
     }
   } catch (e) {
-    applyNativeMyPapersFallback("获取统计数据失败，已使用原生演示试卷", e);
+    console.error("获取统计数据失败", e);
   }
 };
 
 // 加载试卷列表
 const loadData = async () => {
-  if (isUsingNativeDemoData.value) {
-    applyNativePaperList();
-    return;
-  }
-
   loading.value = true;
   try {
     const res = await getPaperList({
@@ -284,38 +182,40 @@ const loadData = async () => {
         searchForm.status !== ""
           ? (Number(searchForm.status) as PaperStatus)
           : undefined,
-      courseId: searchForm.courseId ? Number(searchForm.courseId) : undefined
+      courseId: searchForm.courseId ? Number(searchForm.courseId) : undefined,
+      folderId: selectedFolderId.value ?? undefined
     });
     if (res.code === 0 && res.data) {
       paperList.value = res.data.list || [];
       pagination.total = res.data.total || 0;
-    } else {
-      applyNativeMyPapersFallback("使用原生演示试卷列表", res);
     }
   } catch (e) {
-    applyNativeMyPapersFallback("获取试卷列表失败，已使用原生演示试卷", e);
+    console.error("获取试卷列表失败", e);
   } finally {
     loading.value = false;
   }
 };
 
+const loadCourses = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0 && Array.isArray(res.data)) {
+      courseList.value = res.data;
+    }
+  } catch (error) {
+    console.error("获取课程列表失败", error);
+  }
+};
+
 // ==================== 文件夹相关方法 ====================
 const fetchFolders = async () => {
-  if (isUsingNativeDemoData.value) {
-    refreshNativePaperFolders();
-    folderList.value = nativePaperFolders.value;
-    return;
-  }
-
   try {
     const res = await getPaperFolders();
     if (res.code === 0 && res.data) {
       folderList.value = res.data;
-    } else {
-      applyNativeMyPapersFallback("使用原生演示试卷文件夹", res);
     }
   } catch (e) {
-    applyNativeMyPapersFallback("获取文件夹列表失败，已使用原生演示文件夹", e);
+    console.error("获取文件夹列表失败", e);
   }
 };
 
@@ -344,43 +244,12 @@ const saveFolder = async () => {
   }
   try {
     if (isNewFolder.value) {
-      if (isUsingNativeDemoData.value) {
-        nativePaperFolders.value.push({
-          id: Date.now(),
-          name: editingFolder.value.name.trim(),
-          parentId: editingFolder.value.parentId,
-          paperCount: 0,
-          createTime: new Date().toISOString().split("T")[0]
-        });
-        ElMessage.success("创建成功");
-        folderDialogVisible.value = false;
-        refreshNativePaperState();
-        return;
-      }
-
       await createPaperFolder({
         name: editingFolder.value.name,
         parentId: editingFolder.value.parentId
       });
       ElMessage.success("创建成功");
     } else {
-      if (isUsingNativeDemoData.value) {
-        nativePaperFolders.value = nativePaperFolders.value.map(folder =>
-          folder.id === editingFolder.value.id
-            ? { ...folder, name: editingFolder.value.name.trim() }
-            : folder
-        );
-        nativePaperList.value = nativePaperList.value.map(paper =>
-          paper.folderId === editingFolder.value.id
-            ? { ...paper, folderName: editingFolder.value.name.trim() }
-            : paper
-        );
-        ElMessage.success("更新成功");
-        folderDialogVisible.value = false;
-        refreshNativePaperState();
-        return;
-      }
-
       await updatePaperFolder({
         id: editingFolder.value.id!,
         name: editingFolder.value.name
@@ -405,23 +274,6 @@ const handleDeleteFolder = (folder: PaperFolder) => {
     }
   ).then(async () => {
     try {
-      if (isUsingNativeDemoData.value) {
-        nativePaperFolders.value = nativePaperFolders.value.filter(
-          item => item.id !== folder.id
-        );
-        nativePaperList.value = nativePaperList.value.map(paper =>
-          paper.folderId === folder.id
-            ? { ...paper, folderId: undefined, folderName: "" }
-            : paper
-        );
-        if (selectedFolderId.value === folder.id) {
-          selectedFolderId.value = null;
-        }
-        ElMessage.success("删除成功");
-        refreshNativePaperState();
-        return;
-      }
-
       await deletePaperFolder(folder.id);
       ElMessage.success("删除成功");
       if (selectedFolderId.value === folder.id) {
@@ -447,20 +299,6 @@ const handleMoveToFolder = async () => {
     return;
   }
   try {
-    if (isUsingNativeDemoData.value) {
-      const folderName = resolveFolderName(targetFolderId.value);
-      nativePaperList.value = nativePaperList.value.map(paper =>
-        selectedPaperIds.value.includes(paper.paperId)
-          ? { ...paper, folderId: targetFolderId.value!, folderName }
-          : paper
-      );
-      ElMessage.success("移动成功");
-      moveDialogVisible.value = false;
-      selectedPaperIds.value = [];
-      refreshNativePaperState();
-      return;
-    }
-
     await movePapersToFolder({
       paperIds: selectedPaperIds.value,
       folderId: targetFolderId.value
@@ -485,59 +323,73 @@ const editPaper = (paper: any) => {
 };
 
 // 复制试卷
-const copyPaper = (paper: any) => {
-  ElMessageBox.confirm(`确定要复制试卷"${paper.title}"吗？`, "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "info"
-  }).then(() => {
-    if (isUsingNativeDemoData.value) {
-      nativePaperList.value.unshift({
-        ...deepClone(paper),
-        paperId: Date.now(),
-        title: `${paper.title} 副本`,
-        status: 0,
-        statusText: "草稿",
-        publishCount: 0,
-        createTime: new Date().toISOString().slice(0, 16).replace("T", " "),
-        updateTime: new Date().toISOString().slice(0, 16).replace("T", " ")
-      });
-      ElMessage.success("复制成功");
-      refreshNativePaperState();
-      return;
+const copyPaper = async (paper: any) => {
+  try {
+    await ElMessageBox.confirm(`确定要复制试卷"${paper.title}"吗？`, "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "info"
+    });
+
+    const detailRes = await getPaperDetail(paper.paperId);
+    if (detailRes.code !== 0 || !detailRes.data) {
+      throw new Error(detailRes.msg || "读取原试卷失败");
+    }
+
+    const source = detailRes.data;
+    const createRes = await createPaperApi({
+      title: `${source.title}（副本）`,
+      description: source.description,
+      courseId: source.courseId,
+      timeLimit: source.timeLimit,
+      questionGroups: (source.questionGroups || []).map(group => ({
+        groupName: group.groupName,
+        questionType: group.questionType,
+        questions: group.questions.map(question => {
+          const copiedQuestion = { ...question } as any;
+          delete copiedQuestion.questionId;
+          delete copiedQuestion.sortOrder;
+          return copiedQuestion;
+        })
+      }))
+    });
+    if (createRes.code !== 0) {
+      throw new Error(createRes.msg || "复制试卷失败");
     }
 
     ElMessage.success("复制成功");
-  });
+    await Promise.all([loadData(), loadStatistics(), fetchFolders()]);
+  } catch (error) {
+    if (error === "cancel" || error === "close") return;
+    console.error("复制试卷失败", error);
+    ElMessage.error(error instanceof Error ? error.message : "复制试卷失败");
+  }
 };
 
 // 删除试卷
-const deletePaper = (paper: any) => {
-  ElMessageBox.confirm(`确定要删除试卷"${paper.title}"吗？`, "警告", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    if (isUsingNativeDemoData.value) {
-      nativePaperList.value = nativePaperList.value.filter(
-        item => item.paperId !== paper.paperId
-      );
-      ElMessage.success("删除成功");
-      refreshNativePaperState();
-      return;
+const deletePaper = async (paper: any) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除试卷"${paper.title}"吗？`, "警告", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    });
+    const res = await deletePaperApi(paper.paperId);
+    if (res.code !== 0) {
+      throw new Error(res.msg || "删除试卷失败");
     }
-
     ElMessage.success("删除成功");
-    loadData();
-  });
+    await Promise.all([loadData(), loadStatistics(), fetchFolders()]);
+  } catch (error) {
+    if (error === "cancel" || error === "close") return;
+    console.error("删除试卷失败", error);
+    ElMessage.error(error instanceof Error ? error.message : "删除试卷失败");
+  }
 };
 
 // 发布试卷
 const publishPaper = (paper: any) => {
-  router.push({
-    path: `/exam-paper/editor/${paper.paperId}`,
-    query: { publish: "1" }
-  });
+  router.push(`/exam-paper/publish/${paper.paperId}`);
 };
 
 const handleMobileAction = (command: string, paper: any) => {
@@ -562,22 +414,8 @@ const handleMobileAction = (command: string, paper: any) => {
   }
 };
 
-// 获取状态标签类型
-const getStatusType = (status: number) => {
-  return status === 1 ? "success" : "info";
-};
-
-// 获取状态文本
-const getStatusText = (status: number) => {
-  return status === 1 ? "已发布" : "草稿";
-};
-
 // 分页变化
 const handlePageChange = () => {
-  if (isUsingNativeDemoData.value) {
-    applyNativePaperList();
-    return;
-  }
   loadData();
 };
 
@@ -585,6 +423,7 @@ onMounted(() => {
   loadStatistics();
   loadData();
   fetchFolders();
+  loadCourses();
 });
 </script>
 
@@ -705,8 +544,12 @@ onMounted(() => {
                 clearable
                 @change="handleSearch"
               >
-                <el-option label="草稿" value="0" />
-                <el-option label="已发布" value="1" />
+                <el-option
+                  v-for="option in PAPER_STATUS_OPTIONS"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="String(option.value)"
+                />
               </el-select>
               <el-select
                 v-model="searchForm.courseId"
@@ -754,11 +597,11 @@ onMounted(() => {
                     </div>
                   </div>
                   <el-tag
-                    :type="getStatusType(row.status)"
+                    :type="getPaperStatusType(row.status)"
                     size="small"
                     effect="light"
                   >
-                    {{ getStatusText(row.status) }}
+                    {{ getPaperStatusText(row.status) }}
                   </el-tag>
                 </div>
 
@@ -890,11 +733,11 @@ onMounted(() => {
             >
               <template #default="{ row }">
                 <el-tag
-                  :type="getStatusType(row.status)"
+                  :type="getPaperStatusType(row.status)"
                   size="small"
                   effect="light"
                 >
-                  {{ getStatusText(row.status) }}
+                  {{ getPaperStatusText(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -992,7 +835,7 @@ onMounted(() => {
     <el-dialog
       v-model="folderDialogVisible"
       :title="isNewFolder ? '新建文件夹' : '编辑文件夹'"
-      width="400px"
+      width="min(400px, calc(100vw - 24px))"
     >
       <el-form label-width="80px">
         <el-form-item label="文件夹名">
@@ -1011,7 +854,11 @@ onMounted(() => {
     </el-dialog>
 
     <!-- 移动到文件夹对话框 -->
-    <el-dialog v-model="moveDialogVisible" title="移动到文件夹" width="400px">
+    <el-dialog
+      v-model="moveDialogVisible"
+      title="移动到文件夹"
+      width="min(400px, calc(100vw - 24px))"
+    >
       <el-form label-width="80px">
         <el-form-item label="目标文件夹">
           <el-select

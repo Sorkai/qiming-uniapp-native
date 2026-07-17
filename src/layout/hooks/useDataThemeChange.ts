@@ -10,11 +10,8 @@ import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { darken, lighten, useGlobal, storageLocal } from "@pureadmin/utils";
 
-const defaultEpThemeColor = "#97b4f7";
-const getEpThemeColor = () => getConfig().EpThemeColor || defaultEpThemeColor;
-const getLayoutTheme = () => getConfig().Theme || "light";
-
 export function useDataThemeChange() {
+  const defaultEpThemeColor = getConfig().EpThemeColor || "#97b4f7";
   const { layoutTheme, layout } = useLayout();
   const themeColors = ref<Array<themeColorsType>>([
     /* 亮白色 */
@@ -48,33 +45,29 @@ export function useDataThemeChange() {
   }
 
   /** 设置导航主题色 */
-  function setLayoutThemeColor(theme = getLayoutTheme(), isClick = true) {
-    const fallbackTheme = getLayoutTheme();
-    const matchedTheme =
-      theme === "default" || theme === "light"
-        ? theme
-        : themeColors.value.some(v => v.themeColor === theme)
-          ? theme
-          : fallbackTheme;
-    layoutTheme.value.theme = matchedTheme;
-    document.documentElement.setAttribute("data-theme", matchedTheme);
+  function setLayoutThemeColor(
+    theme = getConfig().Theme ?? "light",
+    isClick = true
+  ) {
+    layoutTheme.value.theme = theme;
+    document.documentElement.setAttribute("data-theme", theme);
     // 如果非isClick，保留之前的themeColor
-    const storageThemeColor = $storage.layout?.themeColor ?? fallbackTheme;
+    const storageThemeColor = $storage.layout.themeColor;
     $storage.layout = {
       layout: layout.value,
-      theme: matchedTheme,
+      theme,
       darkMode: dataTheme.value,
-      sidebarStatus: $storage.layout?.sidebarStatus ?? true,
-      epThemeColor: $storage.layout?.epThemeColor ?? getEpThemeColor(),
-      themeColor: isClick ? matchedTheme : storageThemeColor,
+      sidebarStatus: $storage.layout?.sidebarStatus,
+      epThemeColor: $storage.layout?.epThemeColor,
+      themeColor: isClick ? theme : storageThemeColor,
       overallStyle: overallStyle.value
     };
 
-    if (matchedTheme === "default" || matchedTheme === "light") {
-      setEpThemeColor(getEpThemeColor());
+    if (theme === "default" || theme === "light") {
+      setEpThemeColor(defaultEpThemeColor);
     } else {
-      const colors = themeColors.value.find(v => v.themeColor === matchedTheme);
-      setEpThemeColor(colors?.color || getEpThemeColor());
+      const colors = themeColors.value.find(v => v.themeColor === theme);
+      setEpThemeColor(colors?.color || defaultEpThemeColor);
     }
   }
 
@@ -87,30 +80,30 @@ export function useDataThemeChange() {
 
   /** 设置 `element-plus` 主题色 */
   const setEpThemeColor = (color: string) => {
-    useEpThemeStoreHook().setEpThemeColor(color);
-    document.documentElement.style.setProperty("--el-color-primary", color);
+    const safeColor = color || defaultEpThemeColor;
+    useEpThemeStoreHook().setEpThemeColor(safeColor);
+    document.documentElement.style.setProperty("--el-color-primary", safeColor);
     for (let i = 1; i <= 2; i++) {
-      setPropertyPrimary("dark", i, color);
+      setPropertyPrimary("dark", i, safeColor);
     }
     for (let i = 1; i <= 9; i++) {
-      setPropertyPrimary("light", i, color);
+      setPropertyPrimary("light", i, safeColor);
     }
   };
 
   /** 浅色、深色整体风格切换 */
   function dataThemeChange(overall?: string) {
     overallStyle.value = overall;
-    const epTheme = useEpThemeStoreHook().epTheme || $storage.layout?.theme;
-    if (epTheme === "light" && dataTheme.value) {
+    if (useEpThemeStoreHook().epTheme === "light" && dataTheme.value) {
       setLayoutThemeColor("default", false);
     } else {
-      setLayoutThemeColor(epTheme || getLayoutTheme(), false);
+      setLayoutThemeColor(useEpThemeStoreHook().epTheme, false);
     }
 
     if (dataTheme.value) {
       document.documentElement.classList.add("dark");
     } else {
-      if ($storage.layout?.themeColor === "light") {
+      if ($storage.layout.themeColor === "light") {
         setLayoutThemeColor("light", false);
       }
       document.documentElement.classList.remove("dark");
@@ -121,9 +114,9 @@ export function useDataThemeChange() {
   function onReset() {
     removeToken();
     storageLocal().clear();
-    const { Grey, Weak, MultiTagsCache, Layout } = getConfig();
+    const { Grey, Weak, MultiTagsCache, EpThemeColor, Layout } = getConfig();
     useAppStoreHook().setLayout(Layout);
-    setEpThemeColor(getEpThemeColor());
+    setEpThemeColor(EpThemeColor);
     useMultiTagsStoreHook().multiTagsCacheChange(MultiTagsCache);
     toggleClass(Grey, "html-grey", document.querySelector("html"));
     toggleClass(Weak, "html-weakness", document.querySelector("html"));

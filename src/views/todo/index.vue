@@ -489,7 +489,7 @@ const toggleStatus = (row: TodoItem) => {
   transition: all 0.3s ease;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .todo-page {
     padding: 8px !important;
   }

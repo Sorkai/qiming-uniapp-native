@@ -1,18 +1,9 @@
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  nextTick,
-  watch,
-  onMounted,
-  onBeforeUnmount
-} from "vue";
+import { ref, computed, nextTick, watch } from "vue";
 import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
-import { ElMessage } from "element-plus";
 import "highlight.js/styles/github.css";
 import type { ChatMessage } from "./types";
-import { getSavedCourseTheme } from "@/utils/courseTheme";
 
 defineOptions({
   name: "AiChatDialog"
@@ -57,62 +48,29 @@ const emit = defineEmits<{
   (e: "openChat"): void;
   (e: "loadHistory", id: string): void;
   (e: "reset"): void;
-  (e: "uploadImage", file: File | File[]): void;
+  (e: "uploadImage", file: File): void;
 }>();
 
 const inputMessage = ref("");
 const messageListRef = ref<HTMLElement>();
 const inputRef = ref<any>();
 const fileInputRef = ref<HTMLInputElement>();
-const isDragActive = ref(false);
-const dragDepth = ref(0);
-const isDarkDialog = ref(false);
-let themeObserver: MutationObserver | null = null;
 
 const dialogVisible = computed({
   get: () => props.visible,
   set: val => emit("update:visible", val)
 });
 
-const syncDialogTheme = () => {
-  if (typeof document === "undefined") return;
-  isDarkDialog.value =
-    document.documentElement.classList.contains("dark") ||
-    document.body?.classList.contains("dark") ||
-    getSavedCourseTheme("light") === "dark";
-};
-
 watch(
   () => props.visible,
   val => {
     if (val) {
-      syncDialogTheme();
       nextTick(() => {
         inputRef.value?.focus();
       });
     }
   }
 );
-
-onMounted(() => {
-  syncDialogTheme();
-  themeObserver = new MutationObserver(syncDialogTheme);
-  themeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["class", "data-theme"]
-  });
-  themeObserver.observe(document.body, {
-    attributes: true,
-    attributeFilter: ["class"]
-  });
-  window.addEventListener("storage", syncDialogTheme);
-});
-
-onBeforeUnmount(() => {
-  themeObserver?.disconnect();
-  themeObserver = null;
-  window.removeEventListener("storage", syncDialogTheme);
-});
 
 const isStreaming = computed(() => {
   if (props.streaming) return true;
@@ -137,127 +95,16 @@ const useSuggestion = (suggestion: string) => {
   handleSend();
 };
 
-const isNativeWebViewRuntime = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
-
-const isImageFile = (file: File) => {
-  if (file.type?.startsWith("image/")) return true;
-  return /\.(png|jpe?g|webp|gif|bmp|heic|heif)$/i.test(file.name || "");
-};
-
-const emitFiles = (files: File[]) => {
-  const imageFiles = files.filter(isImageFile);
-  if (!imageFiles.length) {
-    ElMessage.warning("请上传图片文件");
-    return;
-  }
-
-  emit("uploadImage", imageFiles.length === 1 ? imageFiles[0] : imageFiles);
-};
-
-const resolveNativeGalleryFile = (filePath: string): Promise<File> => {
-  const plusApi = (window as any).plus;
-  return new Promise((resolve, reject) => {
-    plusApi?.io?.resolveLocalFileSystemURL?.(
-      filePath,
-      entry => {
-        entry.file?.(file => {
-          resolve(file as File);
-        }, reject);
-      },
-      reject
-    );
-  });
-};
-
-const pickNativeImages = () => {
-  if (!isNativeWebViewRuntime()) return false;
-
-  const plusApi = (window as any).plus;
-  if (!plusApi?.gallery?.pick || !plusApi?.io?.resolveLocalFileSystemURL) {
-    return false;
-  }
-
-  plusApi.gallery.pick(
-    async result => {
-      try {
-        const paths = Array.isArray(result?.files)
-          ? result.files
-          : [typeof result === "string" ? result : result?.file].filter(
-              Boolean
-            );
-        const files = await Promise.all(
-          paths.map(path => resolveNativeGalleryFile(String(path)))
-        );
-        emitFiles(files);
-      } catch (error) {
-        console.error("读取系统相册图片失败:", error);
-        ElMessage.error("读取图片失败，请重试");
-      }
-    },
-    error => {
-      if (error?.code === 12) return;
-      console.warn("系统相册选择失败，回退文件选择", error);
-      fileInputRef.value?.click();
-    },
-    {
-      filter: "image",
-      multiple: true,
-      maximum: 9,
-      system: false
-    }
-  );
-
-  return true;
-};
-
 const triggerFileUpload = () => {
-  if (pickNativeImages()) return;
   fileInputRef.value?.click();
 };
 
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement;
-  const files = Array.from(target.files || []);
-  if (files.length) {
-    emitFiles(files);
+  const file = target.files?.[0];
+  if (file) {
+    emit("uploadImage", file);
     target.value = "";
-  }
-};
-
-const handleDragEnter = (event: DragEvent) => {
-  if (props.loading) return;
-  event.preventDefault();
-  dragDepth.value += 1;
-  isDragActive.value = true;
-};
-
-const handleDragOver = (event: DragEvent) => {
-  if (props.loading) return;
-  event.preventDefault();
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = "copy";
-  }
-};
-
-const handleDragLeave = (event: DragEvent) => {
-  event.preventDefault();
-  dragDepth.value = Math.max(0, dragDepth.value - 1);
-  if (dragDepth.value === 0) {
-    isDragActive.value = false;
-  }
-};
-
-const handleDrop = (event: DragEvent) => {
-  event.preventDefault();
-  dragDepth.value = 0;
-  isDragActive.value = false;
-  if (props.loading) return;
-
-  const files = Array.from(event.dataTransfer?.files || []);
-  if (files.length) {
-    emitFiles(files);
   }
 };
 
@@ -316,19 +163,10 @@ const handleClose = () => {
     v-model="dialogVisible"
     :close-on-click-modal="false"
     :close-on-press-escape="true"
-    :class="[
-      'ai-chat-dialog modern-style',
-      {
-        'is-native-dark': isDarkDialog
-      }
-    ]"
+    class="ai-chat-dialog modern-style"
     append-to-body
     destroy-on-close
     :show-close="false"
-    @dragenter="handleDragEnter"
-    @dragover="handleDragOver"
-    @dragleave="handleDragLeave"
-    @drop="handleDrop"
   >
     <template #header>
       <div class="dialog-header">
@@ -372,26 +210,7 @@ const handleClose = () => {
       </div>
     </template>
 
-    <div
-      class="chat-layout"
-      :class="{ 'is-drag-active': isDragActive }"
-      @dragenter="handleDragEnter"
-      @dragover="handleDragOver"
-      @dragleave="handleDragLeave"
-      @drop="handleDrop"
-    >
-      <div v-if="isDragActive" class="drop-overlay">
-        <div class="drop-panel">
-          <svg viewBox="0 0 24 24" width="28" height="28">
-            <path
-              d="M19.35 10.04A7.49 7.49 0 0 0 5.38 8.09A6 6 0 0 0 6 20h13a5 5 0 0 0 .35-9.96ZM13 13v4h-2v-4H8l4-4l4 4h-3Z"
-              fill="currentColor"
-            />
-          </svg>
-          <span>松开即可上传图片</span>
-          <small>支持多张图片继续追问</small>
-        </div>
-      </div>
+    <div class="chat-layout">
       <div v-if="historyList?.length" class="chat-sidebar">
         <div class="sidebar-title">历史对话</div>
         <div class="history-list">
@@ -436,20 +255,6 @@ const handleClose = () => {
         </div>
 
         <div ref="messageListRef" class="message-area">
-          <div v-if="!messages.length" class="empty-chat-state">
-            <div class="empty-icon">
-              <svg viewBox="0 0 24 24" width="24" height="24">
-                <path
-                  d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2Zm-2 10H6l3.2-4.2l2.3 2.8l1.8-2.3L18 16Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </div>
-            <div class="empty-title">拖入图片或点击上传，直接向 AI 提问</div>
-            <div class="empty-sub">
-              也可以先框选屏幕区域，助手会带着截图进入对话。
-            </div>
-          </div>
           <div
             v-for="msg in messages"
             :key="msg.id"
@@ -565,7 +370,6 @@ const handleClose = () => {
             ref="fileInputRef"
             type="file"
             accept="image/*"
-            multiple
             style="display: none"
             @change="handleFileChange"
           />
@@ -681,274 +485,21 @@ const handleClose = () => {
   .el-dialog.ai-chat-dialog.modern-style {
     top: 0 !important;
     left: 0 !important;
-    width: var(--qiming-native-vw, 100vw);
-    max-width: var(--qiming-native-vw, 100vw);
+    width: 100vw;
+    max-width: 100vw;
     height: 100vh;
     height: 100dvh;
-    height: var(--qiming-native-vh, 100dvh);
     min-width: 0;
     min-height: 0;
     border: none;
     border-radius: 0;
     box-shadow: none;
     transform: none !important;
-    background: var(--qiming-native-page-bg, #f6f9ff);
 
     .el-dialog__header,
     .el-dialog__footer {
       border-radius: 0;
     }
-
-    .el-dialog__header {
-      border-bottom: 1px solid
-        var(--qiming-native-border-color, rgb(151 180 247 / 20%));
-    }
-
-    .el-dialog__footer {
-      background: var(--qiming-native-page-bg, rgb(246 249 255 / 96%));
-      border-top: 1px solid
-        var(--qiming-native-border-color, rgb(151 180 247 / 18%));
-    }
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header {
-    box-sizing: border-box;
-    min-height: calc(54px + var(--pure-safe-area-top, 0px));
-    padding: calc(
-        8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
-      )
-      12px 8px;
-    background: var(--qiming-native-navbar-bg, rgb(255 255 255 / 96%));
-    border-bottom: 0;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .header-content {
-    min-width: 0;
-    gap: 9px;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .header-icon {
-    flex: 0 0 auto;
-    width: 30px;
-    height: 30px;
-    color: #fff;
-    border-radius: 12px;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .header-icon svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .header-text {
-    min-width: 0;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .main-title {
-    max-width: 46vw;
-    overflow: hidden;
-    color: var(--qiming-native-text-primary, #172033) !important;
-    font-size: 17px;
-    line-height: 1.18;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .sub-title {
-    display: none;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .header-ops {
-    flex-shrink: 0;
-    gap: 4px;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .dialog-header .op-btn {
-    width: 32px;
-    height: 32px;
-    color: var(--qiming-native-text-regular, #475569);
-    border-radius: 11px;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .chat-layout {
-    background: var(--qiming-native-page-bg, #f6f9ff);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .chat-sidebar {
-    max-height: 78px;
-    background: var(--qiming-native-page-bg, rgb(248 251 255 / 94%));
-    border-bottom: 1px solid
-      var(--qiming-native-border-color, rgb(151 180 247 / 20%));
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .chat-sidebar .sidebar-title {
-    padding: 6px 12px 0;
-    color: var(--qiming-native-text-secondary, #64748b);
-    font-size: 11px;
-    line-height: 1.2;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .chat-sidebar .history-list {
-    display: flex;
-    gap: 7px;
-    padding: 7px 12px 9px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style
-    .chat-sidebar
-    .history-list::-webkit-scrollbar {
-    display: none;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .chat-sidebar .history-item {
-    flex: 0 0 118px;
-    min-height: 40px;
-    padding: 7px 9px;
-    margin: 0;
-    background: var(--qiming-native-surface-bg, rgb(255 255 255 / 88%));
-    border: 1px solid var(--qiming-native-border-color, rgb(151 180 247 / 22%));
-    border-radius: 13px;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .preview-banner .banner-inner {
-    background: var(--qiming-native-surface-bg, rgb(255 255 255 / 92%));
-    border-color: var(--qiming-native-border-color, rgb(151 180 247 / 22%));
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .message-area {
-    background: var(--qiming-native-page-bg, #f6f9ff);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .footer-input {
-    background: var(--qiming-native-page-bg, rgb(248 251 255 / 96%));
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style .footer-input .input-container {
-    background: var(--qiming-native-surface-bg, rgb(255 255 255 / 95%));
-    border-color: var(--qiming-native-border-color, rgb(151 180 247 / 24%));
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark {
-    --ai-primary-soft-border: rgb(148 163 184 / 20%);
-
-    color: #eaf2ff;
-    background: #07111f;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .dialog-header {
-    background: rgb(7 17 31 / 96%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .dialog-header
-    .main-title {
-    color: #f8fafc !important;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .dialog-header .op-btn {
-    color: #cbd5e1;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .chat-layout,
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .message-area {
-    background: linear-gradient(180deg, #07111f 0%, #0b1220 100%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .chat-sidebar {
-    background: rgb(7 17 31 / 94%);
-    border-bottom-color: rgb(148 163 184 / 18%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .chat-sidebar
-    .sidebar-title {
-    color: #94a3b8;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .chat-sidebar
-    .history-item {
-    background: rgb(30 41 59 / 82%);
-    border-color: rgb(148 163 184 / 18%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .chat-sidebar
-    .item-title {
-    color: #e5e7eb;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .chat-sidebar
-    .item-date,
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .chat-sidebar
-    .item-icon {
-    color: #94a3b8;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .preview-banner
-    .banner-inner {
-    background: rgb(15 23 42 / 86%);
-    border-color: rgb(148 163 184 / 18%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .preview-banner .label,
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .preview-banner .desc {
-    color: #dbeafe;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .message-row.assistant
-    .bubble {
-    color: #e5e7eb;
-    background: rgb(15 23 42 / 92%);
-    border-color: rgb(148 163 184 / 18%);
-    box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .message-row.assistant
-    .bubble.thinking {
-    background: rgb(30 41 59 / 88%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .thinking-text,
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .markdown-body,
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .bubble-text {
-    color: #e5e7eb;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .typing span {
-    background: #94a3b8;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .meta {
-    color: #94a3b8;
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .stop-bar {
-    background: linear-gradient(
-      180deg,
-      rgb(7 17 31 / 0%) 0%,
-      rgb(7 17 31 / 88%) 100%
-    );
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark .footer-input {
-    background: rgb(7 17 31 / 96%);
-  }
-
-  .el-dialog.ai-chat-dialog.modern-style.is-native-dark
-    .footer-input
-    .input-container {
-    background: rgb(2 6 23 / 86%);
-    border-color: rgb(148 163 184 / 22%);
-    box-shadow: 0 10px 28px rgb(0 0 0 / 24%);
   }
 }
 </style>
@@ -1032,58 +583,11 @@ const handleClose = () => {
 }
 
 .chat-layout {
-  position: relative;
   display: flex;
   flex: 1;
   height: 100%;
   min-height: 0;
   overflow: hidden;
-
-  &.is-drag-active {
-    .chat-main,
-    .chat-sidebar {
-      filter: blur(1px);
-    }
-  }
-
-  .drop-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    pointer-events: none;
-    background: rgb(239 246 255 / 64%);
-    backdrop-filter: blur(10px);
-
-    .drop-panel {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      min-width: min(320px, calc(100vw - 48px));
-      padding: 28px 30px;
-      color: var(--ai-primary);
-      text-align: center;
-      background: rgb(255 255 255 / 92%);
-      border: 1px solid var(--ai-primary-soft-border);
-      border-radius: 18px;
-      box-shadow: 0 18px 44px rgb(37 99 235 / 16%);
-
-      span {
-        font-size: 15px;
-        font-weight: 700;
-        color: var(--el-text-color-primary);
-      }
-
-      small {
-        font-size: 12px;
-        color: var(--el-text-color-secondary);
-      }
-    }
-  }
 
   .chat-sidebar {
     display: flex;
@@ -1214,45 +718,6 @@ const handleClose = () => {
   min-height: 0;
   padding: 20px;
   overflow-y: auto;
-
-  .empty-chat-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100%;
-    padding: 28px 18px;
-    text-align: center;
-    color: var(--el-text-color-secondary);
-
-    .empty-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 56px;
-      height: 56px;
-      margin-bottom: 14px;
-      color: var(--ai-primary);
-      background: var(--ai-primary-soft);
-      border: 1px solid var(--ai-primary-soft-border);
-      border-radius: 18px;
-    }
-
-    .empty-title {
-      max-width: 360px;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.45;
-      color: var(--el-text-color-primary);
-    }
-
-    .empty-sub {
-      max-width: 420px;
-      margin-top: 8px;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-  }
 
   .message-row {
     display: flex;
@@ -1597,84 +1062,19 @@ const handleClose = () => {
 }
 
 @media screen and (max-width: 768px) {
-  .el-dialog.ai-chat-dialog.modern-style {
-    background: #f6f9ff;
-
-    .el-dialog__header {
-      border-bottom: 1px solid rgb(151 180 247 / 20%);
-    }
-
-    .el-dialog__body {
-      min-height: 0;
-    }
-
-    .el-dialog__footer {
-      background: rgb(246 249 255 / 96%);
-      border-top: 1px solid rgb(151 180 247 / 18%);
-    }
-  }
-
   .dialog-header {
-    min-height: calc(54px + var(--pure-safe-area-top, 0px));
-    align-items: flex-end;
-    padding: calc(
-        8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
-      )
-      12px 8px;
-    background: rgb(255 255 255 / 96%);
-    border-bottom: 0;
+    align-items: flex-start;
+    padding: 14px 16px;
 
     .header-content {
       min-width: 0;
-      gap: 9px;
-
-      .header-icon {
-        flex: 0 0 auto;
-        width: 30px;
-        height: 30px;
-        border-radius: 12px;
-
-        svg {
-          width: 18px;
-          height: 18px;
-        }
-      }
 
       .header-text {
         min-width: 0;
 
-        .main-title {
-          overflow: hidden;
-          font-size: 17px;
-          line-height: 1.18;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
         .sub-title {
-          max-width: 46vw;
-          overflow: hidden;
-          font-size: 10.5px;
-          line-height: 1.25;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-    }
-
-    .header-ops {
-      flex-shrink: 0;
-      gap: 4px;
-
-      .op-btn {
-        width: 32px;
-        height: 32px;
-        color: #475569;
-        border-radius: 11px;
-
-        svg {
-          width: 18px;
-          height: 18px;
+          white-space: normal;
+          line-height: 1.4;
         }
       }
     }
@@ -1682,181 +1082,76 @@ const handleClose = () => {
 
   .chat-layout {
     flex-direction: column;
-    background: linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
-
-    .drop-overlay {
-      padding: 18px;
-
-      .drop-panel {
-        width: 100%;
-        min-width: 0;
-        padding: 22px 18px;
-        border-radius: 20px;
-
-        span {
-          font-size: 15px;
-        }
-      }
-    }
 
     .chat-sidebar {
-      flex: 0 0 auto;
       width: 100%;
       height: auto;
-      max-height: 84px;
-      background: rgb(248 251 255 / 92%);
       border-right: none;
       border-bottom: 1px solid var(--ai-primary-soft-border);
-      box-shadow: none;
 
       .sidebar-title {
-        padding: 7px 12px 0;
-        font-size: 11px;
-        line-height: 1.2;
+        padding: 12px 16px 0;
         border-bottom: none;
       }
 
       .history-list {
-        flex: 0 0 auto;
         display: flex;
-        gap: 7px;
-        padding: 7px 12px 9px;
+        gap: 10px;
+        padding: 12px 16px 14px;
         overflow-x: auto;
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-
-        &::-webkit-scrollbar {
-          display: none;
-        }
 
         .history-item {
-          flex: 0 0 132px;
-          min-height: 42px;
-          padding: 7px 9px;
+          flex: 0 0 180px;
           margin-bottom: 0;
-          background: rgb(255 255 255 / 86%);
-          border: 1px solid rgb(151 180 247 / 24%);
-          border-radius: 13px;
-
-          .item-icon {
-            flex: 0 0 auto;
-            color: #64748b;
-          }
-
-          .item-body {
-            .item-title {
-              font-size: 11.5px;
-              line-height: 1.2;
-            }
-
-            .item-date {
-              font-size: 10px;
-              line-height: 1.2;
-            }
-          }
         }
       }
     }
   }
 
   .preview-banner {
-    padding: 9px 12px 7px;
-    background: transparent;
+    padding: 10px 16px;
 
     .banner-inner {
-      align-items: center;
-      padding: 8px 10px;
-      background: rgb(255 255 255 / 90%);
-      border-color: rgb(151 180 247 / 22%);
-      border-radius: 15px;
-
-      .image-box {
-        flex: 0 0 auto;
-        width: 42px;
-        height: 42px;
-        border-radius: 11px;
-      }
-
-      .info-box {
-        min-width: 0;
-
-        .label {
-          font-size: 12px;
-          line-height: 1.2;
-        }
-
-        .desc {
-          max-width: 100%;
-          overflow: hidden;
-          font-size: 12px;
-          line-height: 1.3;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-        }
-      }
+      align-items: flex-start;
     }
   }
 
   .message-area {
-    padding: 11px 12px 10px;
+    padding: 16px;
     -webkit-overflow-scrolling: touch;
 
-    .empty-chat-state {
-      justify-content: flex-start;
-      min-height: 0;
-      padding: 32px 14px 18px;
-
-      .empty-icon {
-        width: 52px;
-        height: 52px;
-        margin-bottom: 12px;
-      }
-
-      .empty-title {
-        font-size: 15px;
-      }
-
-      .empty-sub {
-        font-size: 12px;
-      }
-    }
-
     .message-row {
-      gap: 8px;
-      margin-bottom: 16px;
+      gap: 10px;
+      margin-bottom: 18px;
     }
 
     .avatar-col {
       .user-avatar,
       .ai-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
+        width: 36px;
+        height: 36px;
+        border-radius: 11px;
 
         svg {
-          width: 18px;
-          height: 18px;
+          width: 20px;
+          height: 20px;
         }
       }
     }
 
     .content-col {
-      max-width: calc(100% - 40px);
+      max-width: calc(100% - 46px);
 
       .bubble {
-        padding: 9px 11px;
+        padding: 10px 12px;
         font-size: 13px;
-        line-height: 1.55;
-        border-radius: 14px;
       }
 
       .content-image {
         :deep(.el-image) {
-          max-width: min(72vw, 250px);
-          max-height: 270px;
-          overflow: hidden;
-          border-radius: 13px;
+          max-width: min(100%, 220px);
         }
       }
 
@@ -1872,17 +1167,7 @@ const handleClose = () => {
   }
 
   .stop-bar {
-    padding: 4px 12px 6px;
-
-    .stop-btn {
-      min-height: 34px;
-      padding: 7px 16px;
-      font-size: 12px;
-      color: #fff;
-      background: rgb(15 23 42 / 88%);
-      border: 0;
-      border-radius: 18px;
-    }
+    padding: 6px 16px;
   }
 
   .suggestions-bar {
@@ -1898,38 +1183,30 @@ const handleClose = () => {
   }
 
   .footer-input {
-    padding: 8px 10px
-      calc(8px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
-    background: rgb(248 251 255 / 96%);
+    padding: 12px 12px calc(12px + var(--pure-safe-area-bottom));
 
     .input-container {
       gap: 8px;
-      align-items: center;
-      padding: 7px 8px;
-      background: rgb(255 255 255 / 95%);
-      border-color: rgb(151 180 247 / 24%);
-      border-radius: 16px;
-      box-shadow: 0 10px 28px rgb(89 121 196 / 10%);
+      padding: 8px 10px;
+      border-radius: 14px;
 
       .upload-btn {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
         margin-bottom: 0;
       }
 
       :deep(.el-textarea__inner) {
-        min-height: 34px !important;
-        max-height: 94px;
+        min-height: 36px;
         padding: 6px 8px;
         font-size: 13px;
-        line-height: 1.4;
       }
     }
 
     .send-action {
       .el-button {
-        width: 34px;
-        height: 34px;
+        width: 36px;
+        height: 36px;
       }
     }
   }
@@ -1937,10 +1214,7 @@ const handleClose = () => {
 
 @media screen and (max-width: 480px) {
   .dialog-header {
-    padding: calc(
-        8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
-      )
-      10px 8px;
+    padding: 12px 14px;
 
     .header-content {
       .header-text {
@@ -1954,10 +1228,10 @@ const handleClose = () => {
   .chat-layout {
     .chat-sidebar {
       .history-list {
-        padding: 7px 10px 9px;
+        padding: 10px 12px 12px;
 
         .history-item {
-          flex-basis: 128px;
+          flex-basis: 160px;
         }
       }
     }
@@ -1974,135 +1248,6 @@ const handleClose = () => {
   .footer-input {
     padding-left: 10px;
     padding-right: 10px;
-  }
-}
-
-:global(html.dark) {
-  .el-dialog.ai-chat-dialog.modern-style {
-    background: #0f172a;
-    border-color: rgb(148 163 184 / 18%);
-
-    .el-dialog__footer {
-      background: #0f172a;
-    }
-  }
-
-  .dialog-header {
-    background: linear-gradient(180deg, #172033 0%, #0f172a 100%);
-    border-bottom-color: rgb(148 163 184 / 16%);
-  }
-
-  .chat-layout {
-    .drop-overlay {
-      background: rgb(2 6 23 / 66%);
-
-      .drop-panel {
-        background: rgb(15 23 42 / 94%);
-        border-color: rgb(148 163 184 / 18%);
-        box-shadow: 0 18px 44px rgb(0 0 0 / 32%);
-      }
-    }
-
-    .chat-sidebar {
-      background-color: rgb(15 23 42 / 92%);
-      border-color: rgb(148 163 184 / 16%);
-
-      .history-item {
-        background: rgb(30 41 59 / 70%);
-        border-color: rgb(148 163 184 / 14%);
-
-        &:hover {
-          background: rgb(51 65 85 / 76%);
-        }
-      }
-    }
-  }
-
-  .preview-banner {
-    background-color: #0f172a;
-
-    .banner-inner {
-      background-color: rgb(15 23 42 / 88%);
-      border-color: rgb(148 163 184 / 16%);
-    }
-  }
-
-  .message-area {
-    .message-row.assistant {
-      .bubble {
-        background: rgb(15 23 42 / 88%);
-        border-color: rgb(148 163 184 / 18%);
-      }
-    }
-  }
-
-  .footer-input {
-    background-color: #0f172a;
-    border-top-color: rgb(148 163 184 / 16%);
-
-    .input-container {
-      background-color: rgb(15 23 42 / 88%);
-      border-color: rgb(148 163 184 / 18%);
-    }
-  }
-}
-
-@media screen and (max-width: 768px) {
-  :global(html.dark) {
-    .el-dialog.ai-chat-dialog.modern-style {
-      background: #07111f;
-
-      .el-dialog__header,
-      .el-dialog__footer {
-        border-color: rgb(148 163 184 / 18%);
-      }
-    }
-
-    .dialog-header {
-      background: rgb(7 17 31 / 96%);
-    }
-
-    .chat-layout {
-      background: linear-gradient(180deg, #07111f 0%, #0b1220 100%);
-
-      .chat-sidebar {
-        background: rgb(7 17 31 / 92%);
-        box-shadow: none;
-
-        .history-item {
-          background: rgb(30 41 59 / 82%);
-          border-color: rgb(148 163 184 / 18%);
-
-          .item-icon,
-          .item-date {
-            color: #94a3b8;
-          }
-
-          .item-title {
-            color: #e5e7eb;
-          }
-        }
-      }
-    }
-
-    .preview-banner {
-      background: transparent;
-
-      .banner-inner {
-        background: rgb(15 23 42 / 86%);
-        border-color: rgb(148 163 184 / 18%);
-      }
-    }
-
-    .footer-input {
-      background: rgb(7 17 31 / 96%);
-
-      .input-container {
-        background: rgb(2 6 23 / 82%);
-        border-color: rgb(148 163 184 / 22%);
-        box-shadow: 0 10px 28px rgb(0 0 0 / 24%);
-      }
-    }
   }
 }
 </style>

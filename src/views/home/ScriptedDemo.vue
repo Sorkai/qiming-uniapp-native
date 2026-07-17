@@ -1,19 +1,12 @@
 <template>
-  <section class="sd" aria-label="启明智教 · 智能工作流演示">
+  <section class="sd" aria-label="启明智教课程工作台演示">
     <header class="sd__head">
-      <p class="sd__eyebrow">智能工作流演示</p>
+      <p class="sd__eyebrow">课程工作台演示</p>
     </header>
 
     <div ref="rootEl" class="sd__stage" :class="{ 'is-paused': paused }">
-      <!-- 舞台：桌面端保留演示外框，移动端会收敛成 App 任务面板 -->
+      <!-- 舞台：浏览器外框 -->
       <div class="sd__chrome">
-        <div class="sd__mobileTitle">
-          <span class="sd__mobileMark" aria-hidden="true" />
-          <div>
-            <strong>智能工作流</strong>
-            <span>{{ activeLabel }}同步演示</span>
-          </div>
-        </div>
         <div class="sd__lights"><span /><span /><span /></div>
         <div class="sd__url">
           <svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true">
@@ -29,7 +22,7 @@
         </div>
         <div class="sd__chip">
           <i class="sd__chipDot" />
-          实时演示
+          演示中
         </div>
       </div>
 
@@ -37,7 +30,7 @@
         <!-- 侧边栏 -->
         <aside class="sd__side">
           <div class="sd__sideHead">
-            <span class="sd__brandSquare" aria-hidden="true" />
+            <img class="sd__brandSquare" :src="logo" alt="" />
             <span>启明智教</span>
           </div>
           <p class="sd__sideGroup">工作区</p>
@@ -65,7 +58,7 @@
             <div class="sd__tbActions">
               <span class="sd__tbBadge">
                 <i class="sd__tbDot" />
-                教学服务已连接
+                课程数据已同步
               </span>
               <button class="sd__tbBtn">导出报告</button>
             </div>
@@ -80,7 +73,7 @@
                   <i v-if="showCaret" class="sd__caret" />
                 </h3>
                 <p class="sd__sceneLede">
-                  AI 已经按本节课的目标，把章节、资源、互动环节自动排好了。
+                  已按本节课目标整理章节、资源、课堂活动和课后练习。
                 </p>
                 <div class="sd__sceneMeta">
                   <span>授课对象：信工 22 级 3 班 (45人)</span>
@@ -152,9 +145,9 @@
           >
             <div class="sd__sceneHead">
               <div class="sd__sceneHeadMain">
-                <h3 class="sd__sceneTitle">学情看板 · 多维能力评估</h3>
+                <h3 class="sd__sceneTitle">班级学情概览</h3>
                 <p class="sd__sceneLede">
-                  融合学生历史行为（LTSM）与题目难度特征，立体刻画学习者能力。
+                  汇总课程进度、练习和测评结果，查看班级与个人的掌握变化。
                 </p>
               </div>
               <div class="sd__kpiGrid">
@@ -192,8 +185,7 @@
                   <span
                     class="sd__barFill"
                     :style="{
-                      background: `linear-gradient(to top, ${b.color}15, ${b.color}E6)`,
-                      boxShadow: `0 4px 12px ${b.color}33`,
+                      background: b.color,
                       borderTop: `2px solid ${b.color}`
                     }"
                   />
@@ -215,10 +207,14 @@
                     x2="100%"
                     y2="100%"
                   >
-                    <stop offset="0%" stop-color="#4A90E2" stop-opacity="0.5" />
+                    <stop
+                      offset="0%"
+                      stop-color="#4a90e2"
+                      stop-opacity="0.34"
+                    />
                     <stop
                       offset="100%"
-                      stop-color="#7B61FF"
+                      stop-color="#7c65c1"
                       stop-opacity="0.1"
                     />
                   </linearGradient>
@@ -246,12 +242,9 @@
                     ref="radarShapeEl"
                     :points="radarShape"
                     fill="url(#radarGrad)"
-                    stroke="#4A90E2"
-                    stroke-width="2"
+                    stroke="#4a90e2"
+                    stroke-width="1.6"
                     stroke-linejoin="round"
-                    style="
-                      filter: drop-shadow(0 4px 10px rgba(74, 144, 226, 0.3));
-                    "
                   />
                 </g>
               </svg>
@@ -266,8 +259,10 @@
           >
             <div class="sd__sceneHead">
               <div class="sd__sceneHeadMain">
-                <h3 class="sd__sceneTitle">课堂中控 · 知识拓扑图</h3>
-                <p class="sd__sceneLede">知识点、反馈、资源与评价同步点亮。</p>
+                <h3 class="sd__sceneTitle">课堂反馈与知识点</h3>
+                <p class="sd__sceneLede">
+                  提问、作答和知识点掌握情况随课堂进度同步更新。
+                </p>
               </div>
               <div class="sd__liveOverlay">
                 <div class="sd__livePulse" />
@@ -331,9 +326,9 @@
                         x2="100%"
                         y2="0%"
                       >
-                        <stop offset="0%" stop-color="#111827" />
-                        <stop offset="45%" stop-color="#10B981" />
-                        <stop offset="100%" stop-color="#4A90E2" />
+                        <stop offset="0%" stop-color="#5f6368" />
+                        <stop offset="45%" stop-color="#2d9d78" />
+                        <stop offset="100%" stop-color="#4a90e2" />
                       </linearGradient>
                     </defs>
                     <path
@@ -414,18 +409,17 @@
           >
             <div class="sd__sceneHead">
               <div class="sd__sceneHeadMain">
-                <h3 class="sd__sceneTitle">思维链错题诊断与自适应组卷</h3>
+                <h3 class="sd__sceneTitle">错题诊断与组卷建议</h3>
                 <p class="sd__sceneLede">
-                  SAHR
-                  语义自适应检索，跨越题海自动匹配最优评估组合，动态规划试题难度。
+                  根据本次作答定位薄弱知识点，并给出题目范围与难度建议。
                 </p>
               </div>
             </div>
             <div class="sd__exam">
               <div class="sd__examBank">
                 <div class="sd__labelBar">
-                  <p class="sd__label">错因挖掘池</p>
-                  <span class="sd__filter">AI Pool</span>
+                  <p class="sd__label">待选题目</p>
+                  <span class="sd__filter">课程题库</span>
                 </div>
                 <div
                   v-for="q in examQuestions"
@@ -444,18 +438,16 @@
                   >
                   <div class="sd__examQText">
                     <strong>{{ q.title }}</strong>
-                    <div class="sd__examQMeta">
-                      DI: 0.{{ 80 + q.id * 3 }} | W: {{ 15 + q.id * 5 }}
-                    </div>
+                    <div class="sd__examQMeta">已关联本节课知识点</div>
                   </div>
                 </div>
               </div>
               <div class="sd__examPaper">
                 <div class="sd__paperBar">
-                  <span>高斯网络评估体系 · A 套流转</span>
+                  <span>课程测评 A 卷</span>
                   <div class="sd__paperStats">
-                    <span>信度 0.88</span>
-                    <span>预计耗时 40'</span>
+                    <span>3 道题</span>
+                    <span>预计 40 分钟</span>
                   </div>
                 </div>
                 <div ref="paperBodyEl" class="sd__paperBody">
@@ -463,7 +455,7 @@
                     v-if="!paperQuestions.length"
                     class="sd__paperPlaceholder"
                   >
-                    等待算法汇聚组卷策略...
+                    选择题目后生成试卷预览
                   </div>
                   <div
                     v-for="q in paperQuestions"
@@ -487,9 +479,9 @@
             data-scene="vlab"
           >
             <div class="sd__sceneHead">
-              <h3 class="sd__sceneTitle">虚拟仿真实验室 · 实时内核轨迹</h3>
+              <h3 class="sd__sceneTitle">虚拟仿真实验：进程调度</h3>
               <p class="sd__sceneLede">
-                突破硬件限制，在浏览器中直观追踪 CPU 调度与系统调用流动。
+                在浏览器中观察 CPU 调度、进程状态与系统调用的变化。
               </p>
             </div>
             <div class="sd__vlab">
@@ -538,46 +530,10 @@
           </div>
         </main>
 
-        <section class="sd__mobilePanel" aria-label="智能工作流移动端预览">
-          <div class="sd__mobileStatus">
-            <span>{{ mobileScene.eyebrow }}</span>
-            <strong>{{ mobileScene.title }}</strong>
-            <p>{{ mobileScene.desc }}</p>
-          </div>
-
-          <div class="sd__mobileMetrics">
-            <article v-for="metric in mobileScene.metrics" :key="metric.label">
-              <span>{{ metric.label }}</span>
-              <strong>{{ metric.value }}</strong>
-            </article>
-          </div>
-
-          <div class="sd__mobileFlow">
-            <div class="sd__mobileLine" aria-hidden="true">
-              <i />
-            </div>
-            <article
-              v-for="(step, index) in mobileScene.steps"
-              :key="step"
-              :class="{ 'is-active': index === mobileScene.activeStep }"
-            >
-              <span>{{ String(index + 1).padStart(2, "0") }}</span>
-              <strong>{{ step }}</strong>
-            </article>
-          </div>
-
-          <div class="sd__mobileAction">
-            <span>教学服务已连接</span>
-            <button type="button" @click="manualActivate(nextMobileKey)">
-              下一步
-            </button>
-          </div>
-        </section>
-
         <!-- 右侧浮动卡 -->
         <Transition name="sd-pop">
           <div v-if="showInsight" ref="insightChipEl" class="sd__insight">
-            <span class="sd__insightTag">AI 洞察</span>
+            <span class="sd__insightTag">操作提示</span>
             <strong>{{ insightTitle }}</strong>
             <p>{{ insightDesc }}</p>
           </div>
@@ -603,6 +559,7 @@
 
 <script setup lang="ts">
 import { gsap } from "gsap";
+import logo from "@/assets/logo.png";
 import {
   computed,
   nextTick,
@@ -646,39 +603,39 @@ type NavKey = (typeof navItems)[number]["key"];
 const prepCards = [
   {
     tag: "导入",
-    tagBg: "rgba(255,181,71,0.18)",
-    tagFg: "#9a6500",
+    tagBg: "rgba(217,154,50,0.12)",
+    tagFg: "#9a681e",
     meta: "10:00 · 5min",
-    title: "情境引入：Linux 内核与教学流转换",
-    desc: "用智慧物流案例切入，引出本节核心逻辑。",
+    title: "情境引入：从日常任务理解进程调度",
+    desc: "用物流调度案例切入本节核心概念。",
     progress: 100
   },
   {
     tag: "深度讲解",
-    tagBg: "rgba(74,144,226,0.18)",
-    tagFg: "#164e63",
+    tagBg: "rgba(74,144,226,0.11)",
+    tagFg: "#2f6fae",
     meta: "10:05 · 18min",
-    title: "多维学情聚类与归因算法",
-    desc: "动态演示如何捕捉学生认知盲区的流动方向。",
+    title: "核心讲解：调度队列与切换条件",
+    desc: "结合图示讲清进程状态与切换条件。",
     progress: 82
   },
   {
     tag: "实时互动",
-    tagBg: "rgba(16,185,129,0.18)",
-    tagFg: "#065f46",
+    tagBg: "rgba(45,157,120,0.11)",
+    tagFg: "#21795d",
     meta: "10:23 · 12min",
-    title: "课堂随练 · 高阶思辨讨论",
-    desc: "AI 根据历史轨迹自动调整讨论深度。",
+    title: "课堂随练：判断调度结果",
+    desc: "根据本节作答情况调整后续讲解。",
     progress: 55
   }
 ];
 
 const bars = [
-  { label: "理解力", value: 86, color: "#10B981" },
-  { label: "活跃度", value: 72, color: "#3B82F6" },
-  { label: "专注度", value: 58, color: "#8B5CF6" },
-  { label: "准确率", value: 45, color: "#F43F5E" },
-  { label: "完成率", value: 92, color: "#06B6D4" }
+  { label: "预习", value: 86, color: "#2d9d78" },
+  { label: "作业", value: 72, color: "#4a90e2" },
+  { label: "随堂练习", value: 58, color: "#7c65c1" },
+  { label: "测评", value: 45, color: "#e16b5b" },
+  { label: "完成", value: 92, color: "#36a6a1" }
 ];
 
 const radarValues = [0.88, 0.72, 0.58, 0.82, 0.65, 0.92];
@@ -710,9 +667,9 @@ const classMetrics = [
 ];
 
 const teacherSignals = [
-  { label: "掌握", value: 76, color: "#10B981" },
-  { label: "追问", value: 48, color: "#4A90E2" },
-  { label: "风险", value: 22, color: "#F43F5E" }
+  { label: "掌握", value: 76, color: "#2d9d78" },
+  { label: "追问", value: 48, color: "#4a90e2" },
+  { label: "需复习", value: 22, color: "#e16b5b" }
 ];
 
 const classStack = ["AWSP", "MCP", "IRT"];
@@ -772,29 +729,29 @@ const coreTiles = [
     code: "01",
     title: "知识拓扑",
     value: "22 节点",
-    color: "#111827",
-    bg: "linear-gradient(135deg, #ffffff, #f5f5f4)"
+    color: "#202124",
+    bg: "#f7f7f5"
   },
   {
     code: "02",
     title: "错因聚类",
     value: "6 簇",
-    color: "#F43F5E",
-    bg: "linear-gradient(135deg, #fff7ed, #fff1f2)"
+    color: "#e16b5b",
+    bg: "#fbefed"
   },
   {
     code: "03",
     title: "资源编排",
     value: "12 条",
-    color: "#4A90E2",
-    bg: "linear-gradient(135deg, #eff6ff, #ecfeff)"
+    color: "#4a90e2",
+    bg: "#edf4fb"
   },
   {
     code: "04",
     title: "评价闭环",
     value: "实时",
-    color: "#10B981",
-    bg: "linear-gradient(135deg, #ecfdf5, #f7fee7)"
+    color: "#2d9d78",
+    bg: "#eaf6f2"
   }
 ];
 
@@ -861,90 +818,12 @@ const consoleHistory = [
 ];
 
 /* ------------ 响应式状态 ------------ */
+const FULL_TITLE = "嵌入式 Linux 第 4 章教学方案";
 const activeNav = ref<NavKey>("prep");
 const activeLabel = computed(
   () => navItems.find(n => n.key === activeNav.value)?.label ?? ""
 );
-
-const mobileScenes: Record<
-  NavKey,
-  {
-    eyebrow: string;
-    title: string;
-    desc: string;
-    activeStep: number;
-    metrics: Array<{ label: string; value: string }>;
-    steps: string[];
-  }
-> = {
-  prep: {
-    eyebrow: "AI 备课同步",
-    title: "嵌入式 Linux 教学方案生成中",
-    desc: "章节目标、资源与课堂节奏正在被串成一条可执行任务流。",
-    activeStep: 1,
-    metrics: [
-      { label: "章节", value: "12" },
-      { label: "资源", value: "96%" },
-      { label: "耗时", value: "8s" }
-    ],
-    steps: ["课程目标", "学情匹配", "课堂节奏", "课后追踪"]
-  },
-  insight: {
-    eyebrow: "学情分析",
-    title: "多维能力评估已更新",
-    desc: "历史行为与题目表现合并计算，刷新班级能力画像。",
-    activeStep: 2,
-    metrics: [
-      { label: "均值", value: "85.4" },
-      { label: "预警", value: "6人" },
-      { label: "掌握", value: "75%" }
-    ],
-    steps: ["行为入库", "能力估计", "风险识别", "报告生成"]
-  },
-  class: {
-    eyebrow: "课堂互动",
-    title: "知识拓扑正在同步点亮",
-    desc: "知识点、反馈、资源与评价状态在教师端实时对齐。",
-    activeStep: 2,
-    metrics: [
-      { label: "连通", value: "94%" },
-      { label: "响应", value: "37/45" },
-      { label: "延迟", value: "1.2s" }
-    ],
-    steps: ["意图识别", "拓扑更新", "学生响应", "反馈沉淀"]
-  },
-  exam: {
-    eyebrow: "智能组卷",
-    title: "错因诊断与组卷策略完成",
-    desc: "错因挖掘、试题调权和 A 套试卷流转已收敛。",
-    activeStep: 3,
-    metrics: [
-      { label: "信度", value: "0.88" },
-      { label: "题量", value: "3题" },
-      { label: "耗时", value: "40'" }
-    ],
-    steps: ["错因挖掘", "题目匹配", "难度调权", "试卷生成"]
-  },
-  vlab: {
-    eyebrow: "虚拟实验",
-    title: "内核轨迹正在映射教学事件",
-    desc: "CPU 调度与系统调用流动被转换为可观察实验过程。",
-    activeStep: 1,
-    metrics: [
-      { label: "进程", value: "3" },
-      { label: "核心", value: "4" },
-      { label: "状态", value: "同步" }
-    ],
-    steps: ["轨迹采样", "负载映射", "事件解释", "实验回放"]
-  }
-};
-
-const mobileScene = computed(() => mobileScenes[activeNav.value]);
-const nextMobileKey = computed(() => {
-  const index = navItems.findIndex(item => item.key === activeNav.value);
-  return navItems[(index + 1) % navItems.length].key;
-});
-const typedTitle = ref("");
+const typedTitle = ref(FULL_TITLE);
 const showCaret = ref(false);
 const showInsight = ref(false);
 const insight = reactive({ title: "", desc: "" });
@@ -986,8 +865,6 @@ const crumbActiveEl = ref<HTMLElement | null>(null);
 let tl: gsap.core.Timeline | null = null;
 let io: IntersectionObserver | null = null;
 
-const FULL_TITLE = "嵌入式 Linux · 第 4 章 教学方案";
-
 const moveCursorToNav = (key: NavKey) => {
   const el = navRefs.value.find(n => n?.dataset.key === key);
   const root = rootEl.value;
@@ -1004,7 +881,7 @@ const buildTimeline = () => {
   tl?.kill();
 
   // 初始隐藏需要进场的元素
-  gsap.set(prepCardRefs.value, { y: 16, opacity: 0 });
+  gsap.set(prepCardRefs.value, { y: 0, opacity: 1 });
   gsap.set(barRefs.value, { transformOrigin: "bottom center" });
   barRefs.value.forEach(b => {
     const fill = b.querySelector(".sd__barFill") as HTMLElement | null;
@@ -1026,7 +903,7 @@ const buildTimeline = () => {
   gsap.set(cursorEl.value, { x: startX, y: startY, opacity: 1 });
   gsap.set(rippleEl.value, { scale: 0, opacity: 0 });
 
-  const t = gsap.timeline({ repeat: -1, repeatDelay: 1.2 });
+  const t = gsap.timeline({ repeat: -1, repeatDelay: 1.8 });
   tl = t;
   // 在开发期暴露时间轴便于排查；生产环境无副作用
   if (typeof window !== "undefined") (window as any).__sdTl = t;
@@ -1034,32 +911,29 @@ const buildTimeline = () => {
   // ============= 幕 1：AI 备课 =============
   const prepPos = moveCursorToNav("prep");
   if (prepPos) {
-    t.to(cursorEl.value, { ...prepPos, duration: 0.9, ease: "power2.inOut" });
+    t.to(cursorEl.value, { ...prepPos, duration: 0.62, ease: "power3.inOut" });
     t.add(() => clickNav("prep"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
   t.add(() => activateScene("prep"), "+=0.05");
-  // 打字机：标题
-  t.add(() => typeOut(FULL_TITLE), "+=0.1");
-  t.to({}, { duration: FULL_TITLE.length * 0.04 + 0.3 });
-  // 卡片错层进入
+  t.set(prepCardRefs.value, { y: 12, opacity: 0 });
   t.to(prepCardRefs.value, {
     y: 0,
     opacity: 1,
-    duration: 0.55,
-    stagger: 0.12,
+    duration: 0.45,
+    stagger: 0.09,
     ease: "power3.out"
   });
   // 洞察弹出
   t.add(() =>
-    showInsightChip("已生成教学方案", "本节包含 1 个引入 · 1 段讲解 · 1 组练习")
+    showInsightChip("教学方案已整理", "包含情境引入、核心讲解和随堂练习")
   );
-  t.to({}, { duration: 1.6 });
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 2：学情 =============
   const insightPos = moveCursorToNav("insight");
@@ -1067,14 +941,14 @@ const buildTimeline = () => {
   if (insightPos) {
     t.to(cursorEl.value, {
       ...insightPos,
-      duration: 0.85,
-      ease: "power2.inOut"
+      duration: 0.58,
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("insight"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
@@ -1087,7 +961,7 @@ const buildTimeline = () => {
     if (fill)
       t.to(
         fill,
-        { scaleY: target, duration: 0.6, ease: "power2.out" },
+        { scaleY: target, duration: 0.46, ease: "power3.out" },
         `>-${i === 0 ? 0 : 0.5}`
       );
   });
@@ -1095,16 +969,13 @@ const buildTimeline = () => {
   if (radarShapeEl.value)
     t.to(
       radarShapeEl.value,
-      { scale: 1, duration: 0.7, ease: "back.out(1.4)" },
+      { scale: 1, duration: 0.52, ease: "power3.out" },
       "<0.2"
     );
   t.add(() =>
-    showInsightChip(
-      "学习效率 +18%",
-      "AI 标出 3 个薄弱知识点：调度 · 同步 · 信号"
-    )
+    showInsightChip("需要重点讲解 3 个知识点", "进程调度、线程同步和信号处理")
   );
-  t.to({}, { duration: 1.6 });
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 3：课堂 =============
   const classPos = moveCursorToNav("class");
@@ -1112,14 +983,14 @@ const buildTimeline = () => {
   if (classPos) {
     t.to(cursorEl.value, {
       ...classPos,
-      duration: 0.85,
-      ease: "power2.inOut"
+      duration: 0.58,
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("class"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
@@ -1129,7 +1000,7 @@ const buildTimeline = () => {
   // 连线绘制
   t.to(
     lineRefs.value,
-    { strokeDashoffset: 0, duration: 0.7, stagger: 0.12, ease: "power2.out" },
+    { strokeDashoffset: 0, duration: 0.5, stagger: 0.07, ease: "power3.out" },
     "<-0.2"
   );
   // 学生头像弹入
@@ -1138,16 +1009,14 @@ const buildTimeline = () => {
     {
       scale: 1,
       opacity: 1,
-      duration: 0.45,
-      stagger: 0.12,
-      ease: "back.out(1.6)"
+      duration: 0.36,
+      stagger: 0.07,
+      ease: "power3.out"
     },
     "<0.1"
   );
-  t.add(() =>
-    showInsightChip("4 名学生已响应", "课堂互动率 100% · AI 实时收集回答")
-  );
-  t.to({}, { duration: 1.8 });
+  t.add(() => showInsightChip("4 名学生已响应", "回答已归入本节课的课堂记录"));
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 4：智能组卷 =============
   const examPos = moveCursorToNav("exam");
@@ -1155,29 +1024,29 @@ const buildTimeline = () => {
   if (examPos) {
     t.to(cursorEl.value, {
       ...examPos,
-      duration: 0.85,
+      duration: 0.58,
       opacity: 1,
-      ease: "power2.inOut"
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("exam"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
   t.add(() => activateScene("exam"), "+=0.05");
   // 模拟从左侧拖拽/飞入题目
   examQRefs.value.forEach((q, i) => {
-    t.to(q, { x: 10, backgroundColor: "#f0f9ff", duration: 0.3 }, ">-0.1");
+    t.to(q, { x: 6, backgroundColor: "#f4f7fb", duration: 0.24 }, ">-0.1");
     t.add(() => {
       paperQuestions.value.push(examQuestions[i]);
       nextTick(() => {
         const item = paperBodyEl.value?.querySelector(
           ".sd__paperItem:last-child"
         );
-        if (item) gsap.from(item, { x: -20, opacity: 0, duration: 0.4 });
+        if (item) gsap.from(item, { x: -10, opacity: 0, duration: 0.28 });
       });
     }, "+=0.1");
     t.to(q, { x: 0, backgroundColor: "#fff", duration: 0.2, delay: 0.1 });
@@ -1187,12 +1056,9 @@ const buildTimeline = () => {
     duration: 0.4
   });
   t.add(() =>
-    showInsightChip(
-      "AI 自动调权完成",
-      "已根据知识点权重平衡了 A 卷难度，预测区分度 0.82"
-    )
+    showInsightChip("组卷建议已更新", "已根据知识点范围调整 A 卷的题型与难度")
   );
-  t.to({}, { duration: 1.6 });
+  t.to({}, { duration: 2.2 });
 
   // ============= 幕 5：虚拟实验 =============
   const vlabPos = moveCursorToNav("vlab");
@@ -1200,15 +1066,15 @@ const buildTimeline = () => {
   if (vlabPos) {
     t.to(cursorEl.value, {
       ...vlabPos,
-      duration: 0.85,
+      duration: 0.58,
       opacity: 1,
-      ease: "power2.inOut"
+      ease: "power3.inOut"
     });
     t.add(() => clickNav("vlab"), "+=0.05");
     t.fromTo(
       rippleEl.value,
       { scale: 0, opacity: 0.5 },
-      { scale: 2.2, opacity: 0, duration: 0.55, ease: "power2.out" },
+      { scale: 1.55, opacity: 0, duration: 0.32, ease: "power3.out" },
       "<"
     );
   }
@@ -1216,7 +1082,7 @@ const buildTimeline = () => {
   // 模拟内核调度动画
   t.to(vlabProcs.value, {
     y: -4,
-    repeat: 3,
+    repeat: 1,
     yoyo: true,
     duration: 0.2,
     stagger: 0.1
@@ -1224,7 +1090,7 @@ const buildTimeline = () => {
   t.to(
     vlabCpus.value.map(c => c.querySelector(".sd__cpuLoad i")),
     {
-      width: () => 40 + Math.random() * 50 + "%",
+      scaleX: () => 0.4 + Math.random() * 0.5,
       stagger: 0.1,
       duration: 0.4
     }
@@ -1238,14 +1104,12 @@ const buildTimeline = () => {
   consoleHistory.forEach(line => {
     t.add(() => consoleLines.value.push(line), "+=0.3");
   });
-  t.add(() =>
-    showInsightChip("实时内核观测", "映射内存地址：0x7ffc... 教学负载平衡中")
-  );
-  t.to({}, { duration: 2 });
+  t.add(() => showInsightChip("实验状态已更新", "进程调度与 CPU 负载同步显示"));
+  t.to({}, { duration: 2.4 });
 
   // ============= 收尾：回到右上 =============
   t.add(() => hideInsightChip());
-  t.to(cursorEl.value, { x: startX, y: startY, opacity: 1, duration: 0.6 });
+  t.to(cursorEl.value, { x: startX, y: startY, opacity: 1, duration: 0.5 });
   t.add(() => activateScene("prep"));
   t.to({}, { duration: 0.4 });
 };
@@ -1280,9 +1144,9 @@ const activateScene = (key: NavKey) => {
     el.classList.toggle("sd__scene--hidden", k !== key);
   });
   if (key === "prep") {
-    typedTitle.value = "";
+    typedTitle.value = FULL_TITLE;
     showCaret.value = false;
-    gsap.set(prepCardRefs.value, { y: 16, opacity: 0 });
+    gsap.set(prepCardRefs.value, { y: 0, opacity: 1 });
   } else if (key === "insight") {
     barRefs.value.forEach(b => {
       const fill = b.querySelector(".sd__barFill") as HTMLElement | null;
@@ -1301,24 +1165,11 @@ const activateScene = (key: NavKey) => {
   } else if (key === "vlab") {
     consoleLines.value = [];
     gsap.set(vlabCpus.value, { backgroundColor: "rgb(0 0 0 / 6%)" });
+    gsap.set(
+      vlabCpus.value.map(c => c.querySelector(".sd__cpuLoad i")),
+      { scaleX: 0.45 }
+    );
   }
-};
-
-let typeTimer: number | null = null;
-const typeOut = (text: string) => {
-  if (typeTimer) window.clearInterval(typeTimer);
-  typedTitle.value = "";
-  showCaret.value = true;
-  let i = 0;
-  typeTimer = window.setInterval(() => {
-    i++;
-    typedTitle.value = text.slice(0, i);
-    if (i >= text.length) {
-      if (typeTimer) window.clearInterval(typeTimer);
-      typeTimer = null;
-      window.setTimeout(() => (showCaret.value = false), 600);
-    }
-  }, 38);
 };
 
 const showInsightChip = (title: string, desc: string) => {
@@ -1380,18 +1231,15 @@ onBeforeUnmount(() => {
   tl?.kill();
   io?.disconnect();
   window.removeEventListener("resize", onResize);
-  if (typeTimer) window.clearInterval(typeTimer);
 });
 </script>
 
 <style lang="scss" scoped>
-@use "sass:math";
-
-$bg: #fafaf9;
-$border: #e8e5df;
-$text: #191918;
-$muted: #5f5e5b;
-$faint: #91908d;
+$bg: #f7f7f5;
+$border: #e8e8e5;
+$text: #202124;
+$muted: #5f6368;
+$faint: #777b80;
 
 .sd {
   position: relative;
@@ -1419,29 +1267,18 @@ $faint: #91908d;
     overflow: hidden;
     background: #fff;
     border: 1px solid $border;
-    border-radius: 16px;
+    border-radius: 10px;
     box-shadow:
       0 1px 2px rgb(0 0 0 / 4%),
-      0 32px 80px rgb(0 0 0 / 10%),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.4);
-    aspect-ratio: 16 / 12;
+      0 22px 56px rgb(16 24 61 / 9%);
+    aspect-ratio: 16 / 10;
     cursor: default;
 
     &::before {
       content: "";
       position: absolute;
       inset: 0;
-      background:
-        radial-gradient(
-          circle at 0% 0%,
-          rgba(123, 97, 255, 0.03) 0%,
-          transparent 50%
-        ),
-        radial-gradient(
-          circle at 100% 100%,
-          rgba(74, 144, 226, 0.03) 0%,
-          transparent 50%
-        );
+      background: transparent;
       pointer-events: none;
     }
   }
@@ -1455,10 +1292,6 @@ $faint: #91908d;
     padding: 0 14px;
     background: rgb(0 0 0 / 3%);
     border-bottom: 1px solid $border;
-  }
-
-  &__mobileTitle {
-    display: none;
   }
 
   &__lights {
@@ -1507,18 +1340,17 @@ $faint: #91908d;
     padding: 4px 10px;
     font-size: 11.5px;
     font-weight: 600;
-    color: #047857;
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid rgba(16, 185, 129, 0.28);
+    color: #315f8c;
+    background: rgb(53 111 168 / 9%);
+    border: 1px solid rgb(53 111 168 / 20%);
     border-radius: 999px;
   }
 
   &__chipDot {
     width: 6px;
     height: 6px;
-    background: #10b981;
+    background: #527ca5;
     border-radius: 50%;
-    animation: sd-pulse 1.6s ease-out infinite;
   }
 
   &__body {
@@ -1549,31 +1381,10 @@ $faint: #91908d;
   }
 
   &__brandSquare {
-    position: relative;
-    display: inline-block;
-    flex: 0 0 auto;
     width: 22px;
     height: 22px;
-    overflow: hidden;
-    background:
-      radial-gradient(
-        circle at 64% 34%,
-        rgb(255 255 255 / 58%) 0 3px,
-        transparent 4px
-      ),
-      linear-gradient(135deg, #111, #444);
+    object-fit: contain;
     border-radius: 5px;
-
-    &::after {
-      position: absolute;
-      right: 5px;
-      bottom: 5px;
-      width: 5px;
-      height: 5px;
-      content: "";
-      background: #10b981;
-      border-radius: 999px;
-    }
   }
 
   &__sideGroup {
@@ -1634,10 +1445,6 @@ $faint: #91908d;
     flex-direction: column;
   }
 
-  &__mobilePanel {
-    display: none;
-  }
-
   &__crumbs {
     display: flex;
     gap: 8px;
@@ -1668,19 +1475,18 @@ $faint: #91908d;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    color: #047857;
-    background: rgba(16, 185, 129, 0.12);
+    color: #315f8c;
+    background: rgb(53 111 168 / 9%);
     padding: 4px 8px;
     border-radius: 999px;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgb(53 111 168 / 20%);
   }
 
   &__tbDot {
     width: 4px;
     height: 4px;
-    background: #10b981;
+    background: #527ca5;
     border-radius: 50%;
-    animation: sd-pulse 2s infinite;
   }
 
   &__tbBtn {
@@ -1715,10 +1521,11 @@ $faint: #91908d;
   &__sceneTitle {
     margin: 0 0 10px;
     font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: 0;
     color: $text;
     min-height: 32px;
+    text-wrap: balance;
   }
 
   &__caret {
@@ -1996,7 +1803,6 @@ $faint: #91908d;
       height: 100%;
       background: linear-gradient(90deg, #111, #5f5e5b);
       border-radius: 2px;
-      transition: width 0.6s ease;
     }
   }
 
@@ -2007,12 +1813,7 @@ $faint: #91908d;
     gap: 40px;
     align-items: center;
     height: calc(100% - 100px);
-    background-image: radial-gradient(
-      circle at 2px 2px,
-      rgba(0, 0, 0, 0.03) 1px,
-      transparent 0
-    );
-    background-size: 24px 24px;
+    background: #fbfbfa;
     padding: 20px;
     border-radius: 12px;
   }
@@ -2680,7 +2481,10 @@ $faint: #91908d;
     border-radius: 6px;
     font-size: 11px;
     color: #aaa;
-    transition: all 0.3s;
+    transition:
+      color 0.3s,
+      background-color 0.3s,
+      border-color 0.3s;
   }
 
   &__hardware {
@@ -2722,10 +2526,11 @@ $faint: #91908d;
 
     i {
       display: block;
+      width: 100%;
       height: 100%;
-      width: 0%;
       background: #7b61ff;
-      transition: width 0.3s;
+      transform: scaleX(0);
+      transform-origin: left center;
     }
   }
 
@@ -2743,11 +2548,29 @@ $faint: #91908d;
       border-radius: 1px;
       animation: sd-wave 1s ease-in-out infinite;
 
-      @for $i from 1 through 5 {
-        &:nth-child(#{$i}) {
-          height: 30% + math.random(60);
-          animation-delay: $i * 0.1s;
-        }
+      &:nth-child(1) {
+        height: 42%;
+        animation-delay: 0.1s;
+      }
+
+      &:nth-child(2) {
+        height: 76%;
+        animation-delay: 0.2s;
+      }
+
+      &:nth-child(3) {
+        height: 58%;
+        animation-delay: 0.3s;
+      }
+
+      &:nth-child(4) {
+        height: 84%;
+        animation-delay: 0.4s;
+      }
+
+      &:nth-child(5) {
+        height: 50%;
+        animation-delay: 0.5s;
       }
     }
   }
@@ -2843,7 +2666,7 @@ $faint: #91908d;
     left: 0;
     z-index: 10;
     pointer-events: none;
-    filter: drop-shadow(0 4px 8px rgb(0 0 0 / 18%));
+    filter: drop-shadow(0 3px 6px rgb(16 24 61 / 16%));
     will-change: transform;
   }
 
@@ -2851,10 +2674,10 @@ $faint: #91908d;
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 26px;
-    height: 26px;
-    background: rgba(0, 0, 0, 0.14);
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    width: 22px;
+    height: 22px;
+    background: rgb(53 111 168 / 10%);
+    border: 1px solid rgb(53 111 168 / 32%);
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(0);
     pointer-events: none;
@@ -2873,17 +2696,19 @@ $faint: #91908d;
 
 .sd-pop-enter-active,
 .sd-pop-leave-active {
-  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sd-pop-enter-from {
   opacity: 0;
-  transform: translateY(24px) scale(0.9);
+  transform: translateY(8px) scale(0.98);
 }
 
 .sd-pop-leave-to {
   opacity: 0;
-  transform: translateY(-12px) scale(0.95);
+  transform: translateY(-4px) scale(0.99);
 }
 
 @keyframes sd-pulse {
@@ -2931,466 +2756,76 @@ $faint: #91908d;
   }
 }
 
-@keyframes sd-mobile-flow {
-  0%,
-  100% {
-    transform: translateX(-24%);
-  }
-
-  50% {
-    transform: translateX(54%);
-  }
-}
-
 @media (max-width: 900px) {
   .sd {
-    padding: 28px 16px 36px;
+    padding: 72px 18px;
   }
-
-  .sd__head {
-    display: none;
-  }
-
   .sd__stage {
     aspect-ratio: auto;
-    min-height: 0;
-    overflow: hidden;
-    border-radius: 18px;
-    box-shadow:
-      0 1px 2px rgb(0 0 0 / 4%),
-      0 18px 42px rgb(15 23 42 / 8%);
+    min-height: 820px;
   }
-
-  .sd__chrome {
-    height: 54px;
-    padding: 0 14px;
-    background: linear-gradient(
-      135deg,
-      rgb(239 246 255 / 96%),
-      rgb(255 255 255 / 96%)
-    );
-    border-bottom-color: rgb(226 232 240);
-  }
-
-  .sd__mobileTitle {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    min-width: 0;
-  }
-
-  .sd__mobileTitle > div {
-    min-width: 0;
-  }
-
-  .sd__mobileTitle > div strong,
-  .sd__mobileTitle > div span {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .sd__mobileTitle strong {
-    font-size: 14px;
-    font-weight: 850;
-    color: $text;
-  }
-
-  .sd__mobileTitle span {
-    margin-top: 2px;
-    font-size: 11px;
-    color: $muted;
-  }
-
-  .sd__mobileMark {
-    position: relative;
-    display: inline-block;
-    flex: 0 0 auto;
-    width: 30px;
-    height: 30px;
-    overflow: hidden;
-    background:
-      radial-gradient(
-        circle at 66% 34%,
-        rgb(255 255 255 / 62%) 0 4px,
-        transparent 5px
-      ),
-      linear-gradient(135deg, #4a90e2, #7b61ff);
-    border-radius: 10px;
-    box-shadow: 0 10px 24px rgb(74 144 226 / 18%);
-  }
-
-  .sd__lights,
-  .sd__url {
-    display: none;
-  }
-
-  .sd__chip {
-    margin-left: auto;
-    padding: 5px 9px;
-    font-size: 11px;
-  }
-
   .sd__body {
-    height: auto;
     grid-template-columns: 1fr;
   }
-
   .sd__side {
     display: none;
   }
-
   .sd__main {
-    display: none;
+    padding: 18px;
   }
-
-  .sd__mobilePanel {
-    display: grid;
-    gap: 14px;
-    padding: 16px;
-    background:
-      radial-gradient(circle at 12% 0%, rgb(74 144 226 / 8%), transparent 32%),
-      #fff;
-  }
-
-  .sd__mobileStatus {
-    padding: 15px;
-    background: rgb(248 250 252 / 84%);
-    border: 1px solid rgb(226 232 240);
-    border-radius: 16px;
-  }
-
-  .sd__mobileStatus span {
-    display: inline-flex;
-    margin-bottom: 9px;
-    padding: 5px 9px;
-    font-size: 11px;
-    font-weight: 800;
-    color: #047857;
-    background: rgb(16 185 129 / 10%);
-    border: 1px solid rgb(16 185 129 / 22%);
-    border-radius: 999px;
-  }
-
-  .sd__mobileStatus strong {
-    display: block;
-    font-size: 21px;
-    line-height: 1.2;
-    color: $text;
-    letter-spacing: 0;
-  }
-
-  .sd__mobileStatus p {
-    margin: 8px 0 0;
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: $muted;
-  }
-
-  .sd__mobileMetrics {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .sd__mobileMetrics article {
-    min-width: 0;
-    padding: 10px 9px;
-    background: #fff;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 14px;
-    box-shadow: 0 10px 24px rgb(15 23 42 / 4%);
-  }
-
-  .sd__mobileMetrics span,
-  .sd__mobileMetrics strong {
-    display: block;
-  }
-
-  .sd__mobileMetrics span {
-    font-size: 10.5px;
-    color: $faint;
-  }
-
-  .sd__mobileMetrics strong {
-    margin-top: 4px;
-    font-size: 17px;
-    line-height: 1;
-    color: $text;
-  }
-
-  .sd__mobileFlow {
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
-    padding: 18px 8px 8px;
-    overflow: hidden;
-    background: #fff;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 16px;
-  }
-
-  .sd__mobileLine {
-    position: absolute;
-    top: 42px;
-    left: 18px;
-    right: 18px;
-    height: 3px;
-    overflow: hidden;
-    background: rgb(226 232 240);
-    border-radius: 999px;
-  }
-
-  .sd__mobileLine i {
-    display: block;
-    width: 70%;
-    height: 100%;
-    background: linear-gradient(90deg, #ffb547, #10b981, #4a90e2);
-    border-radius: inherit;
-    animation: sd-mobile-flow 2.8s ease-in-out infinite;
-  }
-
-  .sd__mobileFlow article {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    justify-items: center;
-    gap: 7px;
-    min-width: 0;
-    text-align: center;
-  }
-
-  .sd__mobileFlow article span {
-    display: grid;
-    width: 30px;
-    height: 30px;
-    place-items: center;
-    font-size: 11px;
-    font-weight: 900;
-    color: #fff;
-    background: #cbd5e1;
-    border: 3px solid #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgb(15 23 42 / 10%);
-  }
-
-  .sd__mobileFlow article.is-active span {
-    background: linear-gradient(135deg, #4a90e2, #10b981);
-  }
-
-  .sd__mobileFlow article strong {
-    font-size: 10.5px;
-    line-height: 1.2;
-    color: $text;
-  }
-
-  .sd__mobileAction {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 12px;
-    background: rgb(239 246 255 / 72%);
-    border: 1px solid rgb(191 219 254);
-    border-radius: 14px;
-  }
-
-  .sd__mobileAction span {
-    min-width: 0;
-    font-size: 12px;
-    font-weight: 750;
-    color: #2563eb;
-  }
-
-  .sd__mobileAction button {
-    flex: 0 0 auto;
-    height: 32px;
-    padding: 0 14px;
-    font-size: 12px;
-    font-weight: 850;
-    color: #fff;
-    background: #0b7fe8;
-    border: 0;
-    border-radius: 999px;
-  }
-
   .sd__crumbs {
-    gap: 8px;
-    margin-bottom: 14px;
-    font-size: 11px;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+    font-size: 12px;
   }
-
-  .sd__crumbs > span:not(:last-of-type) {
-    display: none;
-  }
-
-  .sd__crumbs > span:last-of-type {
-    padding: 5px 9px;
-    color: #047857;
-    background: rgb(16 185 129 / 10%);
-    border: 1px solid rgb(16 185 129 / 22%);
-    border-radius: 999px;
-  }
-
   .sd__tbActions {
-    width: auto;
+    width: 100%;
     margin-left: 0;
-    margin-inline-start: auto;
-    justify-content: flex-end;
+    gap: 8px;
+    justify-content: space-between;
   }
-
   .sd__tbBadge {
-    display: none;
+    min-width: 0;
+    font-size: 9px;
   }
-
   .sd__tbBtn {
     flex: 0 0 auto;
-    padding: 6px 11px;
-    font-size: 11px;
+    padding: 4px 10px;
     white-space: nowrap;
-    border-radius: 999px;
   }
-
-  .sd__scene {
-    min-height: 0;
-  }
-
   .sd__sceneTitle {
     min-height: auto;
-    margin-bottom: 6px;
-    font-size: 20px;
-    line-height: 1.18;
-    letter-spacing: 0;
+    font-size: 22px;
+    line-height: 1.2;
   }
-
   .sd__sceneLede {
     font-size: 12.5px;
-    line-height: 1.55;
   }
-
-  .sd__sceneMeta {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
-    margin-top: 10px;
-  }
-
-  .sd__sceneMeta span:not(.divider) {
-    padding: 7px;
-    font-size: 10px;
-    line-height: 1.35;
-    background: rgb(248 250 252);
-    border: 1px solid rgb(226 232 240);
-    border-radius: 10px;
-  }
-
-  .sd__sceneMeta .divider {
-    display: none;
-  }
-
   .sd__cards {
     grid-template-columns: 1fr;
-    gap: 10px;
-    margin-top: 12px;
   }
-
-  .sd__timelineTrack,
-  .sd__timelineDot {
-    display: none;
-  }
-
-  .sd__card {
-    padding: 12px;
-    border-radius: 14px;
-  }
-
-  .sd__cards .sd__card:nth-of-type(n + 3) {
-    display: none;
-  }
-
-  .sd__card h4 {
-    font-size: 14px;
-  }
-
-  .sd__card p {
-    margin-bottom: 8px;
-    font-size: 12px;
-  }
-
-  .sd__cardFoot {
-    padding-top: 10px;
-  }
-
-  .sd__kpiGrid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
-    gap: 8px;
-    padding: 0;
-    background: transparent;
-    border: 0;
-  }
-
-  .sd__kpi {
-    gap: 3px;
-    min-width: 0;
-    padding: 8px 7px;
-    border: 1px solid rgb(226 232 240);
-    border-radius: 12px;
-    background: rgb(248 250 252);
-  }
-
-  .sd__kpiLabel {
-    font-size: 10px;
-  }
-
-  .sd__kpiVal {
-    font-size: 16px;
-  }
-
   .sd__chartRow {
     grid-template-columns: 1fr;
-    height: auto;
-    min-height: 150px;
-    gap: 12px;
-    padding: 14px 10px 12px;
-    background-size: 18px 18px;
+    gap: 16px;
   }
-
-  .sd__bars {
-    gap: 10px;
-    min-height: 132px;
-    padding-bottom: 22px;
-  }
-
-  .sd__barVal {
-    font-size: 12px;
-  }
-
-  .sd__barLabel {
-    font-size: 11px;
-  }
-
   .sd__radar {
     display: none;
   }
-
   .sd__insight {
-    display: none;
+    right: 12px;
+    top: 60px;
+    width: 180px;
   }
-
   .sd__sceneHead {
     gap: 12px;
     flex-direction: column;
-    margin-bottom: 14px;
+    margin-bottom: 20px;
   }
-
   .sd__liveOverlay {
     width: 100%;
     justify-content: space-between;
-    padding: 7px 9px;
+    padding: 8px 10px;
   }
   .sd__liveStats {
     width: 100%;
@@ -3402,189 +2837,39 @@ $faint: #91908d;
   .sd__liveStats .lbl {
     font-size: 9px;
   }
-
   .sd__class {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    gap: 12px;
+    grid-template-rows: auto 280px auto;
     height: auto;
     min-height: 0;
-    padding: 0;
-    overflow: visible;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
   }
-
   .sd__teacherPanel {
-    display: flex;
+    display: grid;
     grid-template-columns: 1fr;
-    padding: 14px;
-    border-radius: 16px;
   }
-
-  .sd__teacherTop {
-    justify-content: center;
-    gap: 14px;
-  }
-
-  .sd__avatar--teacher {
-    width: 52px;
-    height: 52px;
-  }
-
-  .sd__topology {
-    min-height: 210px;
-    border-radius: 16px;
-  }
-
-  .sd__topologyCanvas {
-    inset: 40px 8px 12px;
-  }
-
-  .sd__topologyNode {
-    width: 96px;
-    padding: 7px;
-  }
-
-  .sd__topologyNode span {
-    width: 24px;
-    height: 24px;
-  }
-
-  .sd__topologyNode strong {
-    font-size: 10.5px;
-  }
-
-  .sd__topologyNode small {
-    display: none;
-  }
-
   .sd__featureGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
   }
-
   .sd__responseDock {
-    display: none;
+    grid-template-columns: 1fr;
   }
-
   .sd__student {
     min-height: 56px;
   }
-
   .sd__featureTile {
-    min-height: 56px;
-    padding: 9px;
-  }
-
-  .sd__exam {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    height: auto;
-  }
-
-  .sd__examBank {
-    max-height: none;
-    padding: 10px;
-    overflow: hidden;
-    border-style: solid;
-    border-radius: 16px;
-  }
-
-  .sd__examQ {
-    align-items: flex-start;
-    padding: 10px;
-    margin-bottom: 7px;
-  }
-
-  .sd__examQ:nth-of-type(n + 4) {
-    display: none;
-  }
-
-  .sd__examPaper {
-    border-radius: 16px;
-  }
-
-  .sd__examQText strong {
-    font-size: 12px;
-  }
-
-  .sd__paperBar {
-    display: block;
-    padding: 12px 14px;
-    font-size: 12px;
-  }
-
-  .sd__paperStats {
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 6px;
-    font-size: 10px;
-  }
-
-  .sd__paperBody {
-    padding: 10px 12px;
-  }
-
-  .sd__paperItem {
-    font-size: 12.5px;
-    line-height: 1.5;
-  }
-
-  .sd__vlab {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    height: auto;
-  }
-
-  .sd__linuxKernel {
-    min-height: 172px;
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .sd__osLabel {
-    font-size: 10px;
-    line-height: 1.4;
-  }
-
-  .sd__osProc {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 7px;
-  }
-
-  .sd__procItem {
-    min-width: 0;
-    padding: 7px 8px;
-    overflow: hidden;
-    font-size: 10px;
-    text-overflow: ellipsis;
-  }
-
-  .sd__hardware {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 10px;
-  }
-
-  .sd__vlabConsole {
-    max-height: 180px;
-  }
-
-  .sd__consoleLines {
-    max-height: 138px;
-    overflow: hidden;
-    font-size: 10px;
-  }
-
-  .sd__cursor {
-    display: none;
+    min-height: 64px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sd *,
+  .sd *::before,
+  .sd *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
   .sd__cursor,
   .sd__caret {
     display: none;

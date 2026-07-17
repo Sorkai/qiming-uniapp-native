@@ -1,4 +1,4 @@
-import { http, resolveApiURL } from "@/utils/http";
+import { http } from "@/utils/http";
 
 export interface CourseCreateParams {
   title: string; // 课程标题
@@ -135,57 +135,96 @@ export interface ApiResponse<T = any> {
   data: T;
 }
 
-async function requestWithNativeFetchFallback<T>(
-  path: string,
-  params: Record<string, unknown> | undefined,
-  request: () => Promise<ApiResponse<T>>
-) {
-  try {
-    return await request();
-  } catch (error) {
-    const isNativePreview =
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("qiming-native-webview");
-    if (!isNativePreview) throw error;
+export type CourseRebuildOperationStatus =
+  | "queued"
+  | "running"
+  | "converging"
+  | "restoring_source"
+  | "completed"
+  | "failed"
+  | "attention_required";
 
-    const tokenInfo = (() => {
-      try {
-        return JSON.parse(localStorage.getItem("user-info") || "{}");
-      } catch {
-        return {};
-      }
-    })();
-    const token = tokenInfo.accessToken || tokenInfo.refreshToken;
-    if (!token) throw error;
+export type CourseRebuildOperationPhase =
+  | "admission"
+  | "preflight"
+  | "evidence_revoke"
+  | "replace"
+  | "source_restore"
+  | "converge"
+  | "done";
 
-    const url = resolveApiURL(path, params);
-    let lastFetchError: unknown = error;
+export type CourseRebuildJobType =
+  | "source_cache_invalidate"
+  | "source_storage_cleanup"
+  | "source_ai_cleanup"
+  | "new_course_hour_initialize"
+  | "source_evidence_restore";
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        const response = await fetch(url, {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) return (await response.json()) as ApiResponse<T>;
-        lastFetchError = new Error(`Native fetch failed: ${response.status}`);
-      } catch (fetchError) {
-        lastFetchError = fetchError;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 260 * (attempt + 1)));
-    }
-
-    console.warn("[NativeFetchFallback] course request failed", {
-      url,
-      error: lastFetchError
-    });
-    throw error;
-  }
+export interface CourseRebuildFact {
+  status: string;
+  pending: number;
+  failed: number;
 }
+
+export interface CourseRebuildOperation {
+  operationId: string;
+  status: CourseRebuildOperationStatus;
+  phase: CourseRebuildOperationPhase;
+  sourceCourseId: number;
+  newCourseId: number;
+  replacement: CourseRebuildFact;
+  cleanup: CourseRebuildFact;
+  initialization: CourseRebuildFact;
+  errorCode: string;
+  errorMessage: string;
+  retryable: boolean;
+}
+
+export interface CourseRebuildErrorResponse {
+  status: "error";
+  code: string;
+  message: string;
+  operationId?: string;
+}
+
+/**
+ * 发起管理员课程重建。接口返回 202 仅表示 operation 已受理，必须继续查询状态。
+ */
+export const startCourseRebuild = (data: {
+  sourceCourseId: number;
+  requestId: string;
+}) => {
+  return http.request<CourseRebuildOperation>(
+    "post",
+    "/edu/backend/v1/admin/course/rebuilds",
+    { data }
+  );
+};
+
+/** 获取课程重建 operation 的权威进度。 */
+export const getCourseRebuild = (operationId: string) => {
+  return http.request<CourseRebuildOperation>(
+    "get",
+    `/edu/backend/v1/admin/course/rebuilds/${encodeURIComponent(operationId)}`
+  );
+};
+
+/**
+ * 只重试管理员选中的失败作业。attention_required 作业必须显式确认后才能提交。
+ */
+export const retryCourseRebuildJobs = (
+  operationId: string,
+  data: {
+    jobTypes: CourseRebuildJobType[];
+    confirmAmbiguous?: boolean;
+  }
+) => {
+  return http.request<CourseRebuildOperation>(
+    "post",
+    `/edu/backend/v1/admin/course/rebuilds/${encodeURIComponent(operationId)}/jobs/retry`,
+    { data }
+  );
+};
 
 /**
  * 创建课程
@@ -213,15 +252,10 @@ export const getCourseList = (params: {
   pageSize?: number;
   courseName?: string;
 }) => {
-  return requestWithNativeFetchFallback<CourseListResult>(
+  return http.request<ApiResponse<CourseListResult>>(
+    "get",
     "/edu/backend/v1/course/list",
-    params,
-    () =>
-      http.request<ApiResponse<CourseListResult>>(
-        "get",
-        "/edu/backend/v1/course/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -229,15 +263,10 @@ export const getCourseList = (params: {
  * 获取课时列表
  */
 export const getCourseHoursList = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback<CourseHoursListResult>(
+  return http.request<ApiResponse<CourseHoursListResult>>(
+    "get",
     "/edu/backend/v1/course/hours/list",
-    params,
-    () =>
-      http.request<ApiResponse<CourseHoursListResult>>(
-        "get",
-        "/edu/backend/v1/course/hours/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -245,15 +274,10 @@ export const getCourseHoursList = (params: { courseId: number }) => {
  * 获取课程附件列表
  */
 export const getCourseAttrList = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback<CourseAttrListResult>(
+  return http.request<ApiResponse<CourseAttrListResult>>(
+    "get",
     "/edu/backend/v1/course/attr/list",
-    params,
-    () =>
-      http.request<ApiResponse<CourseAttrListResult>>(
-        "get",
-        "/edu/backend/v1/course/attr/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -261,14 +285,9 @@ export const getCourseAttrList = (params: { courseId: number }) => {
  * 获取课程详情
  */
 export const getCourseDetail = (params: { courseId: number }) => {
-  return requestWithNativeFetchFallback(
-    "/edu/backend/v1/course/detail",
-    params,
-    () =>
-      http.request<ApiResponse>("get", "/edu/backend/v1/course/detail", {
-        params
-      })
-  );
+  return http.request<ApiResponse>("get", "/edu/backend/v1/course/detail", {
+    params
+  });
 };
 
 /**
@@ -296,15 +315,10 @@ export const getAllocationUserList = (params: {
   pageNum: number;
   pageSize?: number;
 }) => {
-  return requestWithNativeFetchFallback<AllocationUserResult>(
+  return http.request<ApiResponse<AllocationUserResult>>(
+    "get",
     "/edu/backend/v1/course/allocation/user/list",
-    params,
-    () =>
-      http.request<ApiResponse<AllocationUserResult>>(
-        "get",
-        "/edu/backend/v1/course/allocation/user/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -318,15 +332,10 @@ export const getStudyUserList = (params: {
   pageNum: number;
   pageSize?: number;
 }) => {
-  return requestWithNativeFetchFallback<StudyUserResult>(
+  return http.request<ApiResponse<StudyUserResult>>(
+    "get",
     "/edu/backend/v1/course/study/user/list",
-    params,
-    () =>
-      http.request<ApiResponse<StudyUserResult>>(
-        "get",
-        "/edu/backend/v1/course/study/user/list",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -453,31 +462,32 @@ export const generateTeacherPlan = (data: {
  */
 export interface CourseStatsResult {
   totalCourses: number; // 日期范围内有学习记录的课程数，未传日期则统计教师所有课程
-  totalHours: number; // 范围内有学习记录课程的课时总和（单位：分钟）
+  totalStudents?: number; // 课程关联学生总数
+  totalHours: number; // 范围内有学习记录课程的课时总和
+  totalHoursUnit?: string;
   activeStudents: number; // 近7天有学习记录的去重学生数（固定，与日期筛选无关）
-  completionRate: number; // 加权完成率：完成记录数/总学习记录数×100
+  completedStudents?: number;
+  inProgressStudents?: number;
+  avgCompletionRate?: number; // 加权完成率：完成记录数/总学习记录数×100
+  completionRate?: number; // 兼容旧响应字段
+  lastUpdatedAt?: string;
 }
 
 /**
  * 获取课程统计数据
  * @param params 日期范围参数
  * - startDate/endDate 过滤学习记录时间
- * - totalCourses/totalHours/completionRate 受日期筛选影响
+ * - totalCourses/totalHours/avgCompletionRate 受日期筛选影响
  * - activeStudents 固定为近7天数据，不受日期筛选影响
  */
 export const getCourseStats = (params?: {
   startDate?: string; // 开始日期 yyyy-MM-dd
   endDate?: string; // 结束日期 yyyy-MM-dd
 }) => {
-  return requestWithNativeFetchFallback<CourseStatsResult>(
+  return http.request<ApiResponse<CourseStatsResult>>(
+    "get",
     "/edu/backend/v1/course/stats/overview",
-    params,
-    () =>
-      http.request<ApiResponse<CourseStatsResult>>(
-        "get",
-        "/edu/backend/v1/course/stats/overview",
-        { params }
-      )
+    { params }
   );
 };
 
@@ -489,29 +499,18 @@ export const getTeacherPlanList = (params: {
   pageNum: number;
   pageSize?: number;
 }) => {
-  return requestWithNativeFetchFallback<{
-    total: number;
-    teacherPlanList: Array<{
-      teacherPlanId: number;
-      courseId: number;
-      chapterId: number;
-      courseName: string;
-      chapterName: string;
-    }>;
-  }>("/edu/backend/v1/course/teacher/plan/list", params, () =>
-    http.request<
-      ApiResponse<{
-        total: number;
-        teacherPlanList: Array<{
-          teacherPlanId: number;
-          courseId: number;
-          chapterId: number;
-          courseName: string;
-          chapterName: string;
-        }>;
-      }>
-    >("get", "/edu/backend/v1/course/teacher/plan/list", { params })
-  );
+  return http.request<
+    ApiResponse<{
+      total: number;
+      teacherPlanList: Array<{
+        teacherPlanId: number;
+        courseId: number;
+        chapterId: number;
+        courseName: string;
+        chapterName: string;
+      }>;
+    }>
+  >("get", "/edu/backend/v1/course/teacher/plan/list", { params });
 };
 
 /**
@@ -519,15 +518,10 @@ export const getTeacherPlanList = (params: {
  * @param params 包含教案ID的参数对象
  */
 export const getTeacherPlanProgress = (params: { teacherPlanId: number }) => {
-  return requestWithNativeFetchFallback<{
-    progress: number;
-    downloadUrl?: string;
-  }>("/edu/backend/v1/course/teacher/plan/progress", params, () =>
-    http.request<
-      ApiResponse<{
-        progress: number;
-        downloadUrl?: string;
-      }>
-    >("get", "/edu/backend/v1/course/teacher/plan/progress", { params })
-  );
+  return http.request<
+    ApiResponse<{
+      progress: number;
+      downloadUrl?: string;
+    }>
+  >("get", "/edu/backend/v1/course/teacher/plan/progress", { params });
 };

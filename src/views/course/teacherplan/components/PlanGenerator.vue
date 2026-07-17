@@ -272,12 +272,7 @@ const props = defineProps({
 
 const emit = defineEmits(["switch-tab"]);
 const appStore = useAppStoreHook();
-const isNativeMobile = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
-const isMobileLayout = computed(
-  () => appStore.getDevice === "mobile" || isNativeMobile()
-);
+const isMobileLayout = computed(() => appStore.getDevice === "mobile");
 
 // 表单数据
 const form = reactive({

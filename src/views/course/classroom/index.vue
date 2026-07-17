@@ -54,11 +54,6 @@ const welcomeBannerStyle = computed(() => ({
 const rootRef = ref<HTMLDivElement>();
 const svgObjectRef = ref<HTMLObjectElement>();
 const isFullscreen = ref(false);
-const mobileQuery =
-  typeof window === "undefined"
-    ? null
-    : window.matchMedia("(max-width: 767px)");
-const isMobileView = ref(mobileQuery?.matches ?? false);
 
 function toggleFullscreen() {
   if (!rootRef.value) return;
@@ -73,11 +68,6 @@ function onFsChange() {
   isFullscreen.value = !!document.fullscreenElement;
 }
 
-function onMobileQueryChange(event: MediaQueryListEvent) {
-  isMobileView.value = event.matches;
-  nextTick(measureContainer);
-}
-
 /* ─── 自适应居中（不可缩放、不可拖拽） ─── */
 const svgNaturalW = 1920;
 const svgNaturalH = 1080;
@@ -86,14 +76,7 @@ const containerW = ref(800);
 const containerH = ref(600);
 
 /** 宽度撑满，上下居中 */
-const fitScale = computed(() => {
-  if (!isMobileView.value) return containerW.value / svgNaturalW;
-
-  return Math.max(
-    containerW.value / svgNaturalW,
-    containerH.value / svgNaturalH
-  );
-});
+const fitScale = computed(() => containerW.value / svgNaturalW);
 
 const offsetX = computed(() => 0);
 const offsetY = computed(
@@ -205,7 +188,6 @@ onMounted(() => {
   const el = rootRef.value?.querySelector(".campus-container");
   if (el) ro.value.observe(el);
   document.addEventListener("fullscreenchange", onFsChange);
-  mobileQuery?.addEventListener("change", onMobileQueryChange);
   clockTimer = window.setInterval(() => {
     nowTime.value = formatCurrentTime24h();
   }, 1000);
@@ -214,7 +196,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   ro.value?.disconnect();
   document.removeEventListener("fullscreenchange", onFsChange);
-  mobileQuery?.removeEventListener("change", onMobileQueryChange);
   if (clockTimer) {
     window.clearInterval(clockTimer);
   }
@@ -387,7 +368,6 @@ function onZoneClick(zone: HotZone) {
       >
         <!-- SVG 底图 — 用 object 标签可靠渲染 -->
         <object
-          v-show="!isMobileView"
           ref="svgObjectRef"
           class="campus-bg"
           :data="campusBgUrl"
@@ -403,14 +383,6 @@ function onZoneClick(zone: HotZone) {
             alt="启明智教2D校园"
           />
         </object>
-        <img
-          v-show="isMobileView"
-          class="campus-bg"
-          :src="campusBgUrl"
-          :width="svgNaturalW"
-          :height="svgNaturalH"
-          alt="鍚槑鏅烘暀2D鏍″洯"
-        />
 
         <div class="welcome-banner" :style="welcomeBannerStyle">
           <div class="welcome-line welcome-line-1">{{ welcomeLine1 }}</div>
@@ -476,6 +448,34 @@ function onZoneClick(zone: HotZone) {
         </div>
       </div>
     </div>
+
+    <nav class="mobile-campus-nav" aria-label="校园功能入口">
+      <button
+        type="button"
+        class="mobile-campus-action"
+        @click="onZoneClick(missionsZone)"
+      >
+        {{ missionsZone.label }}
+      </button>
+      <button
+        v-for="zone in buildingZones"
+        :key="`mobile-${zone.id}`"
+        type="button"
+        class="mobile-campus-action"
+        @click="onZoneClick(zone)"
+      >
+        {{ zone.label }}
+      </button>
+      <button
+        v-for="zone in actionZones"
+        :key="`mobile-${zone.id}`"
+        type="button"
+        class="mobile-campus-action mobile-campus-action--utility"
+        @click="onZoneClick(zone)"
+      >
+        {{ zone.label }}
+      </button>
+    </nav>
   </div>
 </template>
 
@@ -657,39 +657,87 @@ function onZoneClick(zone: HotZone) {
   z-index: 10;
 }
 
-@media (max-width: 767px) {
+.mobile-campus-nav {
+  display: none;
+}
+
+@media (width <= 768px) {
   .campus-root {
-    height: min(58dvh, 420px);
-    min-height: 300px;
-    border-radius: 18px;
+    width: auto;
+    height: auto;
+    min-height: calc(100dvh - var(--pure-mobile-tab-height, 56px));
+    margin: 0 !important;
+    overflow: visible;
+    border-radius: 0;
   }
 
   .campus-toolbar {
-    height: 42px;
-    padding: 0 12px;
+    gap: 8px;
+    min-height: 52px;
+    height: auto;
+    padding: 4px 8px;
   }
 
   .toolbar-title {
     min-width: 0;
-    overflow: hidden;
     font-size: 13px;
-    letter-spacing: 0;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .toolbar-actions {
-    flex: 0 0 auto;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
   }
 
   .tb-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
 
-  .hot-zone .zone-tip {
-    display: none;
+  .campus-container {
+    height: clamp(220px, 44vh, 360px);
+    min-height: 220px;
+    flex: 0 0 auto;
+  }
+
+  .campus-container .hot-zone {
+    pointer-events: none;
+  }
+
+  .mobile-campus-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 8px;
+    background: var(--el-bg-color);
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+
+  .mobile-campus-action {
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px;
+    color: var(--el-text-color-primary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+    background: var(--el-fill-color-light);
+    border: 1px solid var(--el-border-color-light);
+    border-radius: 8px;
+  }
+
+  .mobile-campus-action--utility {
+    color: var(--el-color-primary);
+    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary-light-7);
+  }
+}
+
+@media (width <= 380px) {
+  .campus-toolbar,
+  .mobile-campus-nav {
+    padding-right: 6px;
+    padding-left: 6px;
   }
 }
 </style>

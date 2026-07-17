@@ -11,9 +11,8 @@ dayjs.extend(duration);
 const welcomeMessage = gradient(["cyan", "magenta"]).multiline(
   `您好！欢迎使用 长春工业大学 计算机学院 启明智教项目 
 
-IntellEdu.com
-
-Copyright (c) 2026 Est. 吉林省云创迅捷软件开发有限公司 All Rights Reserved. `
+Intelledu.com 
+`
 );
 
 const boxenOptions: BoxenOptions = {

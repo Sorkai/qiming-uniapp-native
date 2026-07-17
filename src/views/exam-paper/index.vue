@@ -2,12 +2,14 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDark } from "@pureadmin/utils";
-import { ArrowRight, Plus } from "@element-plus/icons-vue";
 import {
   getOverviewStatistics,
   getRecentPapers,
   getLearningAnalytics,
-  getSystemTemplateStats
+  getSystemTemplateStats,
+  getCourseList,
+  getPaperStatusText,
+  getPaperStatusType
 } from "@/api/examPaper";
 import {
   isNativeWebViewRuntime,
@@ -109,13 +111,24 @@ const learningStats = ref({
 });
 
 // 课程筛选器数据
-const selectedCourse = ref("all");
-const courseOptions = [
-  { value: "all", label: "全部课程" },
-  { value: "math", label: "高等数学" },
-  { value: "linear", label: "线性代数" },
-  { value: "prob", label: "概率论" }
-];
+const selectedCourse = ref<number | "all">("all");
+const courseOptions = ref<Array<{ value: number | "all"; label: string }>>([
+  { value: "all", label: "全部课程" }
+]);
+
+const loadCourses = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0 && Array.isArray(res.data)) {
+      courseOptions.value = [
+        { value: "all", label: "全部课程" },
+        ...res.data.map(course => ({ value: course.id, label: course.name }))
+      ];
+    }
+  } catch (error) {
+    console.error("获取课程列表失败", error);
+  }
+};
 
 const applyLearningPayload = (data: any) => {
   if (!data?.overview) return;
@@ -164,17 +177,11 @@ const loadLearningStats = async (courseId?: number) => {
 };
 
 // 处理课程切换
-const handleCourseChange = (val: string) => {
+const handleCourseChange = (val: number | "all") => {
   if (val === "all") {
     loadLearningStats();
   } else {
-    // 将课程value映射为courseId
-    const courseIdMap: Record<string, number> = {
-      math: 1,
-      linear: 2,
-      prob: 3
-    };
-    loadLearningStats(courseIdMap[val]);
+    loadLearningStats(val);
   }
 };
 
@@ -201,16 +208,6 @@ const viewMorePapers = () => {
 // 查看更多模板
 const viewMoreTemplates = () => {
   router.push("/exam-paper/templates");
-};
-
-// 获取状态标签类型
-const getStatusType = (status: number) => {
-  return status === 1 ? "success" : "info";
-};
-
-// 获取状态文本
-const getStatusText = (status: number) => {
-  return status === 1 ? "已发布" : "草稿";
 };
 
 // 加载统计数据
@@ -277,6 +274,7 @@ onMounted(() => {
   loadRecentPapers();
   loadLearningStats();
   loadTemplateStats();
+  loadCourses();
 });
 </script>
 
@@ -429,8 +427,8 @@ onMounted(() => {
                 <div class="paper-time">{{ paper.updateTime }}</div>
               </div>
               <div class="paper-status">
-                <el-tag :type="getStatusType(paper.status)" size="small">
-                  {{ getStatusText(paper.status) }}
+                <el-tag :type="getPaperStatusType(paper.status)" size="small">
+                  {{ getPaperStatusText(paper.status) }}
                 </el-tag>
               </div>
             </div>
@@ -1128,118 +1126,19 @@ onMounted(() => {
 /* 响应式 */
 @media (max-width: 768px) {
   .exam-paper-index {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-    box-sizing: border-box;
-    padding: 10px 8px calc(var(--pure-mobile-tab-height, 58px) + 24px);
+    padding: 10px;
   }
 
   .welcome-section {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    border-radius: 18px;
-
-    .welcome-content {
-      flex: 0 0 auto;
-      width: 100%;
-      min-width: 0;
-    }
-
-    .welcome-badge {
-      margin-bottom: 8px;
-      font-size: 12px;
-    }
+    padding: 18px 18px;
 
     .welcome-title {
-      margin-bottom: 6px;
-      font-size: 22px;
-      line-height: 1.2;
-    }
-
-    .welcome-desc {
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .quick-actions {
-      width: 100%;
-
-      .create-btn {
-        width: 100%;
-        height: 38px;
-        font-size: 13px;
-      }
+      font-size: 20px;
     }
   }
 
-  .stats-section {
-    margin-bottom: 12px;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .stat-card {
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 10px;
-    align-items: center;
-    min-height: 78px;
-    padding: 12px;
-    border-radius: 18px;
-
-    .stat-icon {
-      grid-column: 1;
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
-
-      svg {
-        width: 20px;
-        height: 20px;
-      }
-    }
-
-    .stat-info {
-      grid-column: 2;
-      min-width: 0;
-
-      .stat-value {
-        margin-bottom: 4px;
-        font-size: 22px;
-        line-height: 1.05;
-      }
-
-      .stat-label {
-        margin-top: 0;
-        font-size: 12px;
-        line-height: 1.35;
-        white-space: normal;
-      }
-    }
-  }
-
-  .content-section,
-  .overview-main-content,
-  .side-content {
-    gap: 12px;
-  }
-
-  .section-card {
-    padding: 14px;
-    border-radius: 18px;
-  }
-}
-
-@media (max-width: 360px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .stat-card .stat-info .stat-value {
+    font-size: 22px;
   }
 }
 </style>

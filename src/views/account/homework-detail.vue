@@ -150,7 +150,7 @@
     <el-dialog
       v-model="showResultDialog"
       :title="resultDialogTitle"
-      width="400px"
+      width="min(400px, calc(100vw - 24px))"
     >
       <div class="result-content">
         <div v-if="submissionResult" class="score-info">
@@ -374,9 +374,11 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .homework-detail-container {
   min-height: 100vh;
-  padding: 70px 0 30px;
-  padding-top: calc(var(--pure-safe-area-top, 0px) + 70px);
-  padding-bottom: calc(var(--pure-safe-area-bottom, 0px) + 30px);
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: calc(70px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    0
+    calc(30px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
   background-color: #f5f7fa;
   transition: background-color 0.3s;
 
@@ -391,8 +393,11 @@ onBeforeUnmount(() => {
     right: 0;
     left: 0;
     z-index: 1000;
-    height: calc(var(--pure-safe-area-top, 0px) + 60px);
-    padding-top: var(--pure-safe-area-top, 0px);
+    height: calc(
+      60px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+    );
+    box-sizing: border-box;
+    padding-top: var(--pure-safe-area-top, env(safe-area-inset-top, 0));
     background-color: #fff;
     box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: background-color 0.3s;
@@ -405,17 +410,16 @@ onBeforeUnmount(() => {
     .header-content {
       display: flex;
       align-items: center;
-      display: grid;
-      grid-template-columns: minmax(72px, 1fr) auto minmax(72px, 1fr);
+      justify-content: space-between;
       max-width: 1200px;
-      height: 100%;
+      height: 60px;
+      box-sizing: border-box;
       padding: 0 32px;
       margin: 0 auto;
 
       .back-btn {
         display: flex;
         align-items: center;
-        justify-self: start;
         min-width: 60px;
         font-size: 14px;
         cursor: pointer;
@@ -426,14 +430,13 @@ onBeforeUnmount(() => {
       }
 
       .title {
-        justify-self: center;
+        flex: 1;
         font-size: 18px;
         font-weight: bold;
         text-align: center;
       }
 
       .placeholder {
-        justify-self: end;
         min-width: 60px;
       }
     }
@@ -519,8 +522,6 @@ onBeforeUnmount(() => {
             .question-title {
               display: flex;
               align-items: center;
-              flex-wrap: wrap;
-              gap: 8px;
               font-size: 16px;
               font-weight: bold;
 
@@ -598,4 +599,135 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (width <= 768px) {
+  .homework-detail-container {
+    padding: calc(
+        68px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      0
+      calc(
+        16px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+      );
+    margin: 0 !important;
+  }
+
+  .homework-detail-container .header .header-content {
+    padding: 0 8px;
+  }
+
+  .homework-detail-container .header .header-content .back-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .homework-detail-container .header .header-content .placeholder {
+    min-width: 44px;
+  }
+
+  .homework-detail-container .main-content {
+    width: 100%;
+    max-width: calc(100vw - 12px) !important;
+    min-width: 0;
+    padding: 0 6px;
+    margin: 0 6px !important;
+  }
+
+  .homework-detail-container .main-content :deep(.el-card__header),
+  .homework-detail-container .main-content :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .homework-detail-container .main-content .card-header .meta-info {
+    gap: 6px 10px;
+    font-size: 13px;
+  }
+
+  .homework-detail-container .main-content .questions-container .description,
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    min-width: 0;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow-wrap: anywhere;
+  }
+
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-type,
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-score {
+    margin-left: 0;
+  }
+
+  .homework-detail-container .question-content {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-wrap: anywhere;
+  }
+
+  .homework-detail-container :deep(.el-radio-group),
+  .homework-detail-container :deep(.el-checkbox-group) {
+    display: grid;
+    gap: 8px;
+  }
+
+  .homework-detail-container :deep(.el-radio),
+  .homework-detail-container :deep(.el-checkbox) {
+    min-height: 44px;
+    height: auto;
+    margin-right: 0;
+    white-space: normal;
+  }
+
+  .homework-detail-container .submit-container :deep(.el-button) {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .homework-detail-container :deep(.el-dialog) {
+    width: calc(100vw - 16px) !important;
+    max-width: 420px;
+  }
+}
+
+@media (width <= 380px) {
+  .homework-detail-container .header .header-content,
+  .homework-detail-container .main-content {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .homework-detail-container .main-content :deep(.el-card__header),
+  .homework-detail-container .main-content :deep(.el-card__body),
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    padding: 6px;
+  }
+}
 </style>

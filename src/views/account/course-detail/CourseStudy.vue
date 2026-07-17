@@ -114,6 +114,8 @@
                   :chapter-id="chapterId"
                   :current-theme="currentTheme"
                   :current-hour-title="currentHour?.title"
+                  :current-hour-id="currentHour?.hourId"
+                  :current-hour-file-url="currentVideoUrl"
                   @seek-video="handleSeekVideo"
                 />
               </el-scrollbar>
@@ -422,9 +424,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from "vue";
-import MarkdownIt from "markdown-it";
-import katex from "katex";
-import "katex/dist/katex.min.css";
 import CourseHeader from "./CourseHeader.vue";
 import VideoAnalysisPanel from "./VideoAnalysisPanel.vue";
 
@@ -495,74 +494,13 @@ const handleSeekVideo = (timeMs: number) => {
   const videoEl = videoPlayerRef.value as HTMLVideoElement | null;
   if (videoEl) {
     videoEl.currentTime = timeMs / 1000;
-    videoEl.play();
+    videoEl.play()?.catch(() => {});
   }
 };
 
 const internalMsg = ref("");
 const videoPlayerRef = ref(null);
 const catalogScrollRef = ref(null);
-const markdown = new MarkdownIt({
-  html: false,
-  breaks: true,
-  linkify: true,
-  typographer: true
-});
-
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-const renderMath = (source: string) => {
-  const blockMath: string[] = [];
-  const inlineMath: string[] = [];
-  let normalized = source.replace(/\$\$([\s\S]+?)\$\$/g, (_, expression) => {
-    const token = `@@QIMING_BLOCK_MATH_${blockMath.length}@@`;
-    try {
-      blockMath.push(
-        katex.renderToString(expression.trim(), {
-          displayMode: true,
-          throwOnError: false
-        })
-      );
-    } catch {
-      blockMath.push(`<pre>${escapeHtml(expression)}</pre>`);
-    }
-    return token;
-  });
-
-  normalized = normalized.replace(
-    /\\\(([\s\S]+?)\\\)|(?<!\\)\$([^\n$]+?)(?<!\\)\$/g,
-    (_match, parenExpression, dollarExpression) => {
-      const expression = parenExpression || dollarExpression;
-      const token = `@@QIMING_INLINE_MATH_${inlineMath.length}@@`;
-      try {
-        inlineMath.push(
-          katex.renderToString(expression.trim(), {
-            displayMode: false,
-            throwOnError: false
-          })
-        );
-      } catch {
-        inlineMath.push(`<code>${escapeHtml(expression)}</code>`);
-      }
-      return token;
-    }
-  );
-
-  return markdown
-    .render(normalized)
-    .replace(/@@QIMING_BLOCK_MATH_(\d+)@@/g, (_match, index) => {
-      return `<div class="math-block">${blockMath[Number(index)] || ""}</div>`;
-    })
-    .replace(/@@QIMING_INLINE_MATH_(\d+)@@/g, (_match, index) => {
-      return `<span class="math-inline">${inlineMath[Number(index)] || ""}</span>`;
-    });
-};
 
 // 监听 activeNode 变化，自动滚动到当前课时
 watch(
@@ -621,7 +559,7 @@ watch(
 
 const parseMarkdown = (text: string) => {
   if (!text) return "";
-  return renderMath(text);
+  return text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 };
 
 defineExpose({
@@ -630,9 +568,9 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-$primary: #6366f1;
-$primary-light: #818cf8;
-$primary-dark: #4f46e5;
+$primary: #0f766e;
+$primary-light: #14b8a6;
+$primary-dark: #115e59;
 $accent: #f43f5e;
 $success: #10b981;
 $warning: #f59e0b;
@@ -882,6 +820,68 @@ $shadow-xl:
 .analysis-section.glass-card {
   height: auto;
   min-height: unset;
+  background: rgb(255 255 255 / 86%);
+  border-color: rgb(255 255 255 / 68%);
+  box-shadow:
+    0 20px 44px -36px rgb(15 23 42 / 24%),
+    inset 0 1px 0 rgb(255 255 255 / 68%);
+  backdrop-filter: blur(20px);
+
+  &:hover {
+    box-shadow:
+      0 24px 48px -36px rgb(15 23 42 / 30%),
+      inset 0 1px 0 rgb(255 255 255 / 72%);
+    transform: none;
+  }
+
+  .dark & {
+    background: rgb(40 40 40 / 86%);
+    border-color: rgb(255 255 255 / 15%);
+    box-shadow:
+      0 20px 44px -36px rgb(0 0 0 / 48%),
+      inset 0 1px 0 rgb(255 255 255 / 7%);
+
+    &:hover {
+      box-shadow:
+        0 24px 48px -36px rgb(0 0 0 / 58%),
+        inset 0 1px 0 rgb(255 255 255 / 9%);
+    }
+  }
+
+  .card-header {
+    background: rgb(255 255 255 / 36%);
+    border-bottom-color: rgb(15 23 42 / 6%);
+    backdrop-filter: blur(12px);
+
+    .dark & {
+      background: rgb(255 255 255 / 3%);
+      border-bottom-color: rgb(255 255 255 / 6%);
+    }
+  }
+
+  .header-icon.summary-icon {
+    color: #ad5261;
+    background: rgb(255 248 248 / 52%);
+    border: 1px solid rgb(173 82 97 / 10%);
+
+    .dark & {
+      color: #fecdd3;
+      background: rgb(255 255 255 / 7%);
+      border-color: rgb(255 220 221 / 10%);
+    }
+  }
+
+  .ai-badge {
+    color: #9d4353;
+    background: rgb(255 255 255 / 42%);
+    border: 1px solid rgb(173 82 97 / 10%);
+
+    .dark & {
+      color: #fecdd3;
+      background: rgb(255 255 255 / 7%);
+      border-color: rgb(255 220 221 / 10%);
+    }
+  }
 }
 
 .glass-card {
@@ -1007,11 +1007,11 @@ $shadow-xl:
       width: 6px;
 
       .el-scrollbar__thumb {
-        background: rgb(99 102 241 / 30%);
+        background: rgb(15 118 110 / 28%);
         border-radius: 3px;
 
         &:hover {
-          background: rgb(99 102 241 / 50%);
+          background: rgb(15 118 110 / 48%);
         }
       }
     }
@@ -1050,13 +1050,19 @@ $shadow-xl:
   padding: 24px;
   overflow: hidden;
   cursor: pointer;
-  background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
+  background: linear-gradient(135deg, #0f766e 0%, #0f5f69 56%, #164e63 100%);
+  border: 1px solid rgb(255 255 255 / 16%);
   border-radius: $radius-xl;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 14px 32px -18px rgb(15 118 110 / 62%);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease;
 
   &:hover {
-    box-shadow: 0 20px 40px -10px rgb(99 102 241 / 40%);
-    transform: translateY(-4px) scale(1.02);
+    border-color: rgb(255 255 255 / 28%);
+    box-shadow: 0 20px 36px -20px rgb(15 118 110 / 72%);
+    transform: translateY(-2px);
 
     .ai-arrow {
       transform: translateX(4px);
@@ -1074,10 +1080,10 @@ $shadow-xl:
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background: radial-gradient(
-      circle,
-      rgb(255 255 255 / 20%) 0%,
-      transparent 70%
+    background: linear-gradient(
+      118deg,
+      transparent 34%,
+      rgb(255 255 255 / 16%) 100%
     );
   }
 
@@ -1148,24 +1154,55 @@ $shadow-xl:
 
 .chapter-catalog {
   display: flex;
+  position: relative;
   flex: 1;
   flex-direction: column;
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  background:
+    linear-gradient(
+      138deg,
+      rgb(218 244 239 / 90%) 0%,
+      rgb(229 242 246 / 86%) 48%,
+      rgb(246 250 249 / 94%) 100%
+    ),
+    rgb(255 255 255 / 84%);
+  border: 1px solid rgb(15 118 110 / 14%);
   box-shadow:
-    0 4px 20px -4px rgb(0 0 0 / 10%),
-    0 2px 8px -2px rgb(0 0 0 / 6%);
+    0 22px 44px -34px rgb(15 118 110 / 46%),
+    0 4px 12px -8px rgb(15 23 42 / 18%);
+  backdrop-filter: blur(18px);
+
+  .dark & {
+    background:
+      linear-gradient(
+        138deg,
+        rgb(10 55 56 / 96%) 0%,
+        rgb(16 48 62 / 94%) 56%,
+        rgb(24 38 48 / 96%) 100%
+      ),
+      rgb(15 23 42 / 92%);
+    border-color: rgb(94 234 212 / 18%);
+    box-shadow:
+      0 22px 44px -34px rgb(0 0 0 / 72%),
+      0 4px 12px -8px rgb(0 0 0 / 40%);
+  }
 
   .catalog-header {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 20px 24px;
-    border-bottom: 1px solid rgb(0 0 0 / 5%);
+    background: rgb(255 255 255 / 56%);
+    border-bottom: 1px solid rgb(15 118 110 / 10%);
+    backdrop-filter: blur(12px);
 
     .dark & {
-      border-bottom-color: rgb(255 255 255 / 5%);
+      background: rgb(15 23 42 / 28%);
+      border-bottom-color: rgb(153 246 228 / 10%);
     }
 
     .catalog-title {
@@ -1189,18 +1226,23 @@ $shadow-xl:
     .chapter-count {
       padding: 4px 12px;
       font-size: 13px;
-      color: $gray-500;
-      background: $gray-100;
+      font-weight: 600;
+      color: #0f5f59;
+      background: rgb(255 255 255 / 68%);
+      border: 1px solid rgb(15 118 110 / 10%);
       border-radius: 20px;
 
       .dark & {
-        color: $gray-400;
-        background: rgb(255 255 255 / 10%);
+        color: #99f6e4;
+        background: rgb(15 23 42 / 30%);
+        border-color: rgb(153 246 228 / 12%);
       }
     }
   }
 
   .catalog-body {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -1214,6 +1256,11 @@ $shadow-xl:
       .el-scrollbar__wrap {
         height: 100%;
         overflow: hidden auto;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+          display: none;
+        }
       }
 
       .el-scrollbar__view {
@@ -1221,23 +1268,7 @@ $shadow-xl:
       }
 
       .el-scrollbar__bar.is-vertical {
-        right: 2px;
-        width: 6px;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-
-        .el-scrollbar__thumb {
-          background: rgb(99 102 241 / 30%);
-          border-radius: 3px;
-
-          &:hover {
-            background: rgb(99 102 241 / 50%);
-          }
-        }
-      }
-
-      &:hover .el-scrollbar__bar.is-vertical {
-        opacity: 1;
+        display: none;
       }
     }
   }
@@ -1256,17 +1287,20 @@ $shadow-xl:
     align-items: center;
     padding: 12px 16px;
     margin-bottom: 8px;
-    background: $gray-50;
+    background: rgb(255 255 255 / 50%);
+    border: 1px solid rgb(15 118 110 / 7%);
+    box-shadow: 0 8px 18px -18px rgb(15 118 110 / 48%);
     border-radius: $radius-md;
 
     .dark & {
-      background: rgb(255 255 255 / 5%);
+      background: rgb(15 23 42 / 28%);
+      border-color: rgb(153 246 228 / 8%);
     }
 
     .chapter-indicator {
-      width: 4px;
+      width: 5px;
       height: 20px;
-      background: linear-gradient(180deg, $primary 0%, $primary-light 100%);
+      background: linear-gradient(180deg, $primary-light 0%, $primary 100%);
       border-radius: 2px;
     }
 
@@ -1274,8 +1308,8 @@ $shadow-xl:
       padding: 2px 8px;
       font-size: 12px;
       font-weight: 600;
-      color: $primary;
-      background: rgb(99 102 241 / 10%);
+      color: #0f5f59;
+      background: rgb(20 184 166 / 12%);
       border-radius: 4px;
     }
 
@@ -1313,12 +1347,13 @@ $shadow-xl:
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgb(99 102 241 / 5%);
-    border-color: rgb(99 102 241 / 10%);
+    background: rgb(255 255 255 / 54%);
+    border-color: rgb(15 118 110 / 14%);
   }
 
   &.active {
-    border-color: rgb(99 102 241 / 20%);
+    border-color: rgb(15 118 110 / 22%);
+    box-shadow: 0 8px 18px -16px rgb(15 118 110 / 70%);
 
     .lesson-icon {
       color: #fff;
@@ -1350,8 +1385,8 @@ $shadow-xl:
     pointer-events: none;
     background: linear-gradient(
       135deg,
-      rgb(99 102 241 / 10%) 0%,
-      rgb(99 102 241 / 5%) 100%
+      rgb(20 184 166 / 15%) 0%,
+      rgb(14 116 144 / 6%) 100%
     );
     border-radius: inherit;
   }
@@ -1652,7 +1687,7 @@ $shadow-xl:
 
       &:hover {
         color: $primary;
-        background: rgb(99 102 241 / 10%);
+        background: rgb(15 118 110 / 10%);
         border-color: $primary;
       }
 
@@ -1663,7 +1698,7 @@ $shadow-xl:
 
         &:hover {
           color: $primary-light;
-          background: rgb(99 102 241 / 20%);
+          background: rgb(15 118 110 / 18%);
           border-color: $primary;
         }
       }
@@ -1714,105 +1749,9 @@ $shadow-xl:
       line-height: 1.6;
 
       &.ai-text {
-        word-break: break-word;
-
-        :deep(p) {
-          margin: 0 0 10px;
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-        }
-
-        :deep(h1),
-        :deep(h2),
-        :deep(h3),
-        :deep(h4) {
-          margin: 12px 0 8px;
-          font-weight: 700;
-          line-height: 1.35;
-          color: $gray-900;
-
-          .dark & {
-            color: #fff;
-          }
-        }
-
-        :deep(h1) {
-          font-size: 20px;
-        }
-
-        :deep(h2) {
-          font-size: 18px;
-        }
-
-        :deep(h3) {
-          font-size: 16px;
-        }
-
-        :deep(h4) {
-          font-size: 15px;
-        }
-
         :deep(strong) {
           font-weight: 600;
           color: $primary;
-        }
-
-        :deep(ul),
-        :deep(ol) {
-          padding-left: 20px;
-          margin: 8px 0 12px;
-        }
-
-        :deep(li) {
-          margin: 4px 0;
-        }
-
-        :deep(code) {
-          padding: 2px 6px;
-          font-size: 0.9em;
-          color: #475569;
-          background: rgb(99 102 241 / 10%);
-          border-radius: 6px;
-
-          .dark & {
-            color: #dbeafe;
-            background: rgb(99 102 241 / 18%);
-          }
-        }
-
-        :deep(pre) {
-          padding: 10px 12px;
-          margin: 10px 0;
-          overflow-x: auto;
-          color: #e2e8f0;
-          background: #0f172a;
-          border-radius: 10px;
-        }
-
-        :deep(pre code) {
-          padding: 0;
-          color: inherit;
-          background: transparent;
-        }
-
-        :deep(.math-block) {
-          max-width: 100%;
-          margin: 10px 0;
-          overflow-x: auto;
-          text-align: center;
-        }
-
-        :deep(.math-inline) {
-          display: inline-block;
-          max-width: 100%;
-          overflow-x: auto;
-          vertical-align: middle;
-        }
-
-        :deep(.katex) {
-          font-size: 1em;
         }
       }
     }
@@ -1861,7 +1800,7 @@ $shadow-xl:
 
     &:focus-within {
       border-color: $primary;
-      box-shadow: 0 0 0 3px rgb(99 102 241 / 10%);
+      box-shadow: 0 0 0 3px rgb(15 118 110 / 12%);
     }
 
     .dark & {
@@ -1906,7 +1845,7 @@ $shadow-xl:
         background: linear-gradient(135deg, $primary 0%, $primary-dark 100%);
 
         &:hover {
-          box-shadow: 0 4px 12px rgb(99 102 241 / 40%);
+          box-shadow: 0 4px 12px rgb(15 118 110 / 40%);
           transform: scale(1.05);
         }
       }
@@ -1942,7 +1881,7 @@ $shadow-xl:
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 1199px) {
+@media (width <= 1199px) {
   .study-container {
     padding: 80px 24px 24px;
   }
@@ -1964,7 +1903,7 @@ $shadow-xl:
 }
 
 /* stylelint-disable-next-line order/order */
-@media (max-width: 767px) {
+@media (width <= 767px) {
   .course-study-root {
     height: auto;
     min-height: 100vh;
@@ -1974,7 +1913,7 @@ $shadow-xl:
   .study-container {
     height: auto;
     min-height: 100vh;
-    padding: var(--course-mobile-top-offset, 176px) 16px
+    padding: var(--course-mobile-top-offset, 156px) 16px
       calc(20px + var(--course-mobile-fab-clearance, 92px));
   }
 
@@ -2022,8 +1961,8 @@ $shadow-xl:
       align-self: flex-end;
 
       .action-btn {
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
         border-radius: 14px;
       }
     }
@@ -2154,13 +2093,18 @@ $shadow-xl:
   .ai-dialog {
     width: 100vw;
     max-width: none;
-    height: min(92vh, var(--qiming-native-vh, 100%));
+    height: min(92vh, 100%);
     max-height: none;
     border-radius: 24px 24px 0 0;
   }
 
   .dialog-header {
     padding: 16px;
+  }
+
+  .dialog-header .header-actions .header-btn {
+    width: 44px;
+    height: 44px;
   }
 
   .dialog-body {
@@ -2211,19 +2155,10 @@ $shadow-xl:
   }
 }
 
-:global(html.qiming-native-keyboard-open .ai-dialog-overlay) {
-  align-items: flex-start;
-  padding-top: calc(12px + var(--pure-safe-area-top, 0px));
-}
-
-:global(html.qiming-native-keyboard-open .ai-dialog) {
-  height: min(86vh, var(--qiming-native-vh, 100%));
-}
-
 /* stylelint-disable-next-line order/order */
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .study-container {
-    padding: var(--course-mobile-top-offset, 176px) 12px
+    padding: var(--course-mobile-top-offset, 156px) 8px
       calc(16px + var(--course-mobile-fab-clearance, 92px));
   }
 
@@ -2232,8 +2167,8 @@ $shadow-xl:
 
     .video-actions {
       .action-btn {
-        width: 34px;
-        height: 34px;
+        width: 44px;
+        height: 44px;
       }
     }
   }
@@ -2259,7 +2194,7 @@ $shadow-xl:
   .card-body {
     :deep(.el-scrollbar) {
       .el-scrollbar__wrap {
-        padding: 14px;
+        padding: 6px;
       }
     }
   }
@@ -2305,6 +2240,22 @@ $shadow-xl:
     .header-left {
       gap: 10px;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-assistant-widget,
+  .ai-arrow,
+  .lesson-node,
+  .lesson-icon {
+    transition: none;
+  }
+
+  .pulse-ring,
+  .status-dot,
+  .playing-indicator span,
+  .typing-indicator span {
+    animation: none;
   }
 }
 </style>

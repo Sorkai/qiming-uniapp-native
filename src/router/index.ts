@@ -156,6 +156,17 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     ? (demoRole as DemoRole)
     : null;
   const isNativeDemoRoute = String(to.query?.qimingNative || "") === "1";
+  const externalLink = isUrl(to?.name as string);
+  const isMiniProgramWebView =
+    document.documentElement.classList.contains(
+      "qiming-mini-program-webview"
+    ) ||
+    String(to.query?.qimingMiniProgram || "") === "1" ||
+    localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+    sessionStorage.getItem("qimingMiniProgramWebView") === "1";
+  const storedDemoRole = localStorage.getItem("qiming-demo-role");
+  const isExplicitDemoSession =
+    !!normalizedDemoRole && storedDemoRole === normalizedDemoRole;
   const userRoles = userInfo?.roles ?? [];
   const hasRequiredDemoIdentity =
     normalizedDemoRole !== "student" || !!userInfo?.avatar;
@@ -168,14 +179,19 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     Array.isArray(userRoles) &&
     userRoles.includes(normalizedDemoRole) &&
     hasRequiredDemoIdentity &&
-    localStorage.getItem("qiming-demo-role") === normalizedDemoRole &&
+    isExplicitDemoSession &&
     hasDemoSessionMarker;
 
   if (isNativeDemoRoute && normalizedDemoRole && demoSessionMatchesRole) {
     nativeDemoSessionReady.add(normalizedDemoRole);
   }
 
-  if (isNativeDemoRoute && normalizedDemoRole && to.path === "/home") {
+  if (
+    isNativeDemoRoute &&
+    normalizedDemoRole &&
+    isExplicitDemoSession &&
+    to.path === "/home"
+  ) {
     const query = { ...to.query };
     delete query.menu;
     delete query.mode;
@@ -198,6 +214,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   if (
     (import.meta.env.DEV || isNativeDemoRoute) &&
     normalizedDemoRole &&
+    isExplicitDemoSession &&
     !demoSessionMatchesRole
   ) {
     import("@/views/home/demoSession")
@@ -231,8 +248,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     console.log("[Router Guard] 检测到登录状态不一致，已自动恢复 cookie");
   }
 
-  const externalLink = isUrl(to?.name as string);
-  if (!externalLink) {
+  if (!externalLink && !isMiniProgramWebView) {
     to.matched.some(item => {
       if (!item.meta.title) return "";
       const Title = getConfig().Title;

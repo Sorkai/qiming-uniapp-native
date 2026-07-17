@@ -155,9 +155,9 @@
       >
         <!-- 顶部操作栏（内嵌在卡片顶部） -->
         <div
-          class="video-analysis-toolbar px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-fill-color-light)]/30 flex-shrink-0"
+          class="px-6 py-4 border-b border-[var(--el-border-color-lighter)] flex justify-between items-center bg-[var(--el-fill-color-light)]/30 flex-shrink-0"
         >
-          <div class="toolbar-status flex items-center space-x-4">
+          <div class="flex items-center space-x-4">
             <span
               v-if="polling"
               class="flex items-center text-[var(--el-color-primary)] text-sm font-semibold px-4 py-2 bg-[var(--el-color-primary-light-9)] rounded-xl"
@@ -173,7 +173,7 @@
             </span>
           </div>
 
-          <div class="toolbar-actions flex gap-2">
+          <div class="flex gap-2">
             <el-button
               :icon="RefreshRight"
               class="!rounded-xl !h-10 !px-4"
@@ -228,81 +228,15 @@
             </div>
           </div>
 
-          <!-- 有课程时显示任务列表 -->
-          <div v-else class="flex-1 overflow-auto custom-scrollbar">
-            <div v-if="isMobileLayout" class="mobile-video-task-list">
-              <div
-                v-for="row in taskList"
-                :key="row.taskId"
-                class="mobile-video-task-card"
-              >
-                <div class="mobile-video-task-card__header">
-                  <div class="mobile-video-file">
-                    <el-icon class="mobile-video-file__icon"
-                      ><VideoPlay
-                    /></el-icon>
-                    <span>{{ row.fileName || "-" }}</span>
-                  </div>
-                  <el-tag
-                    :type="statusTagType(row.status)"
-                    effect="light"
-                    round
-                  >
-                    {{ statusLabel(row.status) }}
-                  </el-tag>
-                </div>
-
-                <div class="mobile-video-task-card__body">
-                  <div class="mobile-video-field">
-                    <span class="label">Progress</span>
-                    <el-progress
-                      v-if="isTaskProcessing(row)"
-                      :percentage="row.progress || 0"
-                      :stroke-width="7"
-                    />
-                    <span v-else>{{ row.progress ?? 0 }}%</span>
-                  </div>
-                  <div class="mobile-video-grid">
-                    <div class="mobile-video-field">
-                      <span class="label">Created</span>
-                      <span>{{ row.createdAt || "-" }}</span>
-                    </div>
-                    <div class="mobile-video-field">
-                      <span class="label">Completed</span>
-                      <span>{{ row.completedAt || "-" }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mobile-video-task-card__actions">
-                  <el-button
-                    type="primary"
-                    plain
-                    class="mobile-video-action-btn"
-                    @click="viewDetail(row)"
-                  >
-                    查看详情
-                  </el-button>
-                  <el-button
-                    type="info"
-                    plain
-                    class="mobile-video-action-btn"
-                    :disabled="!isTaskProcessing(row)"
-                    @click="refreshTask(row)"
-                  >
-                    刷新状态
-                  </el-button>
-                </div>
-              </div>
-
-              <el-empty
-                v-if="taskList.length === 0"
-                description="暂无视频分析任务"
-              />
-            </div>
-
+          <!-- 有课程时显示表格 -->
+          <div
+            v-else
+            class="task-table-scroll flex-1 overflow-auto custom-scrollbar"
+            role="region"
+            aria-label="视频分析任务表格"
+            tabindex="0"
+          >
             <el-table
-              v-else
               :data="taskList"
               style="width: 100%"
               height="100%"
@@ -374,7 +308,7 @@
                 label="操作"
                 width="160"
                 align="center"
-                fixed="right"
+                :fixed="isMobileLayout ? false : 'right'"
               >
                 <template #default="{ row }">
                   <el-button
@@ -410,15 +344,14 @@
     <el-dialog
       v-model="submitDialogVisible"
       title="提交视频分析任务"
-      :width="isMobileLayout ? '96%' : '520px'"
-      :fullscreen="isMobileLayout"
+      width="min(520px, calc(100vw - 24px))"
       :close-on-click-modal="false"
     >
       <el-form
         ref="submitFormRef"
         :model="submitForm"
         :rules="submitRules"
-        :label-width="isMobileLayout ? '78px' : '90px'"
+        label-width="90px"
       >
         <el-form-item label="课程" prop="courseId">
           <el-select
@@ -494,8 +427,7 @@
     <el-dialog
       v-model="detailDialogVisible"
       title="视频分析结果"
-      :width="isMobileLayout ? '96%' : '80%'"
-      :fullscreen="isMobileLayout"
+      width="80%"
       top="5vh"
       :close-on-click-modal="false"
     >
@@ -506,7 +438,7 @@
       </div>
       <div v-else-if="taskDetail" class="space-y-6">
         <!-- 基本信息 -->
-        <div class="video-detail-grid grid grid-cols-2 gap-4 text-sm">
+        <div class="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span class="text-[var(--el-text-color-secondary)]">任务ID：</span>
             <span class="font-mono">{{ taskDetail.taskId }}</span>
@@ -595,6 +527,9 @@
               暂无问答数据
             </div>
           </el-tab-pane>
+          <el-tab-pane label="思维导图" name="mindmap">
+            <MindMapPreview :source="taskDetail.mindMapUrl" />
+          </el-tab-pane>
         </el-tabs>
       </div>
     </el-dialog>
@@ -624,6 +559,7 @@ import { getCourseList, getCourseHoursList } from "@/api/course";
 import { useAppStoreHook } from "@/store/modules/app";
 import LottieAnimation from "@/components/LottieAnimation.vue";
 import EdenAnim from "@/assets/eden.json";
+import MindMapPreview from "./MindMapPreview.vue";
 
 defineOptions({ name: "VideoAnalysis" });
 
@@ -702,9 +638,6 @@ const stats = computed(() => {
     failed: list.filter(t => t.status === "failed").length
   };
 });
-
-const isTaskProcessing = (task: VideoAnalysisTask) =>
-  ["pending", "submitted", "processing"].includes(task.status);
 
 const loadTaskList = async () => {
   if (!selectedCourseId.value) return;
@@ -1033,6 +966,15 @@ onUnmounted(() => {
   }
 }
 
+.task-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+}
+
 // 侧边栏卡片动效
 .sidebar-card {
   .header-section:hover .icon-box {
@@ -1187,337 +1129,56 @@ onUnmounted(() => {
 
 .video-analysis-container.is-mobile-layout {
   height: auto !important;
-  min-height: auto;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  min-height: calc(100vh - 140px);
   margin: 0;
-  gap: 10px;
+  gap: 12px;
   overflow: visible;
   flex-direction: column;
-  padding: 8px 8px calc(var(--pure-mobile-tab-height, 58px) + 24px);
+  padding: 12px;
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card,
 .video-analysis-container.is-mobile-layout > .flex-1 {
   width: 100% !important;
-  max-width: 100%;
   min-width: 0;
-  flex: 0 0 auto;
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card {
-  max-height: none;
-  overflow: visible;
-}
-
-.video-analysis-container.is-mobile-layout .sidebar-card > .p-6 {
-  padding: 10px 12px 12px !important;
-  overflow: visible !important;
-}
-
-.video-analysis-container.is-mobile-layout .icon-box {
-  width: 36px !important;
-  height: 36px !important;
-  margin-right: 9px !important;
-  border-radius: 11px !important;
-  background: linear-gradient(
-    135deg,
-    var(--el-color-primary),
-    var(--el-color-primary-dark-2)
-  ) !important;
-  box-shadow: 0 10px 24px rgba(64, 111, 255, 0.24);
-}
-
-.video-analysis-container.is-mobile-layout .icon-box :deep(.el-icon) {
-  font-size: 21px !important;
-  color: #fff !important;
+  max-height: 48vh;
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card .header-section,
 .video-analysis-container.is-mobile-layout .flex-1 > .flex-1 > div:first-child {
-  padding: 10px 12px;
-}
-
-.video-analysis-container.is-mobile-layout .sidebar-card .header-section h3 {
-  font-size: 17px !important;
-  line-height: 1.25;
+  padding: 16px;
 }
 
 .video-analysis-container.is-mobile-layout .sidebar-card .header-subtitle {
-  margin-top: 4px !important;
   margin-left: 0;
-  font-size: 12px !important;
-  line-height: 1.35;
 }
 
 .video-analysis-container.is-mobile-layout .flex-1 > .flex-1 > div:first-child {
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: 12px;
 }
 
 .video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 {
-  padding: 10px 12px;
-  overflow: visible;
-}
-
-.video-analysis-container.is-mobile-layout > .flex-1 > .flex-1 {
-  flex: 0 0 auto;
-  min-height: 0;
-  overflow: visible;
-}
-
-.video-analysis-container.is-mobile-layout > .flex-1 > .flex-1 > .flex-1 {
-  flex: 0 0 auto;
-}
-
-.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 {
-  min-height: 0;
-  padding: 10px 0 14px;
-  justify-content: flex-start;
-}
-
-.video-analysis-container.is-mobile-layout
-  .flex-1
-  > .flex-1
-  .p-6
-  > .flex-1
-  .text-center {
-  width: 100%;
-}
-
-.video-analysis-container.is-mobile-layout
-  .flex-1
-  > .flex-1
-  .p-6
-  > .flex-1
-  .absolute {
-  display: none;
-}
-
-.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 h3 {
-  margin-bottom: 6px !important;
-  font-size: 17px !important;
-  line-height: 1.35;
-}
-
-.video-analysis-container.is-mobile-layout .flex-1 > .flex-1 .p-6 > .flex-1 p {
-  max-width: 100%;
-  margin-bottom: 0 !important;
-  font-size: 13px !important;
-  line-height: 1.5;
-}
-
-.video-analysis-container.is-mobile-layout .custom-scrollbar {
-  scrollbar-width: none;
-}
-
-.video-analysis-container.is-mobile-layout
-  .custom-scrollbar::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
-}
-
-.video-analysis-container.is-mobile-layout :deep(.el-select .el-input__wrapper),
-.video-analysis-container.is-mobile-layout :deep(.el-input .el-input__wrapper) {
-  min-height: 34px;
-}
-
-.video-analysis-container.is-mobile-layout :deep(.el-input__inner) {
-  font-size: 13px;
-}
-
-.video-analysis-container.is-mobile-layout label {
-  margin-bottom: 4px;
-  font-size: 13px !important;
-  line-height: 1.3;
-}
-
-.video-analysis-container.is-mobile-layout .stat-card {
-  min-height: 58px;
-  padding: 8px !important;
-  border-radius: 13px !important;
-}
-
-.video-analysis-container.is-mobile-layout .stat-card > div:first-child {
-  margin-bottom: 4px !important;
-  font-size: 20px !important;
-}
-
-.video-analysis-container.is-mobile-layout .stat-card > div:last-child {
-  font-size: 11px !important;
-}
-
-.video-analysis-container.is-mobile-layout :deep(.el-button) {
-  min-height: 36px;
-  font-size: 13px;
-}
-
-.video-analysis-container.is-mobile-layout .lottie-glass {
-  width: 86px;
-  height: 86px;
-  margin-bottom: 10px !important;
-  border-radius: 20px;
-}
-
-.mobile-video-task-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.mobile-video-task-card {
   padding: 16px;
-  background: var(--el-fill-color-extra-light);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 16px;
 }
 
-.mobile-video-task-card__header,
-.mobile-video-task-card__actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.video-analysis-container.is-mobile-layout :deep(.task-table) {
+  min-width: 720px;
 }
 
-.mobile-video-task-card__header {
-  margin-bottom: 12px;
-}
-
-.mobile-video-file {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  font-weight: 700;
-  color: var(--el-text-color-primary);
-}
-
-.mobile-video-file__icon {
-  flex: 0 0 auto;
-  margin-right: 8px;
-  color: var(--el-color-primary);
-}
-
-.mobile-video-file span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mobile-video-task-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.mobile-video-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
-}
-
-.mobile-video-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-  color: var(--el-text-color-primary);
-  word-break: break-word;
-}
-
-.mobile-video-field .label {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.mobile-video-task-card__actions {
-  margin-top: 14px;
-  justify-content: stretch;
-  align-items: stretch;
-}
-
-.mobile-video-action-btn {
-  flex: 1;
-  min-width: 0;
-  height: 44px;
-  margin: 0 !important;
-  padding: 0 12px !important;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.mobile-video-action-btn :deep(span) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.video-analysis-container.is-mobile-layout .task-table-scroll {
   width: 100%;
-  line-height: 1;
-}
-
-.video-analysis-container.is-mobile-layout .video-analysis-toolbar {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-
-.video-analysis-container.is-mobile-layout .toolbar-status {
-  justify-content: center;
-}
-
-.video-analysis-container.is-mobile-layout .toolbar-actions {
-  width: 100%;
-  align-items: stretch;
-}
-
-.video-analysis-container.is-mobile-layout .toolbar-actions :deep(.el-button) {
-  flex: 1;
+  max-width: 100%;
   min-width: 0;
-  margin: 0 !important;
 }
 
-.video-analysis-container.is-mobile-layout :deep(.el-dialog.is-fullscreen) {
-  display: flex;
-  flex-direction: column;
-  height: var(--qiming-native-vh, 100dvh);
-  margin: 0 !important;
-  border-radius: 0 !important;
-}
-
-.video-analysis-container.is-mobile-layout
-  :deep(.el-dialog.is-fullscreen .el-dialog__body) {
-  flex: 1;
-  overflow: auto;
-  padding: 14px 14px calc(var(--pure-safe-area-bottom, 0px) + 18px);
-}
-
-.video-analysis-container.is-mobile-layout
-  :deep(.el-dialog.is-fullscreen .el-dialog__footer) {
-  padding: 10px 14px calc(var(--pure-safe-area-bottom, 0px) + 14px);
-}
-
-.video-analysis-container.is-mobile-layout :deep(.el-form-item) {
-  margin-bottom: 14px;
-}
-
-.video-analysis-container.is-mobile-layout .video-detail-grid {
-  grid-template-columns: 1fr;
-}
-
-.video-analysis-container.is-mobile-layout :deep(.el-tabs__item) {
-  padding: 0 12px;
-}
-
-@media (max-width: 430px) {
-  .mobile-video-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .mobile-video-task-card__header {
-    align-items: flex-start;
-  }
+.video-analysis-container.is-mobile-layout :deep(.task-table .el-button) {
+  min-height: 44px;
+  padding-right: 12px;
+  padding-left: 12px;
 }
 </style>

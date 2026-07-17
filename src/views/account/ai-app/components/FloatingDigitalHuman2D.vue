@@ -47,8 +47,8 @@ const stateLabels: Record<DigitalHumanState, string> = {
   saying: "讲解"
 };
 
+const bubbleSize = 88;
 const windowPadding = 18;
-const bubbleSize = ref(88);
 const storageKey = computed(
   () => props.storageKey || `ai-app-floating-digital-human-2d-${props.anchor}`
 );
@@ -57,6 +57,7 @@ const videoRef = ref<HTMLVideoElement | null>(null);
 const isReady = ref(false);
 const isPaused = ref(false);
 const localSpeaking = ref(false);
+const speechAmplitude = ref(0);
 const position = ref({ x: 0, y: 0 });
 const hasUserPosition = ref(false);
 const dragState = ref<{
@@ -68,7 +69,6 @@ const dragState = ref<{
 } | null>(null);
 
 let speakingTimer: ReturnType<typeof setTimeout> | null = null;
-let preloadVideos: HTMLVideoElement[] = [];
 
 const currentState = computed<DigitalHumanState>(() =>
   localSpeaking.value ? "saying" : props.state
@@ -82,38 +82,20 @@ const ariaLabel = computed(
     }`
 );
 const bubbleStyle = computed(() => ({
-  width: `${bubbleSize.value}px`,
-  height: `${bubbleSize.value}px`,
-  transform: `translate3d(${position.value.x}px, ${position.value.y}px, 0)`,
+  width: `${bubbleSize}px`,
+  height: `${bubbleSize}px`,
+  transform: `translate3d(${position.value.x}px, ${position.value.y}px, 0) scale(${1 + speechAmplitude.value * 0.035})`,
   opacity: isReady.value ? 1 : 0
 }));
 
-const getNativeSafeTop = () => {
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue("--pure-safe-area-top")
-    .trim();
-  const value = Number.parseFloat(raw);
-  return Number.isFinite(value) ? value : 0;
-};
-
-const getResponsiveBubbleSize = () => {
-  if (typeof window === "undefined") return 88;
-  return window.innerWidth <= 768 ? 56 : 88;
-};
-
-const syncBubbleSize = () => {
-  bubbleSize.value = getResponsiveBubbleSize();
-};
-
 const clampPosition = (nextX: number, nextY: number) => {
-  const size = bubbleSize.value;
   const maxX = Math.max(
     windowPadding,
-    window.innerWidth - size - windowPadding
+    window.innerWidth - bubbleSize - windowPadding
   );
   const maxY = Math.max(
     windowPadding,
-    window.innerHeight - size - windowPadding
+    window.innerHeight - bubbleSize - windowPadding
   );
   return {
     x: Math.min(Math.max(windowPadding, nextX), maxX),
@@ -139,30 +121,22 @@ const getAnchorRect = () => {
 };
 
 const getDefaultPosition = () => {
-  const size = bubbleSize.value;
-  if (window.innerWidth <= 768) {
-    return clampPosition(
-      window.innerWidth - size - 16,
-      getNativeSafeTop() + 92
-    );
-  }
-
   if (props.anchor === "appLeftBottom") {
     const rect = getAnchorRect();
     const zoneWidth = Math.min(props.leftZoneWidth, rect.width);
     const leftOffset = Math.max(
       windowPadding,
-      Math.round((zoneWidth - size) / 2)
+      Math.round((zoneWidth - bubbleSize) / 2)
     );
 
     return clampPosition(
       rect.left + leftOffset,
-      rect.bottom - size - props.bottomOffset
+      rect.bottom - bubbleSize - props.bottomOffset
     );
   }
 
   return clampPosition(
-    window.innerWidth - size - 30,
+    window.innerWidth - bubbleSize - 30,
     window.innerWidth >= 768 ? 78 : 68
   );
 };
@@ -186,34 +160,6 @@ const restorePosition = () => {
 
   hasUserPosition.value = false;
   position.value = getDefaultPosition();
-};
-
-const preloadStateVideos = () => {
-  const run = () => {
-    preloadVideos = Object.values(stateAssets).map(src => {
-      const video = document.createElement("video");
-      video.src = src;
-      video.preload = "auto";
-      video.muted = true;
-      video.playsInline = true;
-      video.load();
-      return video;
-    });
-  };
-
-  const idle = (
-    window as Window & {
-      requestIdleCallback?: (
-        callback: IdleRequestCallback,
-        options?: IdleRequestOptions
-      ) => number;
-    }
-  ).requestIdleCallback;
-  if (typeof idle === "function") {
-    idle(run, { timeout: 1200 });
-  } else {
-    window.setTimeout(run, 300);
-  }
 };
 
 const playVideo = async () => {
@@ -256,7 +202,6 @@ const handlePointerUp = (event: PointerEvent) => {
 };
 
 const handleResize = () => {
-  syncBubbleSize();
   position.value = hasUserPosition.value
     ? clampPosition(position.value.x, position.value.y)
     : getDefaultPosition();
@@ -276,12 +221,37 @@ const resumeRender = () => {
 function speak(text = "") {
   if (speakingTimer) clearTimeout(speakingTimer);
   localSpeaking.value = true;
-  isPaused.value = false;
   const duration = Math.min(Math.max(text.length * 80, 1600), 5200);
   speakingTimer = setTimeout(() => {
     localSpeaking.value = false;
   }, duration);
   void playVideo();
+}
+
+function setSpeechState(state: string) {
+  if (speakingTimer) clearTimeout(speakingTimer);
+  localSpeaking.value = state === "speaking";
+  if (!localSpeaking.value) speechAmplitude.value = 0;
+  void playVideo();
+}
+
+function setAmplitude(value: number) {
+  speechAmplitude.value = Math.min(1, Math.max(0, Number(value) || 0));
+  if (speechAmplitude.value > 0.03) localSpeaking.value = true;
+}
+
+function applyViseme(id: string, weight: number) {
+  setAmplitude(id === "sil" ? 0 : weight);
+}
+
+function triggerMotion() {
+  // 2D 资源使用 speaking 视频表达动作，定时 motion 由 3D 模型消费。
+}
+
+function resetSpeech() {
+  if (speakingTimer) clearTimeout(speakingTimer);
+  localSpeaking.value = false;
+  speechAmplitude.value = 0;
 }
 
 watch(currentVideo, () => {
@@ -303,22 +273,27 @@ watch(
 );
 
 onMounted(() => {
-  syncBubbleSize();
   restorePosition();
   isReady.value = true;
-  preloadStateVideos();
   window.addEventListener("resize", handleResize);
   void playVideo();
 });
 
 onUnmounted(() => {
   if (speakingTimer) clearTimeout(speakingTimer);
-  preloadVideos.forEach(video => video.removeAttribute("src"));
-  preloadVideos = [];
   window.removeEventListener("resize", handleResize);
 });
 
-defineExpose({ speak, pauseRender, resumeRender });
+defineExpose({
+  speak,
+  setSpeechState,
+  setAmplitude,
+  applyViseme,
+  triggerMotion,
+  resetSpeech,
+  pauseRender,
+  resumeRender
+});
 </script>
 
 <template>
@@ -341,7 +316,7 @@ defineExpose({ speak, pauseRender, resumeRender });
       autoplay
       loop
       playsinline
-      preload="auto"
+      preload="metadata"
     />
     <span class="floating-human-2d__dot" />
   </div>
@@ -445,22 +420,6 @@ defineExpose({ speak, pauseRender, resumeRender });
 @media (max-width: 768px) {
   .floating-human-2d {
     transform-origin: top left;
-    z-index: 760;
-  }
-
-  .floating-human-2d::before {
-    inset: -4px;
-  }
-
-  .floating-human-2d video {
-    border-width: 3px;
-  }
-
-  .floating-human-2d__dot {
-    right: 4px;
-    bottom: 8px;
-    width: 11px;
-    height: 11px;
   }
 }
 </style>

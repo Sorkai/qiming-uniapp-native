@@ -1,140 +1,154 @@
 <template>
-  <div class="homework-management" :class="{ 'is-mobile-layout': isMobileLayout }">
+  <div class="homework-management">
     <div
-      class="homework-toolbar mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg"
+      class="mb-5 flex flex-wrap justify-between items-center gap-3 bg-[var(--el-fill-color-light)] p-4 rounded-lg"
     >
       <div class="text-[var(--el-text-color-regular)] font-medium">
         <el-icon class="mr-1 mt-0.5"><Notebook /></el-icon>
         作业列表 ({{ total }})
       </div>
-      <el-button type="primary" :icon="Plus" round @click="showCreateDialog">
-        添加作业
-      </el-button>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <el-button
+          class="batch-generate-button"
+          type="primary"
+          plain
+          :icon="MagicStick"
+          :loading="batchGenerating"
+          :disabled="batchGenerating"
+          @click="generateAllHourHomeworks"
+        >
+          {{
+            batchGenerating
+              ? batchProgress.total
+                ? `生成中 ${batchProgress.completed}/${batchProgress.total}`
+                : "准备中..."
+              : "一键生成全课练习"
+          }}
+        </el-button>
+        <el-button
+          type="primary"
+          :icon="Plus"
+          :disabled="batchGenerating"
+          round
+          @click="showCreateDialog"
+        >
+          添加作业
+        </el-button>
+      </div>
     </div>
 
     <!-- 作业列表 -->
-    <el-table
-      v-loading="loading"
-      class="desktop-homework-table"
-      :data="homeworkList"
-      style="width: 100%"
-      border
-      stripe
-      header-cell-class-name="bg-[var(--el-fill-color-light)] text-[var(--el-text-color-primary)] !font-semibold"
-    >
-      <el-table-column prop="homeworkId" label="ID" width="80" align="center" />
-      <el-table-column prop="title" label="作业标题" min-width="180">
-        <template #default="{ row }">
-          <span
-            class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
-            @click="showQuestionDialog(row)"
-            >{{ row.title }}</span
-          >
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="chapterName"
-        label="所属章节"
-        min-width="150"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="hourName"
-        label="所属课时"
-        min-width="150"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="questionNum"
-        label="题量"
-        width="80"
-        align="center"
+    <div class="business-table-scroll homework-table-scroll">
+      <el-table
+        v-loading="loading"
+        :data="homeworkList"
+        :class="{ 'mobile-wide-table': isMobile }"
+        style="width: 100%"
+        border
+        stripe
+        header-cell-class-name="bg-[var(--el-fill-color-light)] text-[var(--el-text-color-primary)] !font-semibold"
       >
-        <template #default="{ row }">
-          <el-badge
-            :value="row.questionNum"
-            :type="row.questionNum > 0 ? 'primary' : 'info'"
-          />
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="totalPoints"
-        label="总分"
-        width="80"
-        align="center"
-      />
-      <el-table-column
-        prop="dueDate"
-        label="截止日期"
-        width="170"
-        align="center"
-      />
-      <el-table-column label="操作" width="220" fixed="right" align="center">
-        <template #default="scope">
-          <el-button link type="primary" @click="showQuestionDialog(scope.row)"
-            >试题管理</el-button
-          >
-          <el-divider direction="vertical" />
-          <el-button link type="primary" @click="showEditDialog(scope.row)"
-            >编辑</el-button
-          >
-          <el-divider direction="vertical" />
-          <el-button link type="danger" @click="confirmDelete(scope.row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <div v-loading="loading" class="mobile-homework-list">
-      <div
-        v-for="homework in homeworkList"
-        :key="homework.homeworkId"
-        class="mobile-homework-card"
-      >
-        <div class="mobile-homework-card__header">
-          <div class="min-w-0">
-            <div class="mobile-homework-card__id">ID {{ homework.homeworkId }}</div>
-            <button
-              class="mobile-homework-card__title"
-              type="button"
-              @click="showQuestionDialog(homework)"
+        <el-table-column
+          prop="homeworkId"
+          label="ID"
+          width="80"
+          align="center"
+        />
+        <el-table-column prop="title" label="作业标题" min-width="180">
+          <template #default="{ row }">
+            <span
+              class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
+              @click="showQuestionDialog(row)"
+              >{{ row.title }}</span
             >
-              {{ homework.title || "未命名作业" }}
-            </button>
-          </div>
-          <el-tag size="small" effect="plain">
-            {{ homework.questionNum || 0 }} 题
-          </el-tag>
-        </div>
-
-        <div class="mobile-homework-card__meta">
-          <span>章节：{{ homework.chapterName || "-" }}</span>
-          <span>课时：{{ homework.hourName || "-" }}</span>
-          <span>总分：{{ homework.totalPoints ?? "-" }}</span>
-          <span>截止：{{ homework.dueDate || "-" }}</span>
-        </div>
-
-        <div class="mobile-homework-card__actions">
-          <el-button
-            type="primary"
-            plain
-            round
-            @click="showQuestionDialog(homework)"
-          >
-            试题管理
-          </el-button>
-          <el-button round @click="showEditDialog(homework)">编辑</el-button>
-          <el-button type="danger" plain round @click="confirmDelete(homework)">
-            删除
-          </el-button>
-        </div>
-      </div>
-
-      <el-empty
-        v-if="!loading && homeworkList.length === 0"
-        description="暂无作业"
-      />
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="chapterName"
+          label="所属章节"
+          min-width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="hourName"
+          label="所属课时"
+          min-width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="questionNum"
+          label="题量"
+          width="80"
+          align="center"
+        >
+          <template #default="{ row }">
+            <el-badge
+              :value="row.questionNum"
+              :type="row.questionNum > 0 ? 'primary' : 'info'"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="totalPoints"
+          label="总分"
+          width="80"
+          align="center"
+        />
+        <el-table-column
+          prop="dueDate"
+          label="截止日期"
+          width="170"
+          align="center"
+        />
+        <el-table-column
+          label="操作"
+          :width="isMobile ? 96 : 220"
+          :fixed="isMobile ? false : 'right'"
+          align="center"
+        >
+          <template #default="scope">
+            <div v-if="isMobile" class="mobile-action-wrap">
+              <el-dropdown
+                trigger="click"
+                popper-class="assessment-action-dropdown"
+                @command="command => handleHomeworkAction(command, scope.row)"
+              >
+                <el-button text type="primary" class="more-action-btn">
+                  更多
+                  <el-icon class="ml-1"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="questions">
+                      试题管理
+                    </el-dropdown-item>
+                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>
+                      <span class="danger-action">删除</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+            <template v-else>
+              <el-button
+                link
+                type="primary"
+                @click="showQuestionDialog(scope.row)"
+                >试题管理</el-button
+              >
+              <el-divider direction="vertical" />
+              <el-button link type="primary" @click="showEditDialog(scope.row)"
+                >编辑</el-button
+              >
+              <el-divider direction="vertical" />
+              <el-button link type="danger" @click="confirmDelete(scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
     <!-- 分页 -->
@@ -143,8 +157,13 @@
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 30, 50]"
-        :layout="paginationLayout"
-        :small="isMobileLayout"
+        :layout="
+          isMobile
+            ? 'prev, pager, next'
+            : 'total, sizes, prev, pager, next, jumper'
+        "
+        :pager-count="isMobile ? 5 : 7"
+        :small="isMobile"
         :total="total"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -155,7 +174,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑作业' : '创建作业'"
-      :width="formDialogWidth"
+      :width="isMobile ? 'calc(100vw - 24px)' : '600px'"
       align-center
     >
       <el-form
@@ -163,7 +182,8 @@
         v-loading="formLoading"
         :model="form"
         :rules="rules"
-        label-width="100px"
+        :label-width="isMobile ? 'auto' : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
       >
         <el-form-item label="作业标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入作业标题" />
@@ -234,9 +254,8 @@
     <el-dialog
       v-model="questionDialogVisible"
       title="作业管理"
-      width="90%"
-      :fullscreen="isMobileLayout"
-      top="5vh"
+      :width="isMobile ? 'calc(100vw - 16px)' : '90%'"
+      :top="isMobile ? '8px' : '5vh'"
       @closed="handleQuestionDialogClosed"
     >
       <div v-if="currentHomework" class="question-dialog-header">
@@ -249,11 +268,11 @@
         </el-button>
       </div>
 
-      <div class="question-table-scroll">
+      <div class="business-table-scroll question-table-scroll">
         <el-table
           v-loading="questionLoading"
-          class="question-management-table"
           :data="questionList"
+          :class="{ 'mobile-question-table': isMobile }"
           style="width: 100%"
           border
           stripe
@@ -281,7 +300,11 @@
             </template>
           </el-table-column>
           <el-table-column prop="sortOrder" label="排序" width="80" />
-          <el-table-column label="操作" width="150" :fixed="questionActionFixed">
+          <el-table-column
+            label="操作"
+            width="150"
+            :fixed="isMobile ? false : 'right'"
+          >
             <template #default="scope">
               <el-button
                 size="small"
@@ -305,8 +328,13 @@
           v-model:current-page="questionCurrentPage"
           v-model:page-size="questionPageSize"
           :page-sizes="[10, 20, 30, 50]"
-          :layout="paginationLayout"
-          :small="isMobileLayout"
+          :layout="
+            isMobile
+              ? 'prev, pager, next'
+              : 'total, sizes, prev, pager, next, jumper'
+          "
+          :pager-count="isMobile ? 5 : 7"
+          :small="isMobile"
           :total="questionTotal"
           @size-change="handleQuestionSizeChange"
           @current-change="handleQuestionCurrentChange"
@@ -318,7 +346,8 @@
     <el-dialog
       v-model="detailDialogVisible"
       title="试题详情"
-      :width="detailDialogWidth"
+      :width="isMobile ? 'calc(100vw - 24px)' : '70%'"
+      :top="isMobile ? '12px' : '15vh'"
     >
       <div v-if="currentQuestion" class="question-detail">
         <el-descriptions border :column="1" size="default">
@@ -374,76 +403,64 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus } from "@element-plus/icons-vue";
-import { useAppStoreHook } from "@/store/modules/app";
+import { ArrowDown, MagicStick, Plus } from "@element-plus/icons-vue";
+import dayjs from "dayjs";
 import {
   getHomeworkList,
   getHomeworkQuestionList,
   createHomework,
   updateHomework,
-  deleteHomework
+  deleteHomework,
+  type HomeworkListResult
 } from "@/api/homework";
 import { deleteWorkQuestion, addRandomWorkQuestion } from "@/api/work";
-import { getCourseHoursList } from "@/api/course";
+import { getCourseHoursList, type CourseHoursListResult } from "@/api/course";
+
+type HomeworkItem = HomeworkListResult["homeworkList"][number];
+type CourseChapter = CourseHoursListResult["courseChapters"][number];
+type CourseHour = CourseChapter["hourList"][number];
+
+interface BulkHomeworkTarget {
+  chapterId: number;
+  chapterName: string;
+  hourId: number;
+  hourTitle: string;
+}
+
+const HOMEWORK_PAGE_SIZE = 100;
 
 const props = defineProps({
   courseId: {
     type: [Number, null],
     required: true
+  },
+  courseEndTime: {
+    type: String,
+    default: ""
   }
 });
 
-const appStore = useAppStoreHook();
-const isNativeMobile = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
-const isMobileLayout = computed(
-  () => appStore.getDevice === "mobile" || isNativeMobile()
-);
-const paginationLayout = computed(() =>
-  isMobileLayout.value ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
-);
-const formDialogWidth = computed(() => (isMobileLayout.value ? "92vw" : "600px"));
-const detailDialogWidth = computed(() => (isMobileLayout.value ? "92vw" : "70%"));
-const questionActionFixed = computed(() =>
-  isMobileLayout.value ? false : "right"
-);
-
-interface HomeworkItem {
-  homeworkId: number;
-  title?: string;
-  chapterName?: string;
-  hourName?: string;
-  questionNum?: number;
-  totalPoints?: number;
-  dueDate?: string;
-}
-
-interface QuestionItem {
-  questionId?: number;
-  questionType: number;
-  title?: string;
-  stem?: string;
-  options?: string;
-  correctAnswer?: string;
-  analysis?: string;
-  points?: number;
-  difficulty?: number;
-  sortOrder?: number;
-}
+const isMobile = ref(window.innerWidth < 768);
+const updateIsMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+};
 
 // 作业列表相关
 const loading = ref(false);
-const homeworkList = ref<HomeworkItem[]>([]);
+const homeworkList = ref([]);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
 
 // 章节和课时选项
-const chapterOptions = ref([]);
-const hourOptions = ref([]);
+const chapterOptions = ref<CourseChapter[]>([]);
+const hourOptions = ref<CourseHour[]>([]);
+
+// 一键生成全课练习
+const batchGenerating = ref(false);
+const batchProgress = ref({ completed: 0, total: 0 });
 
 // 作业表单相关
 const dialogVisible = ref(false);
@@ -473,24 +490,26 @@ const rules = {
 // 试题管理相关
 const questionDialogVisible = ref(false);
 const questionLoading = ref(false);
-const currentHomework = ref<HomeworkItem | null>(null);
-const questionList = ref<QuestionItem[]>([]);
+const currentHomework = ref(null);
+const questionList = ref([]);
 const questionCurrentPage = ref(1);
 const questionPageSize = ref(10);
 const questionTotal = ref(0);
 
 // 试题详情相关
 const detailDialogVisible = ref(false);
-const currentQuestion = ref<QuestionItem | null>(null);
+const currentQuestion = ref(null);
 
 // 监听课程ID变化，重新加载数据
 watch(
   () => props.courseId,
   newVal => {
+    chapterOptions.value = [];
+    hourOptions.value = [];
     if (newVal) {
       currentPage.value = 1;
       fetchHomeworkList();
-      fetchChapters();
+      fetchChapters(Number(newVal));
     } else {
       homeworkList.value = [];
       total.value = 0;
@@ -520,13 +539,199 @@ const fetchHomeworkList = async () => {
 };
 
 // 获取章节和课时列表
-const fetchChapters = async () => {
+const fetchChapters = async (
+  courseId = Number(props.courseId)
+): Promise<CourseChapter[]> => {
+  if (!courseId) return [];
+
   try {
-    const { data } = await getCourseHoursList({ courseId: props.courseId });
-    chapterOptions.value = data.courseChapters || [];
+    const { data } = await getCourseHoursList({ courseId });
+    const chapters = data.courseChapters || data.hoursList || [];
+    if (Number(props.courseId) === courseId) {
+      chapterOptions.value = chapters;
+    }
+    return chapters;
   } catch (error) {
     console.error("获取章节列表失败", error);
     ElMessage.error("获取章节列表失败");
+    return [];
+  }
+};
+
+const getAllHomeworkTargets = (
+  chapters: CourseChapter[] = chapterOptions.value
+): BulkHomeworkTarget[] => {
+  const targetMap = new Map<number, BulkHomeworkTarget>();
+
+  chapters.forEach(chapter => {
+    (chapter.hourList || []).forEach(hour => {
+      const chapterId = Number(chapter.chapterId);
+      const hourId = Number(hour.hourId);
+      if (!chapterId || !hourId || targetMap.has(hourId)) return;
+
+      targetMap.set(hourId, {
+        chapterId,
+        chapterName: chapter.name || `章节 ${chapterId}`,
+        hourId,
+        hourTitle: hour.title || `课时 ${hourId}`
+      });
+    });
+  });
+
+  return Array.from(targetMap.values());
+};
+
+const fetchAllCourseHomeworks = async (
+  courseId: number
+): Promise<HomeworkItem[]> => {
+  const allHomeworks: HomeworkItem[] = [];
+  let pageNum = 1;
+  let totalCount = 0;
+
+  do {
+    const { data } = await getHomeworkList({
+      pageNum,
+      pageSize: HOMEWORK_PAGE_SIZE,
+      courseId
+    });
+    const pageItems = data?.homeworkList || [];
+    totalCount = Number(data?.total) || 0;
+    allHomeworks.push(...pageItems);
+
+    if (pageItems.length === 0) break;
+    pageNum += 1;
+  } while (allHomeworks.length < totalCount);
+
+  return allHomeworks;
+};
+
+const resolveBulkDueDate = () => {
+  const now = dayjs();
+  const courseEndTime = dayjs(props.courseEndTime);
+
+  if (
+    props.courseEndTime &&
+    courseEndTime.isValid() &&
+    courseEndTime.isAfter(now)
+  ) {
+    return courseEndTime.format("YYYY-MM-DD HH:mm:ss");
+  }
+
+  return now.add(30, "day").endOf("day").format("YYYY-MM-DD HH:mm:ss");
+};
+
+const generateAllHourHomeworks = async () => {
+  const courseId = Number(props.courseId);
+  if (!courseId || batchGenerating.value) return;
+
+  batchGenerating.value = true;
+  batchProgress.value = { completed: 0, total: 0 };
+
+  try {
+    const chapters = await fetchChapters(courseId);
+    const allTargets = getAllHomeworkTargets(chapters);
+    if (allTargets.length === 0) {
+      ElMessage.warning("当前课程没有可生成练习的课时");
+      return;
+    }
+
+    const existingHomeworks = await fetchAllCourseHomeworks(courseId);
+    const existingHourIds = new Set(
+      existingHomeworks.map(item => Number(item.hourId)).filter(Boolean)
+    );
+    const pendingTargets = allTargets.filter(
+      target => !existingHourIds.has(target.hourId)
+    );
+    const skippedCount = allTargets.length - pendingTargets.length;
+
+    if (pendingTargets.length === 0) {
+      ElMessage.info("当前课程的所有课时都已有作业，无需重复生成");
+      return;
+    }
+
+    const dueDate = resolveBulkDueDate();
+    await ElMessageBox.confirm(
+      `当前课程共 ${allTargets.length} 个课时，${skippedCount} 个课时已有作业；将为剩余 ${pendingTargets.length} 个课时依次创建练习，每份自动生成最多 10 道题，截止日期为 ${dueDate}。是否继续？`,
+      "一键生成全课练习",
+      {
+        confirmButtonText: "开始生成",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    );
+
+    batchProgress.value = { completed: 0, total: pendingTargets.length };
+    const failedTargets: BulkHomeworkTarget[] = [];
+    const createdHomeworkIds = new Set<number>();
+
+    for (const target of pendingTargets) {
+      try {
+        const { data } = await createHomework({
+          courseId,
+          chapterId: target.chapterId,
+          hourId: target.hourId,
+          title: `${target.hourTitle} 课后练习`,
+          description: `围绕“${target.chapterName} / ${target.hourTitle}”自动生成的课后练习。`,
+          dueDate
+        });
+        const homeworkId = Number(data?.homeworkId);
+        if (homeworkId) createdHomeworkIds.add(homeworkId);
+      } catch (error) {
+        failedTargets.push(target);
+        console.error(`为课时“${target.hourTitle}”生成练习失败`, error);
+      } finally {
+        batchProgress.value.completed += 1;
+      }
+    }
+
+    const refreshedHomeworks = await fetchAllCourseHomeworks(courseId);
+    const emptyQuestionHomeworks = refreshedHomeworks.filter(
+      item =>
+        createdHomeworkIds.has(Number(item.homeworkId)) &&
+        Number(item.questionNum) === 0
+    );
+    const successCount = pendingTargets.length - failedTargets.length;
+
+    if (Number(props.courseId) === courseId) {
+      currentPage.value = 1;
+      await fetchHomeworkList();
+    }
+
+    if (failedTargets.length === 0 && emptyQuestionHomeworks.length === 0) {
+      ElMessage.success(
+        `已为 ${successCount} 个课时创建练习，跳过 ${skippedCount} 个已有作业的课时`
+      );
+      return;
+    }
+
+    const failedNames = failedTargets
+      .slice(0, 5)
+      .map(item => item.hourTitle)
+      .join("、");
+    const emptyNames = emptyQuestionHomeworks
+      .slice(0, 5)
+      .map(item => item.hourName || item.title)
+      .join("、");
+    const detailParts = [
+      failedTargets.length
+        ? `${failedTargets.length} 个课时创建失败${failedNames ? `（${failedNames}）` : ""}`
+        : "",
+      emptyQuestionHomeworks.length
+        ? `${emptyQuestionHomeworks.length} 份作业暂未生成题目${emptyNames ? `（${emptyNames}）` : ""}`
+        : ""
+    ].filter(Boolean);
+
+    ElMessage.warning({
+      message: `已创建 ${successCount} 份作业；${detailParts.join("；")}`,
+      duration: 8000,
+      showClose: true
+    });
+  } catch (error: any) {
+    if (error === "cancel" || error === "close") return;
+    console.error("一键生成全课练习失败", error);
+    ElMessage.error("一键生成全课练习失败，请稍后重试");
+  } finally {
+    batchGenerating.value = false;
   }
 };
 
@@ -550,6 +755,23 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   currentPage.value = val;
   fetchHomeworkList();
+};
+
+const handleHomeworkAction = (
+  command: "questions" | "edit" | "delete",
+  row
+) => {
+  if (command === "questions") {
+    showQuestionDialog(row);
+    return;
+  }
+  if (command === "edit") {
+    showEditDialog(row);
+    return;
+  }
+  if (command === "delete") {
+    confirmDelete(row);
+  }
 };
 
 // 显示创建对话框
@@ -811,10 +1033,15 @@ const handleQuestionDialogClosed = () => {
 
 // 页面加载时获取数据
 onMounted(() => {
+  window.addEventListener("resize", updateIsMobile);
   if (props.courseId) {
     fetchHomeworkList();
-    fetchChapters();
+    fetchChapters(Number(props.courseId));
   }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateIsMobile);
 });
 </script>
 
@@ -823,8 +1050,8 @@ onMounted(() => {
   padding: 10px 0;
 }
 
-.mobile-homework-list {
-  display: none;
+.batch-generate-button {
+  min-width: 176px;
 }
 
 .operation-bar {
@@ -835,6 +1062,39 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.business-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 6px;
+  -webkit-overflow-scrolling: touch;
+
+  :deep(.el-table) {
+    border: 0;
+  }
+}
+
+.mobile-action-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.more-action-btn {
+  min-width: 64px;
+  min-height: 44px;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.danger-action {
+  color: var(--el-color-danger);
+}
+
+:global(.assessment-action-dropdown .el-dropdown-menu__item) {
+  min-height: 44px;
 }
 
 .question-dialog-header {
@@ -856,17 +1116,6 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-.question-table-scroll {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-.question-management-table {
-  min-width: 820px;
-}
-
 .question-detail {
   .option-item {
     margin-bottom: 8px;
@@ -878,144 +1127,91 @@ onMounted(() => {
   }
 }
 
-@media screen and (max-width: 768px) {
-  .homework-management.is-mobile-layout {
-    padding: 0;
-  }
+@media (max-width: 767px) {
+  .homework-management {
+    min-width: 0;
 
-  .homework-toolbar {
-    align-items: stretch;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 18px;
-
-    :deep(.el-button) {
-      width: auto;
-      min-width: 112px;
-      height: 40px;
-      margin-left: auto;
+    > :first-child {
+      align-items: stretch;
+      padding: 12px;
     }
-  }
 
-  .desktop-homework-table {
-    display: none;
-  }
+    > :first-child > :last-child {
+      width: 100%;
+      justify-content: stretch;
+    }
 
-  .mobile-homework-list {
-    display: grid;
-    gap: 12px;
-  }
-
-  .mobile-homework-card {
-    padding: 16px;
-    background: var(--el-bg-color-overlay);
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: 18px;
-    box-shadow: 0 10px 26px rgb(15 23 42 / 6%);
-  }
-
-  .mobile-homework-card__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .mobile-homework-card__id {
-    margin-bottom: 4px;
-    color: var(--el-text-color-placeholder);
-    font-size: 12px;
-    line-height: 1.2;
-  }
-
-  .mobile-homework-card__title {
-    display: block;
-    width: 100%;
-    padding: 0;
-    color: var(--el-text-color-primary);
-    font-size: 17px;
-    font-weight: 800;
-    line-height: 1.35;
-    text-align: left;
-    word-break: break-word;
-    background: transparent;
-    border: 0;
-  }
-
-  .mobile-homework-card__meta {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px;
-    margin-top: 12px;
-    color: var(--el-text-color-regular);
-    font-size: 13px;
-    line-height: 1.45;
-  }
-
-  .mobile-homework-card__actions {
-    display: grid;
-    grid-template-columns: 1fr 0.8fr 0.8fr;
-    gap: 8px;
-    margin-top: 14px;
-
-    :deep(.el-button) {
-      min-width: 0;
+    > :first-child :deep(.el-button) {
+      flex: 1 1 140px;
+      min-height: 44px;
       margin-left: 0;
-      padding: 0 10px;
     }
+
+    :deep(.el-dialog) {
+      max-width: calc(100vw - 16px);
+      max-height: calc(100dvh - 16px);
+      margin-bottom: 8px;
+    }
+
+    :deep(.el-dialog__header) {
+      padding: 16px 16px 12px;
+      margin-right: 0;
+    }
+
+    :deep(.el-dialog__headerbtn) {
+      width: 44px;
+      height: 44px;
+    }
+
+    :deep(.el-dialog__body) {
+      max-height: calc(100dvh - 132px);
+      padding: 12px 16px;
+      overflow-y: auto;
+    }
+
+    :deep(.el-dialog__footer) {
+      padding: 12px 16px 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      min-height: 32px;
+      padding: 0 0 4px;
+      line-height: 32px;
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper),
+    :deep(.el-date-editor) {
+      min-height: 44px;
+    }
+
+    :deep(.dialog-footer .el-button),
+    .question-operation-bar :deep(.el-button),
+    .question-table-scroll :deep(.el-button) {
+      min-height: 44px;
+    }
+  }
+
+  .homework-table-scroll .mobile-wide-table {
+    min-width: 1080px;
+  }
+
+  .question-table-scroll .mobile-question-table {
+    min-width: 900px;
   }
 
   .pagination-container {
     justify-content: center;
-    margin-top: 16px;
+    max-width: 100%;
     overflow-x: auto;
   }
 
-  :deep(.el-dialog) {
-    max-width: calc(100vw - 24px);
-    border-radius: 22px;
-  }
-
-  :deep(.el-dialog__body) {
-    max-height: min(68vh, 620px);
-    overflow-y: auto;
-    padding: 16px 18px;
-  }
-
   .question-dialog-header {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 
     h3 {
-      font-size: 20px;
-      line-height: 1.25;
-      word-break: break-word;
+      overflow-wrap: anywhere;
     }
-  }
-
-  .question-operation-bar {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 16px;
-  }
-
-  .question-table-scroll {
-    margin: 0 -4px;
-    padding: 0 4px 8px;
-    overscroll-behavior-x: contain;
-  }
-
-  .question-management-table {
-    min-width: 760px;
-  }
-
-  :deep(.el-form-item) {
-    display: block;
-  }
-
-  :deep(.el-form-item__label) {
-    justify-content: flex-start;
-    margin-bottom: 6px;
-    font-weight: 700;
   }
 }
 </style>

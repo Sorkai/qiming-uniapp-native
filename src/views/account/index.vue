@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="account-container"
-    :class="[currentTheme, { 'is-native-mobile': isNativeAccountView }]"
-  >
+  <div class="account-container" :class="currentTheme">
     <!-- 顶部导航 -->
     <div class="header" :class="{ 'header-scrolled': isScrolled }">
       <div class="header-content">
@@ -56,7 +53,7 @@
           </div>
 
           <template v-if="userInfo">
-            <el-dropdown trigger="hover" @command="handleCommand">
+            <el-dropdown trigger="click" @command="handleCommand">
               <div class="user-info">
                 <el-avatar :size="32" :src="formatAvatar(userInfo.avatar)" />
                 <span class="nickname">{{
@@ -106,7 +103,7 @@
             <div class="avatar-ring" />
           </div>
           <h3>{{ userInfo?.nickname || userInfo?.username }}</h3>
-          <p class="user-role">{{ accountRoleLabel }}</p>
+          <p class="user-role">学生</p>
         </div>
         <el-menu
           :default-active="activeMenu"
@@ -121,6 +118,10 @@
             <el-icon><CourseIcon /></el-icon>
             <span>课程</span>
           </el-menu-item>
+          <el-menu-item index="student-resources">
+            <el-icon><Reading /></el-icon>
+            <span>教学资源</span>
+          </el-menu-item>
           <el-menu-item index="classroom">
             <el-icon><ClassroomIcon /></el-icon>
             <span>虚拟校园</span>
@@ -128,6 +129,14 @@
           <el-menu-item index="profile">
             <el-icon><StudentIcon /></el-icon>
             <span>个人资料</span>
+          </el-menu-item>
+          <el-menu-item index="learning-profile">
+            <el-icon><TrendCharts /></el-icon>
+            <span>学生画像</span>
+          </el-menu-item>
+          <el-menu-item index="learning-path">
+            <el-icon><Guide /></el-icon>
+            <span>学习路径规划</span>
           </el-menu-item>
           <el-menu-item index="cloud-disk">
             <el-icon><CloudIcon /></el-icon>
@@ -159,12 +168,23 @@
           </el-menu-item>
         </el-menu>
       </div>
-      <div class="account-main">
+      <div
+        class="account-main"
+        :class="{
+          'account-main--student-resources': activeMenu === 'student-resources'
+        }"
+      >
         <div v-if="activeMenu === 'profile'">
           <user-profile
             :current-theme="currentTheme"
             @to-course="activeMenu = 'course'"
           />
+        </div>
+        <div v-else-if="activeMenu === 'learning-profile'">
+          <student-learning-profile :current-theme="currentTheme" />
+        </div>
+        <div v-else-if="activeMenu === 'learning-path'">
+          <student-learning-path-planner :current-theme="currentTheme" />
         </div>
         <div v-else-if="activeMenu === 'cloud-disk'">
           <cloud-disk :current-theme="currentTheme" />
@@ -183,6 +203,12 @@
         </div>
         <div v-else-if="activeMenu === 'exam-center'">
           <student-exam-center :current-theme="currentTheme" />
+        </div>
+        <div
+          v-else-if="activeMenu === 'student-resources'"
+          class="account-main__student-resources"
+        >
+          <StudentResourceWorkbench fixed-viewport />
         </div>
         <div v-else-if="activeMenu === 'classroom'">
           <Classroom3D />
@@ -455,11 +481,7 @@
                 我的课程
               </h3>
               <div class="course-filter">
-                <el-select
-                  v-model="courseFilter"
-                  placeholder="课程状态"
-                  :teleported="false"
-                >
+                <el-select v-model="courseFilter" placeholder="课程状态">
                   <el-option label="全部" value="all" />
                   <el-option label="进行中" value="ongoing" />
                   <el-option label="已完成" value="completed" />
@@ -475,9 +497,9 @@
 
             <!-- 课程网格 -->
             <template v-else>
-              <div v-if="filteredCourseList.length > 0" class="course-grid">
+              <div v-if="coursesData.list.length > 0" class="course-grid">
                 <div
-                  v-for="course in filteredCourseList"
+                  v-for="course in coursesData.list"
                   :key="course.courseId"
                   class="course-item"
                   @click="handleCourseClick(course.courseId)"
@@ -543,7 +565,7 @@
             </template>
 
             <!-- 分页 -->
-            <div v-if="filteredCourseList.length > 0" class="pagination">
+            <div v-if="coursesData.list.length > 0" class="pagination">
               <el-button :disabled="currentPage === 1" @click="handlePrevPage">
                 <el-icon><ArrowLeft /></el-icon>
                 上一页
@@ -570,15 +592,13 @@
       @login-success="handleLoginSuccess"
     />
 
-    <NavMobile v-if="isNativeAccountView" />
-
     <!-- 页尾版权信息 -->
     <LayFooter />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { emitter } from "@/utils/mitt";
 import {
@@ -602,17 +622,13 @@ import {
   Cpu,
   Trophy,
   Sunny,
-  Moon
+  Moon,
+  TrendCharts,
+  Guide
 } from "@element-plus/icons-vue";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
-import {
-  type CourseTheme,
-  getResponsiveLayoutTheme,
-  getSavedCourseTheme,
-  setSavedCourseTheme
-} from "@/utils/courseTheme";
 import { userKey, removeToken, hasManageAccess } from "@/utils/auth";
 import { ElMessage } from "element-plus";
 import type { DataInfo } from "@/utils/auth";
@@ -624,9 +640,11 @@ import {
   Competition
 } from "./components";
 import CloudDisk from "./components/CloudDisk.vue";
+import StudentLearningProfile from "./components/StudentLearningProfile.vue";
+import StudentLearningPathPlanner from "./components/StudentLearningPathPlanner.vue";
 import Classroom3D from "@/views/course/classroom/index.vue";
 import StudentExamCenter from "@/views/exam-paper/student-center/index.vue";
-import NavMobile from "@/layout/components/NavMobile.vue";
+import StudentResourceWorkbench from "@/views/course/student-resource/index.vue";
 import { getFrontendCourseList } from "@/api/frontend/course";
 
 // 导入新图标
@@ -647,30 +665,85 @@ const router = useRouter();
 const route = useRoute();
 const isScrolled = ref(false);
 const showLoginDialog = ref(false);
+const isMiniProgramDemoRoute = computed(
+  () =>
+    route.query.qimingMiniProgram === "1" || route.query.qimingNative === "1"
+);
+
+const menuKeys = [
+  "home",
+  "course",
+  "classroom",
+  "profile",
+  "cloud-disk",
+  "notification",
+  "todo",
+  "ai-app",
+  "virtual-lab",
+  "competition",
+  "exam-center",
+  "student-resources",
+  "learning-profile",
+  "learning-path"
+];
+
+const readRouteMenu = () => {
+  const menu = Array.isArray(route.query.menu)
+    ? route.query.menu[0]
+    : route.query.menu;
+  return typeof menu === "string" && menuKeys.includes(menu) ? menu : "";
+};
+
+const demoCourses = [
+  {
+    courseId: 1,
+    courseName: "嵌入式 Linux 开发实践教程",
+    thumbUrl: "",
+    isRequired: 1,
+    totalHours: 24,
+    finishedHours: 8
+  },
+  {
+    courseId: 2,
+    courseName: "数据结构动画课件",
+    thumbUrl: "",
+    isRequired: 1,
+    totalHours: 18,
+    finishedHours: 12
+  },
+  {
+    courseId: 3,
+    courseName: "AI 助教学习诊断",
+    thumbUrl: "",
+    isRequired: 0,
+    totalHours: 12,
+    finishedHours: 4
+  },
+  {
+    courseId: 4,
+    courseName: "计算机组成原理测评",
+    thumbUrl: "",
+    isRequired: 1,
+    totalHours: 20,
+    finishedHours: 15
+  }
+];
 
 const userInfo = ref<DataInfo<number> | null>(storageLocal().getItem(userKey));
-const accountRoleLabel = computed(() => {
-  if (userInfo.value?.roleType === 3) return "管理员";
-  if (userInfo.value?.roleType === 2) return "教师";
-  return "学生";
-});
-const accountAiAppMode = computed(() => {
-  if (userInfo.value?.roleType === 3) return "admin";
-  if (userInfo.value?.roleType === 2) return "teacher";
-  return "student";
-});
-
-const getInitialCourseTheme = (): CourseTheme =>
-  getSavedCourseTheme(getResponsiveLayoutTheme());
 
 // 主题相关
-const currentTheme = ref<CourseTheme>(getInitialCourseTheme());
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) ||
+    ((storageLocal().getItem("responsive-layout") as any)?.darkMode
+      ? "dark"
+      : "light")
+);
 
 // 监听主题变化
 watch(
   currentTheme,
   val => {
-    setSavedCourseTheme(val);
+    storageLocal().setItem("course_theme", val);
     const other = val === "light" ? "dark" : "light";
     document.documentElement.classList.remove(other);
     document.documentElement.classList.add(val);
@@ -678,6 +751,11 @@ watch(
     document.body.classList.add(val);
 
     // 同步到管理后台主题设置
+    const layout = storageLocal().getItem("responsive-layout") as any;
+    if (layout) {
+      layout.darkMode = val === "dark";
+      storageLocal().setItem("responsive-layout", layout);
+    }
   },
   { immediate: true }
 );
@@ -735,81 +813,13 @@ const toggleTheme = (event: MouseEvent) => {
 
 // 当前激活的菜单项
 const activeMenu = ref<string>("home");
-const accountMenuKeys = new Set([
-  "home",
-  "course",
-  "classroom",
-  "profile",
-  "cloud-disk",
-  "notification",
-  "todo",
-  "ai-app",
-  "virtual-lab",
-  "competition",
-  "exam-center"
-]);
-
-const normalizeAccountMenu = (menu: unknown) => {
-  const value = Array.isArray(menu) ? menu[0] : menu;
-  return typeof value === "string" && accountMenuKeys.has(value) ? value : "";
-};
-
-const isNativeAccountView = computed(() => {
-  if (String(route.query.qimingNative || "") === "1") return true;
-  if (typeof document === "undefined") return false;
-  return document.documentElement.classList.contains("qiming-native-webview");
-});
-
-const buildRouteQuery = (
-  extra: Record<string, string | number> = {},
-  omitKeys: string[] = []
-) => {
-  const query: Record<string, any> = { ...route.query, ...extra };
-  omitKeys.forEach(key => {
-    delete query[key];
-  });
-  return query;
-};
-
-const scrollActiveMenuIntoView = () => {
-  nextTick(() => {
-    const menu = document.querySelector<HTMLElement>(".account-menu");
-    const activeItem = menu?.querySelector<HTMLElement>(
-      ".el-menu-item.is-active"
-    );
-    if (!menu || !activeItem) return;
-
-    const menuRect = menu.getBoundingClientRect();
-    const itemRect = activeItem.getBoundingClientRect();
-    const targetInset = 10;
-    const distanceFromTarget = itemRect.left - menuRect.left - targetInset;
-
-    if (Math.abs(distanceFromTarget) < 8) return;
-
-    const nextScrollLeft = menu.scrollLeft + distanceFromTarget;
-
-    menu.scrollTo({
-      left: Math.max(0, nextScrollLeft),
-      behavior: "smooth"
-    });
-  });
-};
 
 // 初始化菜单状态
 const initActiveMenu = () => {
-  const routeMenu = normalizeAccountMenu(route.query.menu);
+  const routeMenu = readRouteMenu();
   if (routeMenu) {
     activeMenu.value = routeMenu;
     storageLocal().setItem("account_active_menu", routeMenu);
-    return;
-  }
-
-  const isNativeAccountEntry =
-    route.query.qimingNative === "1" ||
-    document.documentElement.classList.contains("qiming-native-webview");
-  if (isNativeAccountEntry) {
-    activeMenu.value = "home";
-    storageLocal().setItem("account_active_menu", "home");
     return;
   }
 
@@ -855,37 +865,28 @@ const coursesData = ref({
   loading: false // 加载状态
 });
 
-const getCourseStatus = (course: any) => {
-  const finishedHours = Number(course?.finishedHours || 0);
-  const totalHours = Number(course?.totalHours || 0);
-  if (totalHours > 0 && finishedHours >= totalHours) return "completed";
-  if (finishedHours > 0) return "ongoing";
-  return "upcoming";
-};
-
-const filteredCourseList = computed(() => {
-  const list = coursesData.value.list || [];
-  if (courseFilter.value === "all") return list;
-  return list.filter(course => getCourseStatus(course) === courseFilter.value);
-});
-
 // 获取课程列表
 const fetchCourseList = async () => {
   try {
     loading.value = true;
-    const { code, data, msg } = await getFrontendCourseList({
-      pageNum: 1,
-      pageSize: 100 // 获取足够多的课程数据
-    });
+    const { code, data, msg } = await getFrontendCourseList(
+      {
+        pageNum: 1,
+        pageSize: 100 // 获取足够多的课程数据
+      },
+      { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 }
+    );
 
     if (code === 200 && data) {
       return data.list || [];
     } else {
+      if (isMiniProgramDemoRoute.value) return demoCourses;
       ElMessage.error(msg || "获取课程列表失败");
       return [];
     }
   } catch (error) {
     console.error("获取课程列表出错:", error);
+    if (isMiniProgramDemoRoute.value) return demoCourses;
     ElMessage.error("获取课程数据失败，请稍后重试");
     return [];
   } finally {
@@ -936,27 +937,36 @@ const loadHomeData = async () => {
 const loadCoursePageData = async () => {
   coursesData.value.loading = true;
   try {
-    // 状态筛选在部分后端环境下不生效，移动端先拉足够多的数据再本地过滤。
-    const isFiltering = courseFilter.value !== "all";
-    const { code, data, msg } = await getFrontendCourseList({
-      pageNum: isFiltering ? 1 : currentPage.value,
-      pageSize: isFiltering ? 100 : pageSize.value
-    });
+    // 分页获取课程列表
+    const { code, data, msg } = await getFrontendCourseList(
+      {
+        pageNum: currentPage.value,
+        pageSize: pageSize.value,
+        status: courseFilter.value === "all" ? undefined : courseFilter.value
+      },
+      { timeout: isMiniProgramDemoRoute.value ? 8000 : 0 }
+    );
 
     if (code === 200 && data) {
-      const list = data.list || [];
-      coursesData.value.list = list;
-      total.value = isFiltering
-        ? list.filter(course => getCourseStatus(course) === courseFilter.value)
-            .length
-        : data.total || 0;
+      coursesData.value.list = data.list || [];
+      total.value = data.total || 0;
     } else {
+      if (isMiniProgramDemoRoute.value) {
+        coursesData.value.list = demoCourses;
+        total.value = demoCourses.length;
+        return;
+      }
       ElMessage.error(msg || "获取课程列表失败");
       coursesData.value.list = [];
       total.value = 0;
     }
   } catch (error) {
     console.error("获取课程列表出错:", error);
+    if (isMiniProgramDemoRoute.value) {
+      coursesData.value.list = demoCourses;
+      total.value = demoCourses.length;
+      return;
+    }
     ElMessage.error("获取课程数据失败，请稍后重试");
     coursesData.value.list = [];
     total.value = 0;
@@ -968,16 +978,7 @@ const loadCoursePageData = async () => {
 // 处理菜单选择
 const handleMenuSelect = (index: string) => {
   if (index === "ai-app") {
-    router.push({
-      path: "/account/ai-app",
-      query: buildRouteQuery(
-        {
-          mode: accountAiAppMode.value,
-          ...(isNativeAccountView.value ? { qimingNative: "1" } : {})
-        },
-        ["menu"]
-      )
-    });
+    router.push("/account/ai-app?mode=student");
     return;
   }
   activeMenu.value = index;
@@ -1012,17 +1013,6 @@ watch(courseFilter, () => {
   currentPage.value = 1; // 重置为第一页
   loadCoursePageData();
 });
-
-watch(
-  () => route.query.menu,
-  menu => {
-    const nextMenu = normalizeAccountMenu(menu);
-    if (nextMenu && nextMenu !== activeMenu.value) {
-      activeMenu.value = nextMenu;
-      storageLocal().setItem("account_active_menu", nextMenu);
-    }
-  }
-);
 
 // 检查用户是否有管理权限（教师或管理员）
 const hasAdminAccess = computed(() => {
@@ -1104,10 +1094,7 @@ const getCoverColor = (index: number) => {
 
 // 修改课程点击处理函数
 const handleCourseClick = (courseId: number) => {
-  router.push({
-    path: `/course/${courseId}`,
-    query: buildRouteQuery()
-  });
+  router.push(`/course/${courseId}`);
 };
 
 // ---------------- AI 总结相关（后续可替换为真实接口） ----------------
@@ -1184,18 +1171,6 @@ const initialLoadDone = ref(false);
 // 监听菜单变化并持久化
 watch(activeMenu, async newVal => {
   storageLocal().setItem("account_active_menu", newVal);
-  if (
-    route.path === "/account" &&
-    normalizeAccountMenu(route.query.menu) !== newVal
-  ) {
-    router
-      .replace({
-        path: "/account",
-        query: buildRouteQuery({ menu: newVal }, ["mode"])
-      })
-      .catch(() => {});
-  }
-  scrollActiveMenuIntoView();
   if (!initialLoadDone.value) return;
 
   if (newVal === "home") {
@@ -1205,6 +1180,21 @@ watch(activeMenu, async newVal => {
     await loadCoursePageData();
   }
 });
+
+watch(
+  () => route.query.menu,
+  async () => {
+    const routeMenu = readRouteMenu();
+    if (!routeMenu || routeMenu === activeMenu.value) return;
+    activeMenu.value = routeMenu;
+    if (routeMenu === "home") {
+      await loadHomeData();
+      startTyping();
+    } else if (routeMenu === "course") {
+      await loadCoursePageData();
+    }
+  }
+);
 
 // 初次挂载如果就在首页也启动
 onMounted(async () => {
@@ -1246,13 +1236,31 @@ onUnmounted(() => {
 }
 
 .account-container {
+  height: 100vh;
   min-height: 100vh;
+  overflow: hidden;
   background-color: #f7f8fc;
   transition: background-color 0.3s ease;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   &.dark {
     color: #f1f5f9;
     background-color: #0b1120;
+  }
+
+  :deep(.layout-footer) {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    padding: 8px 0 6px;
+    pointer-events: none;
+    background: transparent;
   }
 
   .header {
@@ -1322,13 +1330,12 @@ onUnmounted(() => {
       .header-right {
         display: flex;
         align-items: center;
-        gap: 16px;
 
         .theme-toggle-wrapper {
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-right: 0;
+          margin-right: 20px;
         }
 
         .theme-btn-premium {
@@ -1463,17 +1470,20 @@ onUnmounted(() => {
   }
 
   .account-content {
-    display: flex;
-    gap: 24px;
-    height: calc(100vh - 64px);
-    padding: 88px 32px 0;
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    height: 100vh;
+    min-height: 0;
+    padding: calc(88px + var(--pure-safe-area-top, 0px)) 32px 28px;
 
     .account-sidebar {
-      position: sticky;
+      position: fixed;
       top: 88px;
-      flex-shrink: 0;
+      bottom: 28px;
+      left: 32px;
       width: 240px;
-      height: calc(100vh - 88px);
+      height: auto;
       padding-bottom: 32px;
       overflow-y: auto;
 
@@ -1729,26 +1739,31 @@ onUnmounted(() => {
     }
 
     .account-main {
-      flex: 1;
+      height: 100%;
+      margin-left: 264px;
       min-width: 0;
       min-height: 0;
-      padding: 0;
+      padding: 0 0 56px;
       overflow-y: auto;
       background-color: transparent;
       border-radius: 12px;
       box-shadow: none;
+      scrollbar-width: none;
 
       &::-webkit-scrollbar {
-        width: 5px;
+        display: none;
+        width: 0;
       }
 
-      &::-webkit-scrollbar-thumb {
-        background: rgb(151 180 247 / 25%);
-        border-radius: 4px;
+      &.account-main--student-resources {
+        padding-bottom: 0;
+        overflow: hidden;
       }
 
-      &::-webkit-scrollbar-track {
-        background: transparent;
+      .account-main__student-resources {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
       }
 
       .quick-access-section {
@@ -2442,7 +2457,7 @@ onUnmounted(() => {
   }
 
   /* stylelint-disable-next-line order/order */
-  @media (max-width: 1199px) {
+  @media (width <= 1199px) {
     .header {
       .header-content {
         padding: 0 24px;
@@ -2451,13 +2466,19 @@ onUnmounted(() => {
 
     .account-content {
       gap: 20px;
-      padding: 84px 20px 0;
+      padding: 84px 20px 24px;
 
       .account-sidebar {
+        top: 84px;
+        bottom: 24px;
+        left: 20px;
         width: 220px;
       }
 
       .account-main {
+        padding-bottom: 56px;
+        margin-left: 240px;
+
         .quick-access-section {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -2484,11 +2505,24 @@ onUnmounted(() => {
   }
 
   /* stylelint-disable-next-line order/order */
-  @media (max-width: 767px) {
+  @media (width <= 767px) {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+
+    :deep(.layout-footer) {
+      position: static;
+      padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+      pointer-events: auto;
+    }
+
     .header {
-      height: 72px;
+      height: calc(72px + var(--pure-safe-area-top, 0px));
+      padding-top: var(--pure-safe-area-top, 0);
+      box-sizing: border-box;
 
       .header-content {
+        height: 72px;
         padding: 0 16px;
 
         .logo {
@@ -2529,10 +2563,11 @@ onUnmounted(() => {
       gap: 18px;
       height: auto;
       min-height: calc(100vh - 72px);
-      padding: 84px 14px 0;
+      padding: calc(84px + var(--pure-safe-area-top, 0px)) 14px 0;
 
       .account-sidebar {
         position: static;
+        inset: auto;
         width: 100%;
         height: auto;
         padding-bottom: 0;
@@ -2631,7 +2666,20 @@ onUnmounted(() => {
       }
 
       .account-main {
+        height: auto;
+        margin-left: 0;
+        padding-bottom: 56px;
         overflow: visible;
+
+        &.account-main--student-resources {
+          padding-bottom: 56px;
+          overflow: visible;
+        }
+
+        .account-main__student-resources {
+          height: auto;
+          overflow: visible;
+        }
 
         .quick-access-section {
           grid-template-columns: 1fr;
@@ -2730,47 +2778,6 @@ onUnmounted(() => {
           .course-grid {
             grid-template-columns: 1fr;
             gap: 16px;
-
-            .course-item {
-              border-radius: 18px;
-              box-shadow: 0 8px 22px rgb(151 180 247 / 14%);
-
-              &:hover {
-                transform: none;
-              }
-
-              .course-cover {
-                height: clamp(150px, 34vw, 180px);
-                padding-top: 0;
-
-                .course-status {
-                  top: 10px;
-                  right: 10px;
-                }
-              }
-
-              .course-info {
-                padding: 14px;
-
-                h4 {
-                  margin-bottom: 7px;
-                  font-size: 16px;
-                  line-height: 1.25;
-                }
-
-                p {
-                  height: auto;
-                  margin-bottom: 10px;
-                  font-size: 12px;
-                }
-
-                .course-meta {
-                  gap: 8px;
-                  padding-top: 10px;
-                  font-size: 11.5px;
-                }
-              }
-            }
           }
 
           .pagination {
@@ -2791,7 +2798,7 @@ onUnmounted(() => {
   }
 
   /* stylelint-disable-next-line order/order */
-  @media (max-width: 479px) {
+  @media (width <= 479px) {
     .header {
       .header-content {
         .logo {
@@ -2799,13 +2806,13 @@ onUnmounted(() => {
         }
 
         .header-right {
-          gap: 10px;
+          gap: 8px;
 
           .user-info {
             max-width: calc(100vw - 136px);
 
             .nickname {
-              max-width: 88px;
+              max-width: 56px;
             }
           }
         }
@@ -2813,7 +2820,7 @@ onUnmounted(() => {
     }
 
     .account-content {
-      padding: 84px 10px 0;
+      padding: calc(84px + var(--pure-safe-area-top, 0px)) 10px 0;
 
       .account-sidebar {
         .user-info-card {
@@ -2837,287 +2844,6 @@ onUnmounted(() => {
         .course-list {
           .pagination {
             flex-wrap: wrap;
-          }
-        }
-      }
-    }
-  }
-
-  /* 原生 App / 窄屏学生端：保留学生中心风格，只修尺寸、间距和安全区 */
-  @media (max-width: 767px) {
-    min-height: 100dvh;
-    overflow-x: hidden;
-
-    .header {
-      height: calc(64px + var(--pure-safe-area-top, 0));
-      padding-top: var(--pure-safe-area-top, 0);
-      box-sizing: border-box;
-
-      .header-content {
-        height: 64px;
-        padding: 0 14px;
-
-        .logo {
-          display: flex;
-          flex: 0 0 auto;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          margin-right: 12px;
-          padding: 4px;
-          overflow: hidden;
-          border-radius: 12px;
-        }
-
-        .header-right {
-          flex: 1 1 auto;
-          gap: 0;
-          justify-content: flex-end;
-          min-width: 0;
-
-          > * + * {
-            margin-left: 12px;
-          }
-
-          :deep(.el-dropdown) {
-            margin-left: 12px;
-          }
-
-          .theme-toggle-wrapper {
-            flex: 0 0 auto;
-            min-width: 50px;
-          }
-
-          .theme-btn-premium {
-            width: 48px;
-            height: 28px;
-          }
-
-          .user-info {
-            max-width: min(152px, 40vw);
-            min-width: 0;
-            height: 38px;
-            padding: 3px 9px 3px 5px;
-            background: rgb(255 255 255 / 20%);
-            border: 1px solid rgb(255 255 255 / 28%);
-            box-shadow:
-              inset 0 1px 0 rgb(255 255 255 / 32%),
-              0 8px 20px rgb(69 96 159 / 10%);
-
-            :deep(.el-avatar) {
-              flex: 0 0 auto;
-              width: 28px !important;
-              height: 28px !important;
-            }
-
-            .nickname {
-              max-width: clamp(48px, 17vw, 78px);
-              margin: 0 6px 0 7px;
-              font-size: 13px;
-              line-height: 1;
-            }
-
-            .el-icon--right {
-              flex: 0 0 auto;
-              font-size: 14px;
-            }
-          }
-        }
-      }
-    }
-
-    .account-content {
-      gap: 14px;
-      min-height: 100dvh;
-      padding: calc(76px + var(--pure-safe-area-top, 0)) 12px
-        calc(var(--pure-mobile-tab-height, 58px) + 22px);
-      box-sizing: border-box;
-
-      .account-sidebar {
-        .user-info-card {
-          min-height: 184px;
-          padding: 24px 16px 16px;
-          margin-bottom: 14px;
-          border-radius: 18px;
-
-          &::before {
-            height: 68px;
-          }
-
-          .avatar-wrapper {
-            margin-bottom: 6px;
-
-            :deep(.el-avatar) {
-              width: 64px !important;
-              height: 64px !important;
-            }
-
-            .avatar-ring {
-              inset: -6px;
-            }
-          }
-
-          h3 {
-            max-width: 100%;
-            margin: 12px 0 6px;
-            overflow: hidden;
-            font-size: 20px;
-            line-height: 1.15;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-
-          .user-role {
-            padding: 5px 18px;
-            font-size: 12.5px;
-            line-height: 1;
-          }
-        }
-
-        .account-menu {
-          position: relative;
-          gap: 0;
-          width: 100%;
-          max-width: 100%;
-          padding: 8px 10px;
-          overflow-x: auto;
-          overflow-y: hidden;
-          scroll-padding-inline: 10px;
-          scroll-snap-type: x proximity;
-          border-radius: 18px;
-          scrollbar-width: none;
-          mask-image: linear-gradient(
-            90deg,
-            transparent 0,
-            #000 10px,
-            #000 calc(100% - 28px),
-            transparent 100%
-          );
-
-          &::-webkit-scrollbar {
-            display: none;
-          }
-
-          &::after {
-            flex: 0 0 18px;
-            min-width: 18px;
-            height: 1px;
-            pointer-events: none;
-            content: "";
-          }
-
-          :deep(.el-menu-item) {
-            display: inline-flex;
-            flex: 0 0 auto;
-            gap: 0;
-            align-items: center;
-            justify-content: center;
-            width: auto;
-            min-width: 94px;
-            height: 40px;
-            padding: 0 12px;
-            border-radius: 16px;
-            scroll-snap-align: start;
-
-            & + .el-menu-item {
-              margin-left: 10px;
-            }
-
-            .el-icon {
-              flex: 0 0 auto;
-              margin-right: 7px !important;
-              font-size: 18px;
-            }
-
-            span {
-              min-width: max-content;
-              max-width: none;
-              overflow: visible;
-              font-size: 12px;
-              line-height: 1;
-              text-overflow: clip;
-              white-space: nowrap;
-            }
-          }
-        }
-      }
-
-      .account-main {
-        padding-bottom: 0;
-
-        .quick-access-section {
-          gap: 12px;
-          margin-bottom: 16px;
-
-          .quick-access-card {
-            display: flex;
-            gap: 0;
-            align-items: center;
-            min-height: 74px;
-            padding: 13px 14px;
-            border-radius: 18px;
-
-            .access-icon {
-              flex: 0 0 44px;
-              width: 44px;
-              height: 44px;
-              margin-right: 12px;
-              border-radius: 13px;
-
-              svg {
-                width: 28px !important;
-                height: 28px !important;
-              }
-            }
-
-            .access-info {
-              flex: 1 1 auto;
-              min-width: 0;
-
-              h4 {
-                margin-bottom: 4px;
-                font-size: 16px;
-                line-height: 1.2;
-              }
-
-              p {
-                display: -webkit-box;
-                overflow: hidden;
-                font-size: 12px;
-                line-height: 1.35;
-                text-overflow: ellipsis;
-                white-space: normal;
-                -webkit-box-orient: vertical;
-                -webkit-line-clamp: 1;
-              }
-            }
-
-            .access-arrow {
-              flex: 0 0 auto;
-              font-size: 18px;
-            }
-          }
-        }
-
-        .card {
-          padding: 16px 14px;
-          margin-bottom: 16px;
-          border-radius: 18px;
-
-          .info-section {
-            .course-info {
-              .course-card {
-                min-height: 0;
-              }
-            }
-
-            .ai-summary {
-              .summary-card {
-                position: relative;
-                inset: auto;
-              }
-            }
           }
         }
       }

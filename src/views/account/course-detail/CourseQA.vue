@@ -602,7 +602,7 @@
     <el-dialog
       v-model="editDialogVisible"
       title="编辑讨论"
-      width="600px"
+      width="min(600px, calc(100vw - 24px))"
       :close-on-click-modal="false"
       class="edit-dialog"
     >
@@ -664,7 +664,7 @@
     <el-dialog
       v-model="editReplyDialogVisible"
       title="编辑回复"
-      width="500px"
+      width="min(500px, calc(100vw - 24px))"
       :close-on-click-modal="false"
       class="edit-dialog"
     >
@@ -697,7 +697,7 @@
     <el-dialog
       v-model="reportDialogVisible"
       title="举报违规内容"
-      width="400px"
+      width="min(400px, calc(100vw - 24px))"
       destroy-on-close
       :append-to-body="true"
       class="custom-report-dialog"
@@ -910,30 +910,6 @@ const editingReply = ref({
 // 消息列表
 const messages = ref<Message[]>([]);
 
-// 统一监听 visible 和 courseId，只要两者都准备好且 visible 为 true 就加载
-watch(
-  [() => props.visible, () => normalizedCourseId.value],
-  ([newVisible, newCourseId]) => {
-    console.log("[CourseQA] Status check:", { newVisible, newCourseId });
-    if (newVisible && newCourseId) {
-      refreshData();
-    }
-  },
-  { immediate: true }
-);
-
-// 监听 tab 切换
-watch(activeFilter, () => {
-  if (normalizedCourseId.value && props.visible) {
-    refreshData();
-  }
-});
-
-// 监听搜索
-watch(searchKeyword, () => {
-  // 可以在这里做防抖搜索
-});
-
 const refreshData = async () => {
   currentPage.value = 1;
   messages.value = [];
@@ -1033,6 +1009,30 @@ const fetchTags = async () => {
     }));
   } catch (error) {}
 };
+
+// 统一监听 visible 和 courseId，只要两者都准备好且 visible 为 true 就加载
+watch(
+  [() => props.visible, () => normalizedCourseId.value],
+  ([newVisible, newCourseId]) => {
+    console.log("[CourseQA] Status check:", { newVisible, newCourseId });
+    if (newVisible && newCourseId) {
+      refreshData();
+    }
+  },
+  { immediate: true }
+);
+
+// 监听 tab 切换
+watch(activeFilter, () => {
+  if (normalizedCourseId.value && props.visible) {
+    refreshData();
+  }
+});
+
+// 监听搜索
+watch(searchKeyword, () => {
+  // 可以在这里做防抖搜索
+});
 
 // 计算属性
 const isTeacherOrAdmin = computed(() => props.isTeacher || props.isAdmin);
@@ -1476,13 +1476,13 @@ const filterByTag = (tagName: string) => {
 
 <style scoped>
 /* 响应式 */
-@media (max-width: 1200px) {
+@media (width <= 1200px) {
   .board-right-panel {
     width: 300px;
   }
 }
 
-@media (max-width: 992px) {
+@media (width <= 992px) {
   .board-main-content {
     flex-direction: column-reverse;
   }
@@ -1514,11 +1514,11 @@ const filterByTag = (tagName: string) => {
   }
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .message-board-container {
     height: auto;
     min-height: 100vh;
-    padding: var(--course-mobile-top-offset, 176px) 14px
+    padding: var(--course-mobile-top-offset, 156px) 14px
       calc(24px + env(safe-area-inset-bottom));
     overflow: visible;
   }
@@ -1549,7 +1549,8 @@ const filterByTag = (tagName: string) => {
   }
 
   .filter-tab {
-    height: 36px;
+    min-height: 44px;
+    height: 44px;
     padding: 0 16px;
     font-size: 13px;
     white-space: nowrap;
@@ -1634,6 +1635,7 @@ const filterByTag = (tagName: string) => {
   .action-btn {
     flex: 0 0 auto;
     gap: 6px;
+    min-height: 44px;
     padding: 8px 12px;
     font-size: 13px;
   }
@@ -1679,6 +1681,7 @@ const filterByTag = (tagName: string) => {
 
   .reply-action-btn {
     gap: 4px;
+    min-height: 44px;
     padding: 5px 10px;
     font-size: 12px;
   }
@@ -1712,6 +1715,7 @@ const filterByTag = (tagName: string) => {
 
   .submit-reply-btn {
     width: 100%;
+    min-height: 44px;
   }
 
   .board-right-panel {
@@ -1750,7 +1754,7 @@ const filterByTag = (tagName: string) => {
   }
 
   .content-editor :deep(.el-textarea__inner) {
-    padding: 12px 14px 46px;
+    padding: 12px 14px 62px;
     font-size: 13px;
   }
 
@@ -1759,9 +1763,15 @@ const filterByTag = (tagName: string) => {
   }
 
   .toolbar-btn {
-    width: 30px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
     font-size: 13px;
+  }
+
+  .cloud-tag,
+  .load-more-btn,
+  .load-more-btn-link {
+    min-height: 44px;
   }
 
   .post-notice {
@@ -1810,9 +1820,9 @@ const filterByTag = (tagName: string) => {
   }
 }
 
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .message-board-container {
-    padding: var(--course-mobile-top-offset, 176px) 10px
+    padding: var(--course-mobile-top-offset, 156px) 10px
       calc(20px + env(safe-area-inset-bottom));
   }
 
@@ -1841,7 +1851,8 @@ const filterByTag = (tagName: string) => {
 
   .filter-tab {
     gap: 6px;
-    height: 34px;
+    min-height: 44px;
+    height: 44px;
     padding: 0 13px;
     font-size: 12px;
     border-radius: 9px;
@@ -1885,6 +1896,7 @@ const filterByTag = (tagName: string) => {
   }
 
   .action-btn {
+    min-height: 44px;
     padding: 7px 10px;
     font-size: 12px;
   }
@@ -1908,6 +1920,7 @@ const filterByTag = (tagName: string) => {
   }
 
   .reply-action-btn {
+    min-height: 44px;
     padding: 4px 8px;
     font-size: 11px;
   }
@@ -1935,12 +1948,12 @@ const filterByTag = (tagName: string) => {
   }
 
   .content-editor :deep(.el-textarea__inner) {
-    padding: 10px 12px 44px;
+    padding: 10px 12px 60px;
   }
 
   .toolbar-btn {
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
   }
 
   .stats-card,

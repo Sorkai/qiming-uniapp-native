@@ -15,11 +15,18 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     VITE_PORT,
     VITE_COMPRESSION,
     VITE_PUBLIC_PATH,
+    VITE_API_URL,
     VITE_PROXY_TARGET,
+    VITE_MINDMAP_FILE_PROXY_TARGET,
     VITE_MOCK_SCOPE
   } = wrapperEnv(loadEnv(mode, root));
+  const isEdgeOneWechatH5 = process.env.QIMING_EDGEONE_WECHAT_H5 === "1";
+  const resolvedApiUrl =
+    mode === "app" && !VITE_API_URL ? VITE_PROXY_TARGET : VITE_API_URL;
+  const resolvedPublicPath =
+    mode === "app" ? VITE_PUBLIC_PATH || "./" : VITE_PUBLIC_PATH;
   return {
-    base: VITE_PUBLIC_PATH,
+    base: resolvedPublicPath,
     root,
     publicDir: command === "serve" ? "public" : false,
     resolve: {
@@ -37,6 +44,13 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
           changeOrigin: true,
           secure: false,
           rewrite: path => path.replace(/^\/api/, "")
+        },
+        // 思维导图 JSON 存储在 COS；本地通过同源代理读取，避免 Firefox CORS 差异。
+        "/mindmap-file": {
+          target: VITE_MINDMAP_FILE_PROXY_TARGET,
+          changeOrigin: true,
+          secure: false,
+          rewrite: path => path.replace(/^\/mindmap-file/, "")
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布
@@ -53,7 +67,12 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
         ]
       }
     },
-    plugins: getPluginsList(VITE_CDN, VITE_COMPRESSION, VITE_MOCK_SCOPE),
+    plugins: getPluginsList(
+      VITE_CDN,
+      VITE_COMPRESSION,
+      VITE_MOCK_SCOPE,
+      mode === "app"
+    ),
     // https://cn.vitejs.dev/config/dep-optimization-options.html#dep-optimization-options
     optimizeDeps: {
       include,
@@ -61,7 +80,9 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     },
     build: {
       // https://cn.vitejs.dev/guide/build.html#browser-compatibility
-      target: "es2015",
+      target: isEdgeOneWechatH5 ? "es2020" : "es2015",
+      minify: isEdgeOneWechatH5 ? false : "esbuild",
+      cssMinify: isEdgeOneWechatH5 ? false : "esbuild",
       sourcemap: false,
       reportCompressedSize: false,
       // 消除打包大小超过500kb警告
@@ -94,6 +115,7 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
       }
     },
     define: {
+      "import.meta.env.VITE_API_URL": JSON.stringify(resolvedApiUrl),
       __INTLIFY_PROD_DEVTOOLS__: false,
       __APP_INFO__: JSON.stringify(__APP_INFO__)
     }

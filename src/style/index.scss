@@ -40,7 +40,6 @@
   /* 移动端底部安全区域与导航高度 */
   --pure-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --pure-mobile-tab-height: calc(56px + var(--pure-safe-area-bottom));
-  --qiming-native-mobile-header-base-height: 78px;
   --qiming-native-page-bg: #f7f8fc;
   --qiming-native-surface-bg: #fff;
   --qiming-native-surface-soft-bg: #f8fafc;
@@ -68,27 +67,77 @@ html.ua-mobile body {
 
 html.qiming-native-webview {
   --pure-safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --pure-safe-area-top: env(safe-area-inset-top, 0px);
+  --qiming-native-env-safe-top: env(safe-area-inset-top, 0px);
+  --pure-safe-area-top: var(--qiming-native-env-safe-top);
+  --qiming-native-statusbar-offset: var(--pure-safe-area-top, 0px);
   --qiming-native-vh: 100dvh;
   --qiming-native-vw: 100vw;
-  --pure-mobile-tab-height: calc(62px + var(--pure-safe-area-bottom));
-  --pure-mobile-content-bottom-gap: calc(var(--pure-mobile-tab-height) + 18px);
+  --pure-mobile-tab-height: calc(58px + var(--pure-safe-area-bottom));
+  --pure-mobile-content-bottom-gap: calc(var(--pure-mobile-tab-height) + 96px);
   --pure-main-content-margin: 10px 10px 0;
-  --qiming-native-dock-bg: #fff;
-  --qiming-native-dock-border: rgb(226 232 240 / 96%);
-  --qiming-native-dock-shadow: 0 -12px 28px rgb(15 23 42 / 10%);
+}
+
+html.qiming-native-webview.ua-mobile {
+  --qiming-native-statusbar-offset: clamp(
+    22px,
+    var(--qiming-native-env-safe-top, 0px),
+    28px
+  );
+  --pure-safe-area-top: var(--qiming-native-statusbar-offset);
+}
+
+html.qiming-native-webview.ua-mobile.qiming-native-android {
+  --qiming-native-statusbar-offset: clamp(
+    28px,
+    calc(var(--qiming-native-env-safe-top, 0px) + 6px),
+    34px
+  );
+}
+
+html.qiming-native-webview.ua-mobile.qiming-native-android .fixed-header {
+  box-sizing: border-box;
+  padding-top: var(--pure-safe-area-top, 0);
+}
+
+html.qiming-native-webview.ua-mobile.qiming-native-android .app-main {
+  padding-top: calc(64px + var(--pure-safe-area-top, 0px)) !important;
+}
+
+html.qiming-native-webview.ua-mobile.qiming-native-android
+  .qiming-route-content {
+  width: auto;
+  max-width: calc(100vw - 12px) !important;
+  margin: 6px 6px 0 !important;
+  padding-right: 6px !important;
+  padding-left: 6px !important;
+  box-sizing: border-box;
+}
+
+html.qiming-mini-program-webview.ua-mobile {
+  --qiming-native-statusbar-offset: 0px;
+  --pure-safe-area-top: 0px;
+  --pure-main-content-margin: 6px 10px 0;
+  --qiming-native-navbar-bg: transparent;
+  --qiming-mini-topbar-height: 58px;
+  --qiming-mini-toolbar-top: 8px;
+  --pure-mobile-content-bottom-gap: calc(var(--pure-mobile-tab-height) + 18px);
+}
+
+html.qiming-mini-program-webview input,
+html.qiming-mini-program-webview textarea,
+html.qiming-mini-program-webview select {
+  font-size: 16px !important;
+}
+
+html.qiming-mini-program-webview img {
+  font-size: 0;
 }
 
 html.qiming-native-webview,
 html.qiming-native-webview body,
 html.qiming-native-webview #app {
-  display: block !important;
-  align-items: initial !important;
-  justify-content: initial !important;
   width: 100%;
-  min-width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  min-width: 0;
   height: var(--qiming-native-vh, 100dvh);
   min-height: 100vh;
   min-height: 100dvh;
@@ -111,22 +160,9 @@ html.qiming-native-webview.dark {
   --qiming-native-navbar-text: #eaf2ff;
   --qiming-native-control-bg: rgb(15 23 42 / 86%);
   --qiming-native-control-border: rgb(148 163 184 / 22%);
-  --qiming-native-dock-bg: #07101f;
+  --qiming-native-dock-bg: rgb(7 12 24 / 94%);
   --qiming-native-dock-border: rgb(148 163 184 / 20%);
   --qiming-native-dock-shadow: 0 -12px 30px rgb(0 0 0 / 36%);
-}
-
-html.qiming-native-webview.qiming-native-ios {
-  --qiming-native-ios-safe-top-fallback: 59px;
-  --qiming-native-ios-safe-bottom-fallback: 34px;
-  --qiming-native-effective-safe-top: max(
-    var(--pure-safe-area-top, 0px),
-    var(--qiming-native-ios-safe-top-fallback, 59px)
-  );
-  --qiming-native-effective-safe-bottom: max(
-    var(--pure-safe-area-bottom, 0px),
-    var(--qiming-native-ios-safe-bottom-fallback, 34px)
-  );
 }
 
 html.qiming-native-webview.dark body,
@@ -522,7 +558,7 @@ html.qiming-native-webview.dark
 
 html.qiming-native-webview {
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto;
   scrollbar-width: none;
 }
 
@@ -536,8 +572,8 @@ html.qiming-native-webview *::-webkit-scrollbar {
 html.qiming-native-webview body,
 html.qiming-native-webview #app {
   overflow-x: hidden;
-  overflow-y: hidden;
-  touch-action: none;
+  overflow-y: auto;
+  touch-action: pan-y;
 }
 
 html.qiming-native-webview .main-content {
@@ -545,9 +581,8 @@ html.qiming-native-webview .main-content {
 }
 
 html.qiming-native-webview .nav-mobile-container {
-  height: var(--pure-mobile-tab-height);
+  height: calc(58px + var(--pure-safe-area-bottom));
   padding-bottom: var(--pure-safe-area-bottom);
-  opacity: 1;
 }
 
 html.qiming-native-webview.ua-mobile
@@ -558,8 +593,8 @@ html.qiming-native-webview.ua-mobile
   .app-main
   > .el-scrollbar
   > .el-scrollbar__wrap {
-  padding-bottom: var(--pure-mobile-content-bottom-gap) !important;
-  scroll-padding-top: calc(86px + var(--pure-safe-area-top, 0));
+  padding-bottom: var(--pure-mobile-content-bottom-gap);
+  scroll-padding-top: calc(86px + var(--qiming-native-statusbar-offset, 0px));
   box-sizing: border-box;
   scrollbar-width: none;
 }
@@ -575,247 +610,269 @@ html.qiming-native-webview.ua-mobile .app-main,
 html.qiming-native-webview.ua-mobile .app-main-nofixed-header {
   max-width: 100vw;
   overflow-x: hidden;
-  overflow-y: hidden;
-  touch-action: none;
-}
-
-html.qiming-native-webview.ua-mobile
-  .app-main
-  > .el-scrollbar
-  > .el-scrollbar__wrap,
-html.qiming-native-webview.ua-mobile
-  .main-container
-  > .el-scrollbar
-  > .el-scrollbar__wrap {
-  overflow-y: auto !important;
+  overflow-y: auto;
   touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
 }
 
 html.qiming-native-webview.ua-mobile .main-content {
   max-width: calc(100vw - 20px);
   box-sizing: border-box;
-  padding-bottom: 0;
+  padding-bottom: calc(var(--pure-mobile-tab-height) + 42px);
   padding-top: 8px;
   text-rendering: geometricprecision;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile .fixed-header {
+html.qiming-native-webview.ua-mobile .fixed-header,
+html.qiming-native-webview.ua-mobile .navbar {
   opacity: 1 !important;
-  overflow: visible;
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .fixed-header {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .navbar {
+  position: relative !important;
+  display: block !important;
+  height: var(--qiming-mini-topbar-height) !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
   border-bottom: 0 !important;
   box-shadow: none !important;
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile .navbar {
-  align-items: center;
-  height: calc(
-    var(--qiming-native-mobile-header-base-height, 78px) +
-      var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px))
-  ) !important;
-  padding-top: calc(
-    var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px)) +
-      10px
-  ) !important;
-  overflow: visible;
-  opacity: 1 !important;
-  background: var(--qiming-native-navbar-bg, rgb(248 250 255 / 96%)) !important;
-  background-color: var(
-    --qiming-native-navbar-bg,
-    rgb(248 250 255 / 96%)
-  ) !important;
-  background-image: none !important;
-  border-bottom: 1px solid var(--qiming-native-dock-border) !important;
-  border-radius: 0 0 24px 24px;
-  box-shadow:
-    0 8px 18px rgb(29 60 120 / 8%),
-    inset 0 -1px 0 rgb(255 255 255 / 70%) !important;
-  backdrop-filter: blur(14px) saturate(1.08) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+html.qiming-mini-program-webview.ua-mobile .navbar > div:first-child {
+  position: absolute;
+  top: var(--qiming-mini-toolbar-top);
+  left: 10px;
+  z-index: 2;
+  height: 46px !important;
+  min-height: 46px !important;
+  max-width: min(190px, calc(100vw - 184px));
+  padding: 0 !important;
+  transform: none !important;
+  pointer-events: auto;
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile .navbar > div {
-  height: 62px;
-  min-height: 62px;
-  transform: none;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile .hamburger-container {
-  flex-basis: 52px;
-  width: 52px;
-  height: 50px;
-  margin: 0 10px 0 14px !important;
-  border-radius: 17px;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile
-  .hamburger-container::before {
-  inset: 3px 4px;
-  border-radius: 17px;
-  box-shadow:
-    0 10px 24px rgb(29 60 120 / 13%),
-    inset 0 1px 0 rgb(255 255 255 / 82%);
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile .mobile-brand {
-  flex: 1 1 150px;
-  gap: 9px;
-  min-width: 0;
-  max-width: 178px;
-  padding: 4px 2px 6px 0;
-  overflow: visible;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile .mobile-brand-logo {
-  flex-basis: 30px;
-  width: 30px;
-  height: 30px;
-  margin-right: 4px;
-  border-radius: 10px;
-  filter: drop-shadow(0 4px 8px rgb(31 63 123 / 12%));
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile .mobile-brand-title {
-  display: block;
-  min-width: 0;
-  padding: 3px 8px 5px 1px;
-  margin: -2px -8px -5px 0;
-  overflow: visible;
-  text-overflow: clip;
-  font-family: Impact, "Arial Black", "PingFang SC", sans-serif;
-  font-size: 19px;
-  font-style: italic;
-  font-weight: 900;
-  line-height: 1.12;
-  color: #1f4f9f;
-  background: none;
-  background-image: none;
-  background-clip: border-box;
-  text-shadow:
-    0 1px 0 rgb(255 255 255 / 72%),
-    0 4px 12px rgb(37 99 235 / 12%);
-  -webkit-background-clip: border-box;
-  -webkit-text-fill-color: currentcolor;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile .vertical-header-right {
-  padding-right: 12px;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile
-  #header-overall.navbar-item {
+html.qiming-mini-program-webview.ua-mobile .hamburger-container {
+  width: 46px;
   height: 46px;
+  margin: 0 !important;
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile .el-dropdown-link {
-  height: 38px;
-  padding: 5px 9px !important;
-  border-radius: 20px !important;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile
-  .sidebar-container
-  .sidebar-logo-container {
-  height: calc(
-    76px +
-      var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px))
-  ) !important;
-  padding: calc(
-      var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px)) +
-        12px
-    )
-    0 12px !important;
+html.qiming-mini-program-webview.ua-mobile .navbar .mobile-brand {
+  display: inline-flex !important;
+  flex: 0 0 auto;
+  max-width: 120px;
   overflow: visible;
-  background: var(--qiming-native-surface-bg) !important;
-  border-bottom: 1px solid var(--qiming-native-dock-border);
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile
-  .sidebar-container
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .mobile-brand
+  .mobile-brand-logo {
+  display: none !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .mobile-brand
+  .mobile-brand-wordmark {
+  max-width: none;
+  overflow: visible;
+  font-size: 20px;
+  text-overflow: clip;
+}
+
+html.qiming-mini-program-webview.ua-mobile .navbar .vertical-header-right {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  position: absolute !important;
+  top: calc(var(--qiming-mini-toolbar-top) + 3px);
+  right: 0;
+  max-width: 158px;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-right: 8px !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .vertical-header-right
+  .el-dropdown-link {
+  display: flex !important;
+  max-width: 88px;
+  padding-inline: 7px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .navbar
+  .vertical-header-right
+  .el-dropdown-link
+  p {
+  max-width: 38px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.qiming-mini-program-webview.ua-mobile .navbar > div:not(:first-child) {
+  pointer-events: auto;
+}
+
+html.qiming-mini-program-webview.ua-mobile .sidebar-logo-container {
+  height: 80px !important;
+  min-height: 80px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .sidebar-logo-container
   .sidebar-logo-link {
-  justify-content: flex-start;
-  padding: 0 18px !important;
-  overflow: visible;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  padding: 0 14px !important;
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile
-  .sidebar-container
-  .sidebar-logo-link
+html.qiming-mini-program-webview.ua-mobile
+  .sidebar-logo-container
   .app-logo-img {
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
+  flex: 0 0 auto !important;
+  width: 40px !important;
+  height: 40px !important;
+  object-fit: contain !important;
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile
-  .sidebar-container
+html.qiming-mini-program-webview.ua-mobile
+  .sidebar-logo-container
   .sidebar-title {
-  height: auto !important;
-  padding: 4px 10px 5px 0;
-  margin: 0 0 0 11px !important;
+  display: inline-block !important;
+  flex: 0 1 auto !important;
+  min-width: 108px !important;
+  max-width: 148px !important;
   overflow: visible !important;
-  text-overflow: clip !important;
-  font-family: Impact, "Arial Black", "PingFang SC", sans-serif;
-  font-size: 21px !important;
-  font-style: italic;
+  font-family:
+    "Arial Black", "Arial Narrow", "Inter Tight", "Inter", "Microsoft YaHei",
+    sans-serif !important;
+  font-size: 24px !important;
+  font-style: italic !important;
   font-weight: 900 !important;
-  line-height: 1.12 !important;
-  color: #1f4f9f !important;
-  letter-spacing: 0;
-  background: none !important;
-  background-image: none !important;
-  background-clip: border-box !important;
-  text-shadow:
-    0 1px 0 rgb(255 255 255 / 72%),
-    0 4px 12px rgb(37 99 235 / 12%);
-  -webkit-background-clip: border-box !important;
-  -webkit-text-fill-color: currentcolor !important;
+  line-height: 40px !important;
+  color: #174580 !important;
+  letter-spacing: -0.06em !important;
+  background: linear-gradient(135deg, #174580 0%, #2f6fd6 100%) !important;
+  background-clip: text !important;
+  transform: skewX(-8deg) !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
-html.qiming-native-webview.qiming-native-ios.ua-mobile.dark .fixed-header {
+html.qiming-mini-program-webview.ua-mobile .app-main {
+  height: auto;
+  min-height: 100dvh;
+}
+
+html.qiming-mini-program-webview.ua-mobile .main-container > .el-scrollbar,
+html.qiming-mini-program-webview.ua-mobile
+  .main-container
+  > .el-scrollbar
+  > .el-scrollbar__wrap {
+  height: calc(100dvh - var(--pure-mobile-tab-height)) !important;
+  max-height: calc(100dvh - var(--pure-mobile-tab-height)) !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .app-main-nofixed-header {
+  padding-bottom: 0 !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .main-content {
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+}
+
+html.qiming-mini-program-webview.ua-mobile .mobile-main-container,
+html.qiming-mini-program-webview.ua-mobile
+  .main-container
+  > .el-scrollbar
+  > .el-scrollbar__wrap {
+  padding-bottom: 0 !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .app-main
+  > .el-scrollbar
+  > .el-scrollbar__wrap,
+html.qiming-mini-program-webview.ua-mobile
+  .app-main
+  > .el-scrollbar
+  > .el-scrollbar__wrap
+  > .el-scrollbar__view {
+  padding-bottom: 0 !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .analysis-panel {
+  padding: 12px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .analysis-panel-header {
+  gap: 10px !important;
+  margin-bottom: 12px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .analysis-panel .progress-chart,
+html.qiming-mini-program-webview.ua-mobile .analysis-panel .exam-chart {
+  height: clamp(300px, 88vw, 360px) !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .analysis-panel
+  .chart-container.is-empty-chart {
+  height: clamp(96px, 14dvh, 128px) !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile
+  .analysis-section
+  .card-body
+  .el-scrollbar__wrap {
+  padding-block: 12px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .analysis-section .panel-empty {
+  height: 144px !important;
+}
+
+html.qiming-native-webview.ua-mobile.dark .fixed-header,
+html.qiming-native-webview.ua-mobile.dark .navbar {
   background: transparent !important;
   background-color: transparent !important;
+  background-image: none !important;
   border-bottom-color: transparent !important;
   box-shadow: none !important;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile.dark .navbar {
-  background: var(--qiming-native-navbar-bg, rgb(7 12 24 / 96%)) !important;
-  background-color: var(
-    --qiming-native-navbar-bg,
-    rgb(7 12 24 / 96%)
-  ) !important;
-  background-image: none !important;
-  border-bottom-color: rgb(56 189 248 / 14%) !important;
-  box-shadow:
-    0 14px 30px rgb(0 0 0 / 32%),
-    inset 0 -1px 0 rgb(255 255 255 / 5%) !important;
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile.dark
-  .sidebar-container
-  .sidebar-logo-container {
-  background: var(--qiming-native-surface-bg) !important;
-  border-bottom-color: var(--qiming-native-border-color);
-}
-
-html.qiming-native-webview.qiming-native-ios.ua-mobile.dark
-  .sidebar-container
-  .sidebar-title {
-  color: #eaf2ff !important;
-  text-shadow: 0 4px 14px rgb(59 130 246 / 18%);
 }
 
 html.qiming-native-webview.ua-mobile [id],
 html.qiming-native-webview.ua-mobile .chart-card,
 html.qiming-native-webview.ua-mobile .analysis-panel {
-  scroll-margin-top: calc(86px + var(--pure-safe-area-top, 0));
+  scroll-margin-top: calc(86px + var(--qiming-native-statusbar-offset, 0px));
 }
 
 html.qiming-native-webview.ua-mobile .main-content > :first-child {
@@ -956,299 +1013,16 @@ html.qiming-native-webview.ua-mobile .layout-footer {
   display: none !important;
 }
 
-html.qiming-native-webview.ua-mobile body.exam-page,
-html.qiming-native-webview.ua-mobile body.homework-page {
-  width: 100vw !important;
-  min-width: 100vw !important;
-  max-width: 100vw !important;
-  height: var(--qiming-native-vh, 100dvh) !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
+html.qiming-native-webview .nx-nav,
+html.qiming-native-webview.ua-mobile .nx-nav {
+  height: calc(60px + var(--pure-safe-area-top, 0));
+  padding-top: var(--pure-safe-area-top, 0);
+  box-sizing: border-box;
 }
 
-html.qiming-native-webview.ua-mobile body.exam-page #app,
-html.qiming-native-webview.ua-mobile body.homework-page #app {
-  width: 100vw !important;
-  min-width: 100vw !important;
-  max-width: 100vw !important;
-  height: var(--qiming-native-vh, 100dvh) !important;
-  margin: 0 !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
-}
-
-html.qiming-native-webview.ua-mobile body.exam-page .exam-detail-container,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container {
-  width: 100vw !important;
-  max-width: 100vw !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-  overflow-x: hidden !important;
-  overflow-y: visible !important;
-}
-
-html.qiming-native-webview.ua-mobile body.exam-page .exam-detail-container {
-  padding: calc(var(--pure-safe-area-top, 0px) + 76px) 12px
-    calc(var(--pure-safe-area-bottom, 0px) + 92px) !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container {
-  padding: calc(var(--pure-safe-area-top, 0px) + 76px) 12px
-    calc(var(--pure-safe-area-bottom, 0px) + 28px) !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .header,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .header {
-  border-radius: 0 0 18px 18px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .header-content,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .header-content {
-  padding: 0 16px !important;
-  grid-template-columns: minmax(64px, 1fr) auto minmax(64px, 1fr) !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .header-content
-  .title,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .header-content
-  .title {
-  font-size: 17px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .header-content
-  .timer {
-  min-width: 86px !important;
-  font-size: 14px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .main-content,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .main-content {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .el-card,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .el-card {
-  width: 100% !important;
-  max-width: 100% !important;
-  border-radius: 18px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .el-card__body,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .el-card__body {
-  padding: 16px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .card-header
-  h3,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .card-header
-  h3 {
-  font-size: 18px !important;
-  line-height: 1.35 !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .meta-info,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .meta-info {
-  justify-content: flex-start !important;
-  gap: 8px 12px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .meta-info {
-  margin-bottom: 12px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .description,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .description {
-  padding: 14px !important;
-  border-radius: 12px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .question-item,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .question-item {
-  padding: 16px !important;
-  margin-bottom: 16px !important;
-  border-radius: 14px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .question-title,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .question-title {
-  align-items: flex-start !important;
-  line-height: 1.45 !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .question-type,
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .question-score,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .question-type,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .question-score {
-  margin-left: 0 !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .el-radio-group,
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .el-checkbox-group,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .el-radio-group,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .el-checkbox-group {
-  display: grid !important;
-  gap: 10px !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .el-radio,
-html.qiming-native-webview.ua-mobile
-  body.exam-page
-  .exam-detail-container
-  .el-checkbox,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .el-radio,
-html.qiming-native-webview.ua-mobile
-  body.homework-page
-  .homework-detail-container
-  .el-checkbox {
-  height: auto !important;
-  margin-right: 0 !important;
-  white-space: normal !important;
-}
-
-html.qiming-native-webview.ua-mobile body.exam-page .footer-actions {
-  border-radius: 18px 18px 0 0 !important;
-}
-
-html.qiming-native-webview.ua-mobile body.exam-page .el-dialog,
-html.qiming-native-webview.ua-mobile body.homework-page .el-dialog {
-  width: min(360px, calc(100vw - 32px)) !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  .teacher-plan-container.is-mobile-layout {
-  padding-top: 24px !important;
-  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px) !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  .teacher-plan-container.is-mobile-layout
-  .teacher-plan-panel,
-html.qiming-native-webview.ua-mobile
-  .teacher-plan-container.is-mobile-layout
-  .course-sidebar {
-  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 84px) !important;
-}
-
-html.qiming-native-webview.ua-mobile
-  .list-container.is-mobile-layout
-  .plan-list-toolbar {
-  scroll-margin-top: calc(var(--pure-safe-area-top, 0px) + 152px) !important;
+html.qiming-native-webview .nx-hero,
+html.qiming-native-webview.ua-mobile .nx-hero {
+  padding-top: calc(100px + var(--pure-safe-area-top, 0));
 }
 
 html.qiming-native-webview .account-container,
@@ -1315,6 +1089,10 @@ html.qiming-native-webview.ua-mobile .account-container .account-content {
   padding: calc(76px + var(--pure-safe-area-top, 0)) 12px
     calc(var(--pure-mobile-tab-height, 58px) + 22px) !important;
   box-sizing: border-box !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .account-container .account-content {
+  padding-top: 8px !important;
 }
 
 html.qiming-native-webview .account-container .account-sidebar,
@@ -1566,7 +1344,7 @@ html.qiming-native-webview.ua-mobile .ai-app-left-rail {
 
 html.qiming-native-webview .ai-app-left-rail.is-collapsed,
 html.qiming-native-webview.ua-mobile .ai-app-left-rail.is-collapsed {
-  top: calc(70px + var(--pure-safe-area-top, 0)) !important;
+  top: calc(28px + var(--pure-safe-area-top, 0)) !important;
   bottom: auto !important;
   width: 44px !important;
   min-width: 44px !important;
@@ -1618,14 +1396,25 @@ html.qiming-native-webview .ai-app-left-rail:not(.is-collapsed) > button {
 }
 
 html.qiming-native-webview .ai-chat-scene,
-html.qiming-native-webview .ai-chat-welcome,
-html.qiming-native-webview main > div[class*="p-4"],
-html.qiming-native-webview.ua-mobile .ai-chat-scene,
-html.qiming-native-webview.ua-mobile .ai-chat-welcome,
-html.qiming-native-webview.ua-mobile main > div[class*="p-4"] {
-  padding: calc(72px + var(--pure-safe-area-top, 0)) 12px
+html.qiming-native-webview.ua-mobile .ai-chat-scene {
+  padding: calc(56px + var(--pure-safe-area-top, 0)) 12px
     calc(74px + var(--pure-safe-area-bottom, 0)) !important;
   gap: 10px !important;
+}
+
+html.qiming-native-webview .ai-chat-welcome,
+html.qiming-native-webview.ua-mobile .ai-chat-welcome {
+  padding: calc(84px + var(--pure-safe-area-top, 0)) 12px
+    calc(74px + var(--pure-safe-area-bottom, 0)) !important;
+  gap: 10px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .ai-chat-scene {
+  padding-top: 14px !important;
+}
+
+html.qiming-mini-program-webview.ua-mobile .ai-chat-welcome {
+  padding-top: 24px !important;
 }
 
 html.qiming-native-webview .ai-chat-welcome > .absolute,
@@ -1646,8 +1435,8 @@ html.qiming-native-webview.ua-mobile .ai-chat-scene {
 html.qiming-native-webview .ai-chat-card,
 html.qiming-native-webview.ua-mobile .ai-chat-card {
   flex: 0 0 auto !important;
-  height: clamp(236px, 38vh, 330px) !important;
-  min-height: 236px !important;
+  height: clamp(360px, 48vh, 400px) !important;
+  min-height: 360px !important;
   border-radius: 22px !important;
 }
 
@@ -1660,10 +1449,144 @@ html.qiming-native-webview.ua-mobile .ai-app-human-panel {
   gap: 6px !important;
 }
 
+html.qiming-native-webview.ua-mobile .ai-app-human-panel.is-collapsed {
+  display: none !important;
+}
+
+html.qiming-native-webview.ua-mobile .ai-chat-scene {
+  padding-top: 14px !important;
+  padding-right: 10px !important;
+  padding-left: 10px !important;
+  padding-bottom: calc(var(--pure-mobile-tab-height) + 22px) !important;
+  overflow-y: auto !important;
+}
+
+html.qiming-native-webview.ua-mobile .ai-chat-card {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: clamp(520px, 72vh, 620px) !important;
+}
+
+@media (max-width: 767px) {
+  html.qiming-native-webview .ai-app-human-panel.is-collapsed {
+    display: none !important;
+  }
+
+  html.qiming-native-webview .ai-chat-scene {
+    padding-top: 14px !important;
+    padding-right: 10px !important;
+    padding-left: 10px !important;
+    padding-bottom: calc(var(--pure-mobile-tab-height) + 22px) !important;
+    overflow-y: auto !important;
+  }
+
+  html.qiming-native-webview .ai-chat-card {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: clamp(520px, 72vh, 620px) !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module {
+    min-height: 0 !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__topbar {
+    flex: 0 0 auto !important;
+    padding: 10px 12px !important;
+    border-radius: 18px 18px 0 0 !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__topbar .el-tag {
+    max-width: 210px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__messages {
+    flex: 1 1 auto !important;
+    min-height: 220px !important;
+    padding: 14px 12px !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__messages .el-scrollbar__view {
+    padding-bottom: 12px !important;
+  }
+
+  html.qiming-native-webview .chat-message-row {
+    gap: 8px !important;
+  }
+
+  html.qiming-native-webview .message-stack {
+    max-width: calc(100% - 48px) !important;
+  }
+
+  html.qiming-native-webview .message-bubble {
+    padding: 12px 14px !important;
+    font-size: 14px !important;
+    line-height: 1.65 !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__composer {
+    flex: 0 0 auto !important;
+    padding: 10px 10px 12px !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__composer-card {
+    border-radius: 22px !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__input-row {
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__composer .el-textarea__inner {
+    font-size: 16px !important;
+    line-height: 1.45 !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: start !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__toolbar-main {
+    display: flex !important;
+    min-width: 0 !important;
+    gap: 6px !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__toolbar-main span,
+  html.qiming-native-webview .ai-chat-module__toolbar > .el-dropdown span {
+    max-width: 154px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__toolbar > .el-dropdown {
+    max-width: 118px !important;
+    min-width: 0 !important;
+  }
+
+  html.qiming-native-webview .ai-chat-module__toolbar > .el-dropdown span {
+    max-width: 118px !important;
+  }
+}
+
 html.qiming-native-webview .ai-app-human-panel > div:first-of-type,
 html.qiming-native-webview.ua-mobile .ai-app-human-panel > div:first-of-type {
-  height: clamp(286px, 42vh, 390px) !important;
-  min-height: 286px !important;
+  height: clamp(230px, 34vh, 320px) !important;
+  min-height: 230px !important;
   border-radius: 24px !important;
 }
 
@@ -2234,4 +2157,219 @@ html.dark {
       color: #fff !important;
     }
   }
+}
+
+/* iOS native shell overrides retained after shared mobile baseline. */
+html.qiming-native-webview.qiming-native-ios {
+  --qiming-native-mobile-header-base-height: 78px;
+  --qiming-native-ios-safe-top-fallback: 59px;
+  --qiming-native-ios-safe-bottom-fallback: 34px;
+  --qiming-native-effective-safe-top: max(
+    var(--pure-safe-area-top, 0px),
+    var(--qiming-native-ios-safe-top-fallback, 59px)
+  );
+  --qiming-native-effective-safe-bottom: max(
+    var(--pure-safe-area-bottom, 0px),
+    var(--qiming-native-ios-safe-bottom-fallback, 34px)
+  );
+}
+html.qiming-native-webview.qiming-native-ios.ua-mobile .fixed-header {
+  opacity: 1 !important;
+  overflow: visible;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .navbar {
+  align-items: center;
+  /* prettier-ignore */
+  height: calc(var(--qiming-native-mobile-header-base-height, 78px) + var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px))) !important;
+  /* prettier-ignore */
+  padding-top: calc(var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px)) + 10px) !important;
+  overflow: visible;
+  opacity: 1 !important;
+  background: var(--qiming-native-navbar-bg, rgb(248 250 255 / 96%)) !important;
+  background-color: var(
+    --qiming-native-navbar-bg,
+    rgb(248 250 255 / 96%)
+  ) !important;
+  background-image: none !important;
+  border-bottom: 1px solid var(--qiming-native-dock-border) !important;
+  border-radius: 0 0 24px 24px;
+  box-shadow:
+    0 8px 18px rgb(29 60 120 / 8%),
+    inset 0 -1px 0 rgb(255 255 255 / 70%) !important;
+  backdrop-filter: blur(14px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.08) !important;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .navbar > div {
+  height: 62px;
+  min-height: 62px;
+  transform: none;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .hamburger-container {
+  flex-basis: 52px;
+  width: 52px;
+  height: 50px;
+  margin: 0 10px 0 14px !important;
+  border-radius: 17px;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile
+  .hamburger-container::before {
+  inset: 3px 4px;
+  border-radius: 17px;
+  box-shadow:
+    0 10px 24px rgb(29 60 120 / 13%),
+    inset 0 1px 0 rgb(255 255 255 / 82%);
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .mobile-brand {
+  flex: 1 1 150px;
+  gap: 9px;
+  min-width: 0;
+  max-width: 178px;
+  padding: 4px 2px 6px 0;
+  overflow: visible;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .mobile-brand-logo {
+  flex-basis: 30px;
+  width: 30px;
+  height: 30px;
+  margin-right: 4px;
+  border-radius: 10px;
+  filter: drop-shadow(0 4px 8px rgb(31 63 123 / 12%));
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .mobile-brand-title {
+  display: block;
+  min-width: 0;
+  padding: 3px 8px 5px 1px;
+  margin: -2px -8px -5px 0;
+  overflow: visible;
+  text-overflow: clip;
+  font-family: Impact, "Arial Black", "PingFang SC", sans-serif;
+  font-size: 19px;
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1.12;
+  color: #1f4f9f;
+  background: none;
+  background-image: none;
+  background-clip: border-box;
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 72%),
+    0 4px 12px rgb(37 99 235 / 12%);
+  -webkit-background-clip: border-box;
+  -webkit-text-fill-color: currentcolor;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .vertical-header-right {
+  padding-right: 12px;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile
+  #header-overall.navbar-item {
+  height: 46px;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile .el-dropdown-link {
+  height: 38px;
+  padding: 5px 9px !important;
+  border-radius: 20px !important;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile
+  .sidebar-container
+  .sidebar-logo-container {
+  /* prettier-ignore */
+  height: calc(76px + var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px))) !important;
+  /* prettier-ignore */
+  padding: calc(var(--qiming-native-effective-safe-top, var(--pure-safe-area-top, 0px)) + 12px) 0 12px !important;
+  overflow: visible;
+  background: var(--qiming-native-surface-bg) !important;
+  border-bottom: 1px solid var(--qiming-native-dock-border);
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile
+  .sidebar-container
+  .sidebar-logo-link {
+  justify-content: flex-start;
+  padding: 0 18px !important;
+  overflow: visible;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile
+  .sidebar-container
+  .sidebar-logo-link
+  .app-logo-img {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile
+  .sidebar-container
+  .sidebar-title {
+  height: auto !important;
+  padding: 4px 10px 5px 0;
+  margin: 0 0 0 11px !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  font-family: Impact, "Arial Black", "PingFang SC", sans-serif;
+  font-size: 21px !important;
+  font-style: italic;
+  font-weight: 900 !important;
+  line-height: 1.12 !important;
+  color: #1f4f9f !important;
+  letter-spacing: 0;
+  background: none !important;
+  background-image: none !important;
+  background-clip: border-box !important;
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 72%),
+    0 4px 12px rgb(37 99 235 / 12%);
+  -webkit-background-clip: border-box !important;
+  -webkit-text-fill-color: currentcolor !important;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile.dark .fixed-header {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile.dark .navbar {
+  background: var(--qiming-native-navbar-bg, rgb(7 12 24 / 96%)) !important;
+  background-color: var(
+    --qiming-native-navbar-bg,
+    rgb(7 12 24 / 96%)
+  ) !important;
+  background-image: none !important;
+  border-bottom-color: rgb(56 189 248 / 14%) !important;
+  box-shadow:
+    0 14px 30px rgb(0 0 0 / 32%),
+    inset 0 -1px 0 rgb(255 255 255 / 5%) !important;
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile.dark
+  .sidebar-container
+  .sidebar-logo-container {
+  background: var(--qiming-native-surface-bg) !important;
+  border-bottom-color: var(--qiming-native-border-color);
+}
+
+html.qiming-native-webview.qiming-native-ios.ua-mobile.dark
+  .sidebar-container
+  .sidebar-title {
+  color: #eaf2ff !important;
+  text-shadow: 0 4px 14px rgb(59 130 246 / 18%);
 }

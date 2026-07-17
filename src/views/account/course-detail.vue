@@ -11,14 +11,14 @@
       <div class="layout-inner-content" :class="currentTheme">
         <!-- 课程学习 (视频、目录、AI助教) -->
         <CourseStudy
-          v-if="courseId"
+          v-if="courseId && activeMenu === 'course-learn'"
           ref="courseStudyRef"
           :visible="activeMenu === 'course-learn'"
           :current-theme="currentTheme"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
-          :course-name="courseDetail?.courseName"
-          :course-id="courseId"
+          :course-name="courseDetail?.courseName || ''"
+          :course-id="resolvedCourseId"
           :chapter-id="currentChapterId"
           :current-hour="currentHour"
           :current-video-url="currentVideoUrl"
@@ -27,7 +27,7 @@
           :chat-messages="chatMessages"
           :is-typing="isTyping"
           :sending-message="sendingMessage"
-          :chapter-list="courseDetail?.courseChapterList"
+          :chapter-list="courseDetail?.courseChapterList || []"
           :active-node="activeNode"
           @go-back="goBack"
           @toggle-theme="e => toggleTheme(e)"
@@ -44,6 +44,7 @@
 
         <!-- 知识点掌握 -->
         <MasteryPage
+          v-if="activeMenu === 'mastery'"
           :visible="activeMenu === 'mastery'"
           :current-theme="currentTheme"
           :study-effect-data="studyEffectData"
@@ -57,10 +58,11 @@
 
         <!-- 课程问答 -->
         <CourseQA
+          v-if="activeMenu === 'course-qa'"
           ref="courseQARef"
           :visible="activeMenu === 'course-qa'"
           :current-theme="currentTheme"
-          :course-id="courseId"
+          :course-id="resolvedCourseId"
           :user-id="userIdStr"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
@@ -74,10 +76,10 @@
 
         <!-- 作业考试 -->
         <HomeworkExam
-          v-if="courseId"
+          v-if="courseId && activeMenu === 'homework-exam'"
           :visible="activeMenu === 'homework-exam'"
           :current-theme="currentTheme"
-          :course-id="courseId"
+          :course-id="resolvedCourseId"
           :homework-list="homeworkList"
           :exam-list="examList"
           :user-avatar="userAvatar"
@@ -90,6 +92,7 @@
 
         <!-- 课程资料 -->
         <CourseMaterials
+          v-if="activeMenu === 'course-materials'"
           :visible="activeMenu === 'course-materials'"
           :current-theme="currentTheme"
           :course-attr-list="courseAttrList"
@@ -103,6 +106,7 @@
 
         <!-- HTML 动画 -->
         <HtmlAnimations
+          v-if="activeMenu === 'html-animations'"
           :visible="activeMenu === 'html-animations'"
           :current-theme="currentTheme"
           :loading="htmlAnimationLoading"
@@ -117,12 +121,13 @@
 
         <!-- 课程成绩 -->
         <CourseGrades
+          v-if="activeMenu === 'grades'"
           :visible="activeMenu === 'grades'"
           :current-theme="currentTheme"
           :course-scores="courseScores"
           :user-avatar="userAvatar"
           :user-nickname="userNickname"
-          :course-id="courseId"
+          :course-id="resolvedCourseId"
           @go-back="goBack"
           @toggle-theme="e => toggleTheme(e)"
           @go-to-account="goToAccount"
@@ -147,7 +152,6 @@ import { useRouter, useRoute } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { storageLocal } from "@pureadmin/utils";
 import { formatAvatar } from "@/utils/avatar";
-import { getSavedCourseTheme, setSavedCourseTheme } from "@/utils/courseTheme";
 import { userKey } from "@/utils/auth";
 import { useUserStoreHook } from "@/store/modules/user";
 import { setAiScreenCaptureVisibilityOverride } from "@/components/AiScreenCapture/visibility";
@@ -188,17 +192,51 @@ import avatarDefault from "@/assets/course-detail-images/avatar-default.png";
 
 const router = useRouter();
 const route = useRoute();
+const courseMenuKeys = [
+  "course-learn",
+  "mastery",
+  "course-qa",
+  "homework-exam",
+  "course-materials",
+  "html-animations",
+  "grades"
+];
+
+const readRouteSection = () => {
+  const value = Array.isArray(route.query.section)
+    ? route.query.section[0]
+    : route.query.section;
+  return typeof value === "string" && courseMenuKeys.includes(value)
+    ? value
+    : "";
+};
+const buildFallbackCourseDetail = (cid: number) => ({
+  courseId: cid,
+  courseName: "课程学习",
+  thumbUrl: "",
+  isRequired: 1,
+  totalHours: 0,
+  finishedHours: 0,
+  courseDesc: "当前课程详情暂未返回完整数据，请稍后刷新。",
+  courseChapterList: [],
+  courseAttrList: []
+});
 
 // 基础状态
-const baseCourseId = ref<number | null>(null);
+const baseCourseId = ref<number | null>(Number(route.params.id) || null);
 const courseId = computed(() => baseCourseId.value);
+const resolvedCourseId = computed(() => courseId.value || 0);
 const courseDetail = ref<any>(null);
 const loading = ref(false);
-const currentTheme = ref(getSavedCourseTheme("light"));
+const currentTheme = ref(
+  (storageLocal().getItem("course_theme") as string) || "light"
+);
 const activeMenu = ref(
-  (storageLocal().getItem(
-    `course_detail_active_menu_${route.params.id}`
-  ) as string) || "course-learn"
+  readRouteSection() ||
+    (storageLocal().getItem(
+      `course_detail_active_menu_${route.params.id}`
+    ) as string) ||
+    "course-learn"
 );
 
 // 监听菜单变化并持久化
@@ -239,11 +277,11 @@ watch(
       baseCourseId.value = id;
       courseScores.value = null;
 
-      // 恢复新课程的菜单状态
+      // URL 直达的 section 优先级最高，其次才恢复新课程的菜单状态
       const savedMenu = storageLocal().getItem(
         `course_detail_active_menu_${id}`
       ) as string;
-      activeMenu.value = savedMenu || "course-learn";
+      activeMenu.value = readRouteSection() || savedMenu || "course-learn";
 
       // 恢复新课程的课时状态
       const savedNode = storageLocal().getItem(
@@ -271,6 +309,16 @@ watch(
       nextTick(() => {
         scheduleMobileTopOffsetUpdate();
       });
+    }
+  }
+);
+
+watch(
+  () => route.query.section,
+  () => {
+    const routeSection = readRouteSection();
+    if (routeSection && routeSection !== activeMenu.value) {
+      activeMenu.value = routeSection;
     }
   }
 );
@@ -374,18 +422,12 @@ const courseScores = ref<CourseScoreResult | null>(null);
 const MOBILE_BREAKPOINT = 767;
 const courseRootEl = ref<HTMLElement | null>(null);
 let mobileOffsetRafId: number | null = null;
-let nativeScrollResetTimerIds: number[] = [];
-
-const isNativeCourseWebView = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
 
 const updateMobileTopOffset = () => {
   const root = courseRootEl.value;
   if (!root) return;
 
-  const isNative = isNativeCourseWebView();
-  if (!isNative && window.innerWidth > MOBILE_BREAKPOINT) {
+  if (window.innerWidth > MOBILE_BREAKPOINT) {
     root.style.removeProperty("--course-mobile-top-offset");
     return;
   }
@@ -398,14 +440,14 @@ const updateMobileTopOffset = () => {
   ) as HTMLElement | null;
   const headerBottom = headerEl?.getBoundingClientRect().bottom ?? 0;
   const sidebarBottom = sidebarEl?.getBoundingClientRect().bottom ?? 0;
-  const safeGap = isNative ? 30 : 16;
+  const safeGap = 16;
   const measuredOffset = Math.ceil(
     Math.max(headerBottom, sidebarBottom) + safeGap
   );
 
   root.style.setProperty(
     "--course-mobile-top-offset",
-    `${Math.max(measuredOffset, isNative ? 150 : 176)}px`
+    `${Math.max(measuredOffset, 156)}px`
   );
 };
 
@@ -417,37 +459,6 @@ const scheduleMobileTopOffsetUpdate = () => {
   mobileOffsetRafId = requestAnimationFrame(() => {
     mobileOffsetRafId = null;
     updateMobileTopOffset();
-  });
-};
-
-const resetNativeCourseScrollPosition = () => {
-  if (!isNativeCourseWebView()) return;
-
-  nativeScrollResetTimerIds.forEach(timerId => window.clearTimeout(timerId));
-  nativeScrollResetTimerIds = [];
-
-  const reset = () => {
-    window.scrollTo({ left: 0, top: 0 });
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-
-    [
-      document.getElementById("app"),
-      courseRootEl.value,
-      document.querySelector(".layout-container"),
-      document.querySelector(".layout-inner-content"),
-      document.querySelector(".course-study-root")
-    ].forEach(node => {
-      if (!(node instanceof HTMLElement)) return;
-      node.scrollTop = 0;
-      node.scrollLeft = 0;
-    });
-  };
-
-  reset();
-  requestAnimationFrame(reset);
-  [80, 240, 600, 1200].forEach(delay => {
-    nativeScrollResetTimerIds.push(window.setTimeout(reset, delay));
   });
 };
 
@@ -519,11 +530,21 @@ const resolveVideoPlayerEl = () => {
   return (player as any).value ?? player;
 };
 
+const safelyPlayVideo = (videoPlayerEl: any) => {
+  if (!videoPlayerEl || typeof videoPlayerEl.play !== "function") return;
+  const playResult = videoPlayerEl.play();
+  if (playResult && typeof playResult.catch === "function") {
+    playResult.catch(() => {
+      autoPlayOnLoad.value = false;
+    });
+  }
+};
+
 // 监听主题变化
 watch(
   currentTheme,
   val => {
-    setSavedCourseTheme(val);
+    storageLocal().setItem("course_theme", val);
     const other = val === "light" ? "dark" : "light";
     document.documentElement.classList.remove(other);
     document.documentElement.classList.add(val);
@@ -531,6 +552,12 @@ watch(
     document.body.classList.add(val);
 
     // 同步到管理后台主题设置
+    const layout = storageLocal().getItem("responsive-layout") as any;
+    if (layout) {
+      layout.darkMode = val === "dark";
+      storageLocal().setItem("responsive-layout", layout);
+    }
+
     nextTick(() => {
       scheduleMobileTopOffsetUpdate();
     });
@@ -541,13 +568,6 @@ watch(
 // 菜单切换
 const handleMenuClick = (menuName: string) => {
   activeMenu.value = menuName;
-
-  if (isNativeCourseWebView()) {
-    nextTick(() => {
-      scheduleMobileTopOffsetUpdate();
-      resetNativeCourseScrollPosition();
-    });
-  }
 
   // 如果视频正在播放且切换到了非课程学习菜单，则暂停视频
   const videoPlayerEl = resolveVideoPlayerEl();
@@ -567,25 +587,6 @@ const goBack = () => {
   } else {
     router.push("/account");
   }
-};
-
-const goBackToCourseList = () => {
-  router.push({
-    path: "/account",
-    query: {
-      ...route.query,
-      menu: "course",
-      qimingNative: "1"
-    }
-  });
-};
-
-const handleNativeBack = (event: Event) => {
-  if (!document.documentElement.classList.contains("qiming-native-webview")) {
-    return;
-  }
-  event.preventDefault();
-  goBackToCourseList();
 };
 
 // 跳转账号管理
@@ -653,10 +654,16 @@ const fetchCourseDetail = async () => {
         }
       }
     } else {
+      courseDetail.value = buildFallbackCourseDetail(courseId.value);
+      currentHour.value = null;
+      currentVideoUrl.value = "";
       ElMessage.error(msg || "获取课程详情失败");
     }
   } catch (error) {
     console.error("获取课程详情出错:", error);
+    courseDetail.value = buildFallbackCourseDetail(courseId.value);
+    currentHour.value = null;
+    currentVideoUrl.value = "";
   } finally {
     loading.value = false;
   }
@@ -666,9 +673,7 @@ const fetchCourseDetail = async () => {
 const videoLoaded = () => {
   const videoPlayerEl = resolveVideoPlayerEl();
   if (autoPlayOnLoad.value && videoPlayerEl) {
-    if (typeof videoPlayerEl.play === "function") {
-      videoPlayerEl.play();
-    }
+    safelyPlayVideo(videoPlayerEl);
     autoPlayOnLoad.value = false;
   }
 };
@@ -692,20 +697,16 @@ const videoEnded = async () => {
 const handleNodeClick = (nodeId: string, hour: any) => {
   activeNode.value = nodeId;
   storageLocal().setItem(`course_detail_active_node_${courseId.value}`, nodeId);
-  if (hour) {
-    const oldUrl = currentVideoUrl.value;
-    const nextUrl = hour.fileUrl || "";
+  if (hour?.fileUrl) {
     currentHour.value = hour;
-    currentVideoUrl.value = nextUrl;
-    autoPlayOnLoad.value =
-      activeMenu.value === "course-learn" && !!nextUrl && oldUrl !== nextUrl;
+    const oldUrl = currentVideoUrl.value;
+    currentVideoUrl.value = hour.fileUrl;
+    if (oldUrl !== hour.fileUrl) autoPlayOnLoad.value = true;
 
     const videoPlayerEl = resolveVideoPlayerEl();
-    if (videoPlayerEl && nextUrl && oldUrl === nextUrl) {
+    if (videoPlayerEl && oldUrl === hour.fileUrl) {
       videoPlayerEl.currentTime = 0;
-      if (typeof videoPlayerEl.play === "function") {
-        videoPlayerEl.play();
-      }
+      safelyPlayVideo(videoPlayerEl);
     }
   }
 };
@@ -1142,7 +1143,6 @@ onMounted(async () => {
   ) as HTMLElement | null;
   baseCourseId.value = Number(route.params.id);
   window.addEventListener("resize", handleViewportResize, { passive: true });
-  window.addEventListener("qiming:native-back", handleNativeBack);
 
   // 获取用户ID（如果还没有）
   if (!userStore.userId) {
@@ -1205,7 +1205,6 @@ onMounted(async () => {
 
   nextTick(() => {
     scheduleMobileTopOffsetUpdate();
-    resetNativeCourseScrollPosition();
   });
 });
 
@@ -1220,7 +1219,6 @@ onActivated(() => {
 
   nextTick(() => {
     scheduleMobileTopOffsetUpdate();
-    resetNativeCourseScrollPosition();
   });
 });
 
@@ -1228,13 +1226,10 @@ onBeforeUnmount(() => {
   setAiScreenCaptureVisibilityOverride(null);
   document.body.classList.remove("course-page");
   window.removeEventListener("resize", handleViewportResize);
-  window.removeEventListener("qiming:native-back", handleNativeBack);
   if (mobileOffsetRafId !== null) {
     cancelAnimationFrame(mobileOffsetRafId);
     mobileOffsetRafId = null;
   }
-  nativeScrollResetTimerIds.forEach(timerId => window.clearTimeout(timerId));
-  nativeScrollResetTimerIds = [];
 });
 </script>
 
@@ -1247,7 +1242,7 @@ onBeforeUnmount(() => {
 @import url("@/../coursecss/css/chunk-b4b575b6.fcb08796.css");
 
 .course-detail-root {
-  --course-mobile-top-offset: 176px;
+  --course-mobile-top-offset: 156px;
   --course-mobile-fab-clearance: 92px;
   width: 100%;
   min-height: 100vh;
@@ -1297,7 +1292,7 @@ onBeforeUnmount(() => {
   }
 
   /* stylelint-disable-next-line order/order */
-  @media (max-width: 767px) {
+  @media (width <= 767px) {
     .layout-container {
       display: block;
       min-height: 100vh;
@@ -1318,22 +1313,6 @@ onBeforeUnmount(() => {
       border-radius: 0;
     }
   }
-}
-
-html.qiming-native-webview.ua-mobile body.course-page {
-  overflow: hidden !important;
-  touch-action: none !important;
-}
-
-html.qiming-native-webview.ua-mobile body.course-page #app {
-  height: var(--qiming-native-vh, 100dvh) !important;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  overflow-anchor: none;
-  overscroll-behavior-y: contain;
-  scroll-behavior: auto !important;
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* 清空对话 确认框美化 */
@@ -2045,34 +2024,6 @@ html.dark {
     .el-progress-bar__outer {
       background: #444;
     }
-  }
-}
-
-html.qiming-native-webview.ua-mobile .course-detail-root {
-  .layout-inner-content,
-  :deep(.layout-sidebar),
-  :deep(.video-section),
-  :deep(.glass-card),
-  :deep(.out-ai-pro-talk-box),
-  :deep(.ai-assistant-widget) {
-    box-shadow: 0 3px 12px rgb(29 60 120 / 6%) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  :deep(.video-section::after),
-  :deep(.glow-border::before) {
-    opacity: 0 !important;
-  }
-
-  :deep(.study-container),
-  :deep(.mastery-container),
-  :deep(.materials-container),
-  :deep(.homework-exam-container),
-  :deep(.animations-container),
-  :deep(.grades-container),
-  :deep(.qa-container) {
-    padding-bottom: calc(18px + var(--pure-safe-area-bottom, 0px)) !important;
   }
 }
 

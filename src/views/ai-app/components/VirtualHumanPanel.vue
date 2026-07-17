@@ -1,15 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
-import { Refresh, FullScreen, Warning, Loading } from "@element-plus/icons-vue";
+import {
+  Refresh,
+  FullScreen,
+  Warning,
+  Loading,
+  VideoPlay
+} from "@element-plus/icons-vue";
 
-const humanUrl = computed(() => {
-  const suffix = "virtual-people/index.html?embed=ai-app";
-  if (window.location.protocol === "file:") {
-    return `./${suffix}`;
-  }
-
-  const base = `${window.location.origin}${import.meta.env.BASE_URL || "/"}`;
-  return new URL(suffix, base).toString();
+// 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
+const humanBaseUrl = computed(() => {
+  return new URL("virtual-people/index.html", window.location.href).href;
+});
+const humanUrl = computed(() => `${humanBaseUrl.value}?embed=ai-app`);
+const messageTargetOrigin = computed(() => {
+  const target = new URL(humanBaseUrl.value);
+  return target.origin === "null" || !/^https?:$/.test(target.protocol)
+    ? "*"
+    : target.origin;
 });
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
@@ -26,7 +34,10 @@ function flushPendingSpeak() {
   while (pendingSpeakQueue.length) {
     const text = pendingSpeakQueue.shift()!;
     try {
-      iframe.contentWindow.postMessage({ type: "speak", text }, "*");
+      iframe.contentWindow.postMessage(
+        { type: "speak", text },
+        messageTargetOrigin.value
+      );
     } catch (err) {
       console.warn("[VirtualHumanPanel] flush speak failed", err);
     }
@@ -37,27 +48,49 @@ function postControlMessage(payload: Record<string, unknown>) {
   const iframe = iframeRef.value;
   if (!iframe || !iframe.contentWindow) return;
   try {
-    iframe.contentWindow.postMessage(payload, "*");
+    iframe.contentWindow.postMessage(payload, messageTargetOrigin.value);
   } catch (err) {
     console.warn("[VirtualHumanPanel] control postMessage failed", err);
   }
 }
 
 function handleLoad() {
-  loading.value = false;
-  errored.value = false;
-  iframeReady = true;
-  if (probeTimer) {
-    clearTimeout(probeTimer);
-    probeTimer = null;
-  }
-  flushPendingSpeak();
-  postControlMessage({ type: "resumeRender" });
+  iframeReady = false;
+  schedulePing();
 }
 
 function handleError() {
+  iframeReady = false;
+  if (probeTimer) clearTimeout(probeTimer);
+  probeTimer = null;
   loading.value = false;
   errored.value = true;
+}
+
+function handleChildMessage(event: MessageEvent) {
+  const iframe = iframeRef.value;
+  if (!iframe || event.source !== iframe.contentWindow) return;
+
+  const target = new URL(humanBaseUrl.value);
+  if (/^https?:$/.test(target.protocol) && event.origin !== target.origin)
+    return;
+
+  const data = event.data;
+  if (!data || typeof data !== "object") return;
+  if (data.source !== "qiming-virtual-people") return;
+
+  if (data.type === "ready") {
+    loading.value = false;
+    errored.value = false;
+    iframeReady = true;
+    if (probeTimer) clearTimeout(probeTimer);
+    probeTimer = null;
+    postControlMessage({ type: "resumeRender" });
+    syncTtsEngine();
+    flushPendingSpeak();
+  } else if (data.type === "error") {
+    handleError();
+  }
 }
 
 function refresh() {
@@ -69,26 +102,39 @@ function refresh() {
 }
 
 function openFull() {
-  window.open(humanUrl.value, "_blank", "noopener");
+  window.open(humanBaseUrl.value, "_blank", "noopener");
+}
+
+function syncTtsEngine() {
+  postControlMessage({ type: "setTtsEngine", engine: "browser" });
+}
+
+function previewVoice() {
+  postControlMessage({
+    type: "previewTts",
+    text: "你好，我是启明数字人。现在使用中文女声为你朗读。"
+  });
 }
 
 function schedulePing() {
   if (probeTimer) clearTimeout(probeTimer);
-  // 如果 6 秒后 iframe 还没 onload，认为静态资源加载异常
+  // Wait for the child model-ready message, not only iframe document load.
   probeTimer = setTimeout(() => {
     if (loading.value) {
       errored.value = true;
       loading.value = false;
     }
-  }, 6000);
+  }, 30000);
 }
 
 onMounted(() => {
+  window.addEventListener("message", handleChildMessage);
   schedulePing();
 });
 
 onUnmounted(() => {
   if (probeTimer) clearTimeout(probeTimer);
+  window.removeEventListener("message", handleChildMessage);
 });
 
 // 对外暴露：让父组件可以触发数字人朗读 (自动带口型)
@@ -100,7 +146,10 @@ function speak(text: string) {
     return;
   }
   try {
-    iframe.contentWindow.postMessage({ type: "speak", text }, "*");
+    iframe.contentWindow.postMessage(
+      { type: "speak", text },
+      messageTargetOrigin.value
+    );
   } catch (err) {
     console.warn("[VirtualHumanPanel] speak() postMessage failed", err);
   }
@@ -126,7 +175,6 @@ defineExpose({ speak, pauseRender, resumeRender });
       <div class="flex items-center gap-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         <span class="text-[13px] font-semibold text-gray-700">启明数字人</span>
-        <span class="text-[11px] text-gray-400">VRM · FBX 实时驱动</span>
       </div>
       <div class="flex items-center gap-1.5">
         <el-tooltip content="刷新" placement="top">
@@ -148,6 +196,22 @@ defineExpose({ speak, pauseRender, resumeRender });
           />
         </el-tooltip>
       </div>
+    </div>
+
+    <div class="virtual-human-panel__voicebar" aria-label="朗读音色">
+      <div class="virtual-human-panel__voice-label">
+        <span>朗读音色</span>
+        <strong>系统中文音色</strong>
+      </div>
+      <el-button
+        :icon="VideoPlay"
+        class="virtual-human-panel__voice-btn"
+        size="small"
+        text
+        @click="previewVoice"
+      >
+        试听
+      </el-button>
     </div>
 
     <!-- 主区 -->
@@ -211,6 +275,55 @@ defineExpose({ speak, pauseRender, resumeRender });
 .virtual-human-panel__viewer {
   min-height: 0;
   overflow: hidden;
+}
+
+.virtual-human-panel__voicebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #eef3fb;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.virtual-human-panel__voice-label {
+  display: flex;
+  flex: 1 1 190px;
+  align-items: center;
+  min-width: 190px;
+  gap: 8px;
+}
+
+.virtual-human-panel__voice-label span {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.virtual-human-panel__voice-select {
+  flex: 1;
+  min-width: 126px;
+  max-width: 190px;
+  height: 28px;
+  padding: 0 24px 0 9px;
+  font-size: 12px;
+  color: #334155;
+  outline: none;
+  background: #f8fbff;
+  border: 1px solid #dbe6f5;
+  border-radius: 8px;
+}
+
+.virtual-human-panel__voice-select:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+}
+
+.virtual-human-panel__voice-btn {
+  height: 28px;
+  padding: 0 8px;
 }
 
 .animate-spin {

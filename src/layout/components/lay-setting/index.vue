@@ -30,22 +30,19 @@ const { t } = useI18n();
 const { device } = useNav();
 const { isDark } = useDark();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
-
-const defaultConfigure: ResponsiveStorage["configure"] = {
-  grey: false,
-  weak: false,
-  hideTabs: false,
-  hideFooter: false,
-  showLogo: true,
-  showModel: "smart",
-  multiTagsCache: false,
-  stretch: false
-};
-const getConfigure = (): ResponsiveStorage["configure"] => ({
-  ...defaultConfigure,
-  ...($storage.configure ?? {})
-});
-const initialConfigure = getConfigure();
+const configure = computed(
+  () =>
+    $storage.configure ?? {
+      grey: false,
+      weak: false,
+      hideTabs: false,
+      hideFooter: true,
+      showLogo: true,
+      showModel: "smart",
+      multiTagsCache: false,
+      stretch: false
+    }
+);
 
 const mixRef = ref();
 const verticalRef = ref();
@@ -71,19 +68,19 @@ if (unref(layoutTheme)) {
 }
 
 /** 默认灵动模式 */
-const markValue = ref(initialConfigure.showModel ?? "smart");
+const markValue = ref(configure.value.showModel ?? "smart");
 
-const logoVal = ref(initialConfigure.showLogo ?? true);
+const logoVal = ref(configure.value.showLogo ?? true);
 
 const settings = reactive({
-  greyVal: initialConfigure.grey,
-  weakVal: initialConfigure.weak,
-  tabsVal: initialConfigure.hideTabs,
-  showLogo: initialConfigure.showLogo,
-  showModel: initialConfigure.showModel,
-  hideFooter: initialConfigure.hideFooter,
-  multiTagsCache: initialConfigure.multiTagsCache,
-  stretch: initialConfigure.stretch
+  greyVal: configure.value.grey,
+  weakVal: configure.value.weak,
+  tabsVal: configure.value.hideTabs,
+  showLogo: configure.value.showLogo,
+  showModel: configure.value.showModel,
+  hideFooter: configure.value.hideFooter,
+  multiTagsCache: configure.value.multiTagsCache,
+  stretch: configure.value.stretch
 });
 
 const getThemeColorStyle = computed(() => {
@@ -100,9 +97,9 @@ const showThemeColors = computed(() => {
 });
 
 function storageConfigureChange<T>(key: string, val: T): void {
-  const storageConfigure = getConfigure() as Record<string, unknown>;
+  const storageConfigure = $storage.configure ?? configure.value;
   storageConfigure[key] = val;
-  $storage.configure = storageConfigure as ResponsiveStorage["configure"];
+  $storage.configure = storageConfigure;
 }
 
 /** 灰色模式设置 */

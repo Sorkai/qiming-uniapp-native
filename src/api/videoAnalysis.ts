@@ -23,6 +23,7 @@ export interface VideoAnalysisTask {
   fileName: string;
   courseId: number;
   chapterId: number;
+  filePath?: string;
   createdAt: string;
   completedAt: string;
 }

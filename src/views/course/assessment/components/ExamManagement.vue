@@ -1,7 +1,7 @@
 <template>
-  <div class="exam-management" :class="{ 'is-mobile-layout': isMobile }">
+  <div class="exam-management">
     <div
-      class="exam-toolbar mb-5 flex justify-between items-center bg-[var(--el-fill-color-light)] p-4 rounded-lg"
+      class="exam-toolbar mb-5 flex flex-wrap justify-between items-center gap-3 bg-[var(--el-fill-color-light)] p-4 rounded-lg"
     >
       <div class="text-[var(--el-text-color-regular)] font-medium">
         <el-icon class="mr-1 mt-0.5"><Reading /></el-icon>
@@ -13,146 +13,107 @@
     </div>
 
     <!-- 考试列表 -->
-    <el-table
-      v-loading="loading"
-      class="desktop-exam-table"
-      :data="examList"
-      style="width: 100%"
-      border
-      stripe
-      header-cell-class-name="bg-[var(--el-fill-color-light)] text-[var(--el-text-color-primary)] !font-semibold"
-    >
-      <el-table-column prop="examId" label="ID" width="80" align="center" />
-      <el-table-column prop="title" label="考试名称" min-width="200">
-        <template #default="{ row }">
-          <span
-            class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
-            @click="showQuestionDialog(row)"
-            >{{ row.title }}</span
-          >
-        </template>
-      </el-table-column>
-      <el-table-column prop="timeLimit" label="时长" width="100" align="center">
-        <template #default="{ row }">
-          <span class="text-[var(--el-text-color-regular)]"
-            >{{ row.timeLimit }} 分钟</span
-          >
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="totalPoints"
-        label="总分"
-        width="80"
-        align="center"
-      />
-      <el-table-column label="有效时间" min-width="220" align="center">
-        <template #default="scope">
-          <div class="text-xs text-[var(--el-text-color-secondary)]">
-            <div>
-              <span class="text-[var(--el-color-success)]">从:</span>
-              {{ scope.row.availableFrom }}
-            </div>
-            <div>
-              <span class="text-[var(--el-color-danger)]">至:</span>
-              {{ scope.row.availableTo }}
-            </div>
-          </div>
-        </template>
-      </el-table-column>
-      <el-table-column
-        label="操作"
-        :width="isMobile ? 96 : 220"
-        fixed="right"
-        align="center"
+    <div class="business-table-scroll exam-table-scroll">
+      <el-table
+        v-loading="loading"
+        :data="examList"
+        :class="{ 'mobile-wide-table': isMobile }"
+        style="width: 100%"
+        border
+        stripe
+        header-cell-class-name="bg-[var(--el-fill-color-light)] text-[var(--el-text-color-primary)] !font-semibold"
       >
-        <template #default="scope">
-          <div v-if="isMobile" class="mobile-action-wrap">
-            <el-dropdown
-              trigger="click"
-              @command="command => handleExamAction(command, scope.row)"
-            >
-              <el-button text type="primary" class="more-action-btn">
-                更多
-                <el-icon class="ml-1"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="questions"
-                    >试题管理</el-dropdown-item
-                  >
-                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                  <el-dropdown-item command="delete" divided>
-                    <span class="danger-action">删除</span>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
-          <template v-else>
-            <el-button
-              link
-              type="primary"
-              @click="showQuestionDialog(scope.row)"
-              >试题管理</el-button
-            >
-            <el-divider direction="vertical" />
-            <el-button link type="primary" @click="showEditDialog(scope.row)"
-              >编辑</el-button
-            >
-            <el-divider direction="vertical" />
-            <el-button link type="danger" @click="confirmDelete(scope.row)"
-              >删除</el-button
+        <el-table-column prop="examId" label="ID" width="80" align="center" />
+        <el-table-column prop="title" label="考试名称" min-width="200">
+          <template #default="{ row }">
+            <span
+              class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
+              @click="showQuestionDialog(row)"
+              >{{ row.title }}</span
             >
           </template>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <div v-loading="loading" class="mobile-exam-list">
-      <div v-for="exam in examList" :key="exam.examId" class="mobile-exam-card">
-        <div class="mobile-exam-card__header">
-          <div class="min-w-0">
-            <div class="mobile-exam-card__id">ID {{ exam.examId }}</div>
-            <button
-              class="mobile-exam-card__title"
-              type="button"
-              @click="showQuestionDialog(exam)"
+        </el-table-column>
+        <el-table-column
+          prop="timeLimit"
+          label="时长"
+          width="100"
+          align="center"
+        >
+          <template #default="{ row }">
+            <span class="text-[var(--el-text-color-regular)]"
+              >{{ row.timeLimit }} 分钟</span
             >
-              {{ exam.title || "未命名考试" }}
-            </button>
-          </div>
-          <el-tag size="small" effect="plain">
-            {{ exam.timeLimit || 0 }} 分钟
-          </el-tag>
-        </div>
-
-        <div class="mobile-exam-card__meta">
-          <span>题量：{{ exam.questionNum ?? 0 }} 题</span>
-          <span>总分：{{ exam.totalPoints ?? "-" }}</span>
-          <span>开始：{{ exam.availableFrom || "-" }}</span>
-          <span>结束：{{ exam.availableTo || "-" }}</span>
-        </div>
-
-        <div class="mobile-exam-card__actions">
-          <el-button
-            type="primary"
-            plain
-            round
-            @click="showQuestionDialog(exam)"
-          >
-            试题管理
-          </el-button>
-          <el-button round @click="showEditDialog(exam)">编辑</el-button>
-          <el-button type="danger" plain round @click="confirmDelete(exam)">
-            删除
-          </el-button>
-        </div>
-      </div>
-
-      <el-empty
-        v-if="!loading && examList.length === 0"
-        description="暂无考试"
-      />
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="totalPoints"
+          label="总分"
+          width="80"
+          align="center"
+        />
+        <el-table-column label="有效时间" min-width="220" align="center">
+          <template #default="scope">
+            <div class="text-xs text-[var(--el-text-color-secondary)]">
+              <div>
+                <span class="text-[var(--el-color-success)]">从:</span>
+                {{ scope.row.availableFrom }}
+              </div>
+              <div>
+                <span class="text-[var(--el-color-danger)]">至:</span>
+                {{ scope.row.availableTo }}
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="操作"
+          :width="isMobile ? 96 : 220"
+          :fixed="isMobile ? false : 'right'"
+          align="center"
+        >
+          <template #default="scope">
+            <div v-if="isMobile" class="mobile-action-wrap">
+              <el-dropdown
+                trigger="click"
+                popper-class="assessment-action-dropdown"
+                @command="command => handleExamAction(command, scope.row)"
+              >
+                <el-button text type="primary" class="more-action-btn">
+                  更多
+                  <el-icon class="ml-1"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="questions"
+                      >试题管理</el-dropdown-item
+                    >
+                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>
+                      <span class="danger-action">删除</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+            <template v-else>
+              <el-button
+                link
+                type="primary"
+                @click="showQuestionDialog(scope.row)"
+                >试题管理</el-button
+              >
+              <el-divider direction="vertical" />
+              <el-button link type="primary" @click="showEditDialog(scope.row)"
+                >编辑</el-button
+              >
+              <el-divider direction="vertical" />
+              <el-button link type="danger" @click="confirmDelete(scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </template>
+        </el-table-column>
+      </el-table>
     </div>
 
     <!-- 分页 -->
@@ -161,7 +122,12 @@
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 30, 50]"
-        :layout="paginationLayout"
+        :layout="
+          isMobile
+            ? 'prev, pager, next'
+            : 'total, sizes, prev, pager, next, jumper'
+        "
+        :pager-count="isMobile ? 5 : 7"
         :small="isMobile"
         :total="total"
         @size-change="handleSizeChange"
@@ -173,15 +139,16 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑考试' : '创建考试'"
-      :width="formDialogWidth"
-      align-center
+      :width="isMobile ? 'calc(100vw - 24px)' : '600px'"
+      :top="isMobile ? '12px' : '15vh'"
     >
       <el-form
         ref="formRef"
         v-loading="formLoading"
         :model="form"
         :rules="rules"
-        label-width="100px"
+        :label-width="isMobile ? 'auto' : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
       >
         <el-form-item label="考试标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入考试标题" />
@@ -233,9 +200,8 @@
     <el-dialog
       v-model="questionDialogVisible"
       title="试题管理"
-      width="90%"
-      :fullscreen="isMobile"
-      top="5vh"
+      :width="isMobile ? 'calc(100vw - 16px)' : '90%'"
+      :top="isMobile ? '8px' : '5vh'"
       @closed="handleQuestionDialogClosed"
     >
       <div v-if="currentExam" class="question-dialog-header">
@@ -248,11 +214,11 @@
         </el-button>
       </div>
 
-      <div class="question-table-scroll">
+      <div class="business-table-scroll question-table-scroll">
         <el-table
           v-loading="questionLoading"
-          class="question-management-table"
           :data="questionList"
+          :class="{ 'mobile-question-table': isMobile }"
           style="width: 100%"
           border
           stripe
@@ -283,7 +249,7 @@
           <el-table-column
             label="操作"
             width="150"
-            :fixed="questionActionFixed"
+            :fixed="isMobile ? false : 'right'"
           >
             <template #default="scope">
               <el-button
@@ -308,7 +274,12 @@
           v-model:current-page="questionCurrentPage"
           v-model:page-size="questionPageSize"
           :page-sizes="[10, 20, 30, 50]"
-          :layout="paginationLayout"
+          :layout="
+            isMobile
+              ? 'prev, pager, next'
+              : 'total, sizes, prev, pager, next, jumper'
+          "
+          :pager-count="isMobile ? 5 : 7"
           :small="isMobile"
           :total="questionTotal"
           @size-change="handleQuestionSizeChange"
@@ -316,11 +287,13 @@
         />
       </div>
     </el-dialog>
+
     <!-- 查看试题详情弹窗 -->
     <el-dialog
       v-model="detailDialogVisible"
       title="试题详情"
-      :width="detailDialogWidth"
+      :width="isMobile ? 'calc(100vw - 24px)' : '70%'"
+      :top="isMobile ? '12px' : '15vh'"
     >
       <div v-if="currentQuestion" class="question-detail">
         <el-descriptions border :column="1" size="default">
@@ -376,7 +349,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, ArrowDown } from "@element-plus/icons-vue";
 import {
@@ -395,21 +368,10 @@ const props = defineProps({
   }
 });
 
-const isNativeMobile = () =>
-  typeof document !== "undefined" &&
-  document.documentElement.classList.contains("qiming-native-webview");
-const isMobile = ref(window.innerWidth < 768 || isNativeMobile());
+const isMobile = ref(window.innerWidth < 768);
 const updateIsMobile = () => {
-  isMobile.value = window.innerWidth < 768 || isNativeMobile();
+  isMobile.value = window.innerWidth < 768;
 };
-const paginationLayout = computed(() =>
-  isMobile.value
-    ? "prev, pager, next"
-    : "total, sizes, prev, pager, next, jumper"
-);
-const formDialogWidth = computed(() => (isMobile.value ? "92vw" : "600px"));
-const detailDialogWidth = computed(() => (isMobile.value ? "92vw" : "70%"));
-const questionActionFixed = computed(() => (isMobile.value ? false : "right"));
 
 // 考试列表相关
 const loading = ref(false);
@@ -778,10 +740,6 @@ onBeforeUnmount(() => {
   padding: 10px 0;
 }
 
-.mobile-exam-list {
-  display: none;
-}
-
 .operation-bar {
   margin-bottom: 20px;
 }
@@ -792,19 +750,37 @@ onBeforeUnmount(() => {
   margin-top: 20px;
 }
 
+.business-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 6px;
+  -webkit-overflow-scrolling: touch;
+
+  :deep(.el-table) {
+    border: 0;
+  }
+}
+
 .mobile-action-wrap {
   display: flex;
   justify-content: center;
 }
 
 .more-action-btn {
-  min-width: auto;
-  padding: 4px 8px;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 8px;
   font-size: 14px;
 }
 
 .danger-action {
   color: var(--el-color-danger);
+}
+
+:global(.assessment-action-dropdown .el-dropdown-menu__item) {
+  min-height: 44px;
 }
 
 .question-dialog-header {
@@ -826,17 +802,6 @@ onBeforeUnmount(() => {
   margin-bottom: 20px;
 }
 
-.question-table-scroll {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-.question-management-table {
-  min-width: 820px;
-}
-
 .question-detail {
   .option-item {
     margin-bottom: 8px;
@@ -849,143 +814,84 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 767px) {
-  .exam-management.is-mobile-layout {
-    padding: 0;
-  }
+  .exam-management {
+    min-width: 0;
 
-  .exam-toolbar {
-    align-items: stretch;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 18px;
+    .exam-toolbar {
+      align-items: stretch;
+      padding: 12px;
 
-    :deep(.el-button) {
-      width: auto;
-      min-width: 112px;
-      height: 40px;
-      margin-left: auto;
+      > :deep(.el-button) {
+        min-height: 44px;
+        margin-left: 0;
+      }
+    }
+
+    :deep(.el-dialog) {
+      max-width: calc(100vw - 16px);
+      max-height: calc(100dvh - 16px);
+      margin-bottom: 8px;
+    }
+
+    :deep(.el-dialog__header) {
+      padding: 16px 16px 12px;
+      margin-right: 0;
+    }
+
+    :deep(.el-dialog__headerbtn) {
+      width: 44px;
+      height: 44px;
+    }
+
+    :deep(.el-dialog__body) {
+      max-height: calc(100dvh - 132px);
+      padding: 12px 16px;
+      overflow-y: auto;
+    }
+
+    :deep(.el-dialog__footer) {
+      padding: 12px 16px 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      min-height: 32px;
+      padding: 0 0 4px;
+      line-height: 32px;
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper),
+    :deep(.el-date-editor) {
+      min-height: 44px;
+    }
+
+    :deep(.dialog-footer .el-button),
+    .question-operation-bar :deep(.el-button),
+    .question-table-scroll :deep(.el-button) {
+      min-height: 44px;
     }
   }
 
-  .desktop-exam-table {
-    display: none;
+  .exam-table-scroll .mobile-wide-table {
+    min-width: 780px;
   }
 
-  .mobile-exam-list {
-    display: grid;
-    gap: 12px;
-  }
-
-  .mobile-exam-card {
-    padding: 16px;
-    background: var(--el-bg-color-overlay);
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: 18px;
-    box-shadow: 0 10px 26px rgb(15 23 42 / 6%);
-  }
-
-  .mobile-exam-card__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-  }
-
-  .mobile-exam-card__id {
-    margin-bottom: 4px;
-    color: var(--el-text-color-placeholder);
-    font-size: 12px;
-    line-height: 1.2;
-  }
-
-  .mobile-exam-card__title {
-    display: block;
-    width: 100%;
-    padding: 0;
-    color: var(--el-text-color-primary);
-    font-size: 17px;
-    font-weight: 800;
-    line-height: 1.35;
-    text-align: left;
-    word-break: break-word;
-    background: transparent;
-    border: 0;
-  }
-
-  .mobile-exam-card__meta {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px;
-    margin-top: 12px;
-    color: var(--el-text-color-regular);
-    font-size: 13px;
-    line-height: 1.45;
-  }
-
-  .mobile-exam-card__actions {
-    display: grid;
-    grid-template-columns: 1fr 0.8fr 0.8fr;
-    gap: 8px;
-    margin-top: 14px;
-
-    :deep(.el-button) {
-      min-width: 0;
-      margin-left: 0;
-      padding: 0 10px;
-    }
+  .question-table-scroll .mobile-question-table {
+    min-width: 900px;
   }
 
   .pagination-container {
     justify-content: center;
-    margin-top: 16px;
+    max-width: 100%;
     overflow-x: auto;
   }
 
-  :deep(.el-dialog) {
-    max-width: calc(100vw - 24px);
-    border-radius: 22px;
-  }
-
-  :deep(.el-dialog__body) {
-    max-height: min(68vh, 620px);
-    overflow-y: auto;
-    padding: 16px 18px;
-  }
-
   .question-dialog-header {
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 
     h3 {
-      font-size: 20px;
-      line-height: 1.25;
-      word-break: break-word;
+      overflow-wrap: anywhere;
     }
-  }
-
-  .question-operation-bar {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 16px;
-  }
-
-  .question-table-scroll {
-    margin: 0 -4px;
-    padding: 0 4px 8px;
-    overscroll-behavior-x: contain;
-  }
-
-  .question-management-table {
-    min-width: 760px;
-  }
-
-  :deep(.el-form-item) {
-    display: block;
-  }
-
-  :deep(.el-form-item__label) {
-    justify-content: flex-start;
-    margin-bottom: 6px;
-    font-weight: 700;
   }
 }
 </style>

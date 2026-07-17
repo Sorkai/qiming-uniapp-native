@@ -220,7 +220,7 @@ const viewMaterial = (material: any) => {
   font-size: 15px;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .course-materials-wrapper {
     min-height: 100vh;
   }
@@ -228,7 +228,7 @@ const viewMaterial = (material: any) => {
   .materials-container {
     height: auto;
     min-height: 100vh;
-    padding: var(--course-mobile-top-offset, 176px) 14px
+    padding: var(--course-mobile-top-offset, 156px) 14px
       calc(24px + env(safe-area-inset-bottom));
     overflow: visible;
   }
@@ -263,9 +263,9 @@ const viewMaterial = (material: any) => {
   }
 }
 
-@media (max-width: 479px) {
+@media (width <= 479px) {
   .materials-container {
-    padding: var(--course-mobile-top-offset, 176px) 10px
+    padding: var(--course-mobile-top-offset, 156px) 10px
       calc(20px + env(safe-area-inset-bottom));
   }
 

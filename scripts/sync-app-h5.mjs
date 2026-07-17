@@ -8,7 +8,7 @@ import {
   statSync,
   writeFileSync
 } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const distDir = join(root, "dist");
@@ -19,9 +19,44 @@ if (!existsSync(distDir) || !statSync(distDir).isDirectory()) {
   throw new Error("dist does not exist. Run pnpm build:app-h5 first.");
 }
 
+const distIndexPath = join(distDir, "index.html");
+if (!existsSync(distIndexPath)) {
+  throw new Error("dist/index.html is missing. Run pnpm build:app-h5 first.");
+}
+const distIndexSource = readFileSync(distIndexPath, "utf8");
+if (/(?:src|href)=["']\/(?:static|img|fonts)\//.test(distIndexSource)) {
+  throw new Error(
+    "dist appears to use root-relative assets; rebuild with pnpm build:app-h5 before syncing to file:// native WebView"
+  );
+}
+const distVersionPath = join(distDir, "version.json");
+if (existsSync(distVersionPath)) {
+  try {
+    const distVersion = JSON.parse(readFileSync(distVersionPath, "utf8"));
+    if (distVersion.mode === "wechat-h5-source-build") {
+      throw new Error(
+        "dist is a WeChat H5 build; run pnpm build:app-h5 before syncing native assets"
+      );
+    }
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(
+        "dist/version.json is invalid; rebuild before syncing native assets"
+      );
+    }
+    throw error;
+  }
+}
+
 const resolvedTarget = resolve(targetDir);
-const allowedPrefix = resolve(root, "native-app", "src", "hybrid") + sep;
-if (!resolvedTarget.startsWith(allowedPrefix)) {
+const allowedRoot = resolve(root, "native-app", "src", "hybrid");
+const targetRelativePath = relative(allowedRoot, resolvedTarget);
+if (
+  targetRelativePath === "" ||
+  targetRelativePath === ".." ||
+  targetRelativePath.startsWith(`..${sep}`) ||
+  isAbsolute(targetRelativePath)
+) {
   throw new Error(
     `Refusing to sync outside native-app/src/hybrid: ${resolvedTarget}`
   );
@@ -113,6 +148,7 @@ function rewriteVirtualPeopleNativeEntry(input) {
       /\s*<script\s+type=["']importmap-shim["'][^>]*>[\s\S]*?<\/script>/i,
       ""
     )
+    .replace(/\s*<script\s+type=["']importmap["'][^>]*>[\s\S]*?<\/script>/i, "")
     .replace(
       /\s*<script\s+type=["']application\/json["']\s+id=["']qiming-motion-manifest-json["'][^>]*>[\s\S]*?<\/script>/i,
       ""
@@ -133,6 +169,10 @@ function rewriteVirtualPeopleNativeEntry(input) {
     .replace(
       /from\s+(['"])pinyin-pro\1/g,
       'from "./vendor/pinyin-pro/index.mjs"'
+    )
+    .replace(
+      /setDecoderPath\(\s*['"]\/node_modules\/three\/examples\/jsm\/libs\/draco\/gltf\/['"]\s*\)/g,
+      'setDecoderPath("./vendor/three/examples/jsm/libs/draco/gltf/")'
     );
 
   if (inlineMotionTag) {
@@ -157,6 +197,32 @@ if (existsSync(virtualPeopleTargetDir)) {
     }
     if (nextSource !== source) {
       writeFileSync(filePath, nextSource, "utf8");
+    }
+  }
+
+  const nativeVirtualPeopleEntry = join(virtualPeopleTargetDir, "index.html");
+  const nativeVirtualPeopleSource = readFileSync(
+    nativeVirtualPeopleEntry,
+    "utf8"
+  );
+  if (/\/node_modules\//.test(nativeVirtualPeopleSource)) {
+    throw new Error(
+      "virtual-people native entry still references /node_modules; bundle-local assets are required"
+    );
+  }
+  if (/<script\s+type=["']importmap["']/i.test(nativeVirtualPeopleSource)) {
+    throw new Error(
+      "virtual-people native entry still contains an importmap; native imports must be bundle-local"
+    );
+  }
+  for (const requiredAsset of [
+    "vendor/three/build/three.module.js",
+    "vendor/three/examples/jsm/libs/draco/gltf/draco_decoder.js",
+    "vendor/three/examples/jsm/libs/draco/gltf/draco_decoder.wasm",
+    "vendor/pinyin-pro/index.mjs"
+  ]) {
+    if (!existsSync(join(virtualPeopleTargetDir, requiredAsset))) {
+      throw new Error(`virtual-people native asset missing: ${requiredAsset}`);
     }
   }
 }
@@ -317,11 +383,15 @@ const bridgeScript = `
   }
   document.documentElement.classList.add('qiming-native-webview');
   document.documentElement.setAttribute('data-qiming-native', 'true');
-  var nativeTop = 'env(safe-area-inset-top, 0px)';
+  var isAndroidNative = /Android/i.test(window.navigator.userAgent);
+  if (isAndroidNative) document.documentElement.classList.add('qiming-native-android');
+  var nativeTop = isAndroidNative
+    ? 'calc(env(safe-area-inset-top, 0px) + 6px)'
+    : 'env(safe-area-inset-top, 0px)';
   var nativeBottom = 'env(safe-area-inset-bottom, 0px)';
   if (window.plus && plus.navigator) {
     var statusbarHeight = Number(plus.navigator.getStatusbarHeight && plus.navigator.getStatusbarHeight());
-    if (statusbarHeight > 0) nativeTop = statusbarHeight + 'px';
+    if (statusbarHeight > 0) nativeTop = (Math.min(Math.max(statusbarHeight, 22), 28) + (isAndroidNative ? 6 : 0)) + 'px';
     try {
       plus.navigator.setStatusBarStyle('light');
     } catch (_) {}
@@ -330,8 +400,9 @@ const bridgeScript = `
       try {
         var statusbarHeight = Number(plus.navigator.getStatusbarHeight && plus.navigator.getStatusbarHeight());
         if (statusbarHeight > 0) {
-          document.documentElement.style.setProperty('--qiming-native-safe-top', statusbarHeight + 'px');
-          document.documentElement.style.setProperty('--qiming-native-status-top', statusbarHeight + 'px');
+          var resolvedStatusTop = Math.min(Math.max(statusbarHeight, 22), 28) + (isAndroidNative ? 6 : 0);
+          document.documentElement.style.setProperty('--qiming-native-safe-top', resolvedStatusTop + 'px');
+          document.documentElement.style.setProperty('--qiming-native-status-top', resolvedStatusTop + 'px');
         }
         plus.navigator.setStatusBarStyle('light');
       } catch (_) {}
@@ -455,6 +526,24 @@ html = html
 html = stripNativeBlockingExternalResources(html);
 html = injectHeadScript(html, "qiming-native-bridge.js");
 html = injectHeadScript(html, "qiming-native-compat.js");
+
+const platformConfigPath = join(targetDir, "platform-config.json");
+if (existsSync(platformConfigPath)) {
+  const platformConfig = JSON.parse(readFileSync(platformConfigPath, "utf8"));
+  const serializedPlatformConfig = JSON.stringify(platformConfig)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+  const inlineConfigTag = `  <script id="qiming-platform-config">window.__QIMING_PLATFORM_CONFIG__=${serializedPlatformConfig};</script>`;
+  html = html.replace(
+    /\s*<script\s+id=["']qiming-platform-config["'][^>]*>[\s\S]*?<\/script>/g,
+    ""
+  );
+  const nativeBridgeTag = '  <script src="./qiming-native-bridge.js"></script>';
+  html = html.includes(nativeBridgeTag)
+    ? html.replace(nativeBridgeTag, `${inlineConfigTag}\n${nativeBridgeTag}`)
+    : html.replace("</head>", `${inlineConfigTag}\n</head>`);
+}
 writeFileSync(htmlPath, html, "utf8");
 
 writeFileSync(

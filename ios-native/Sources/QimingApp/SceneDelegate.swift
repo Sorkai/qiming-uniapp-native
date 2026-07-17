@@ -9,8 +9,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         options connectionOptions: UIScene.ConnectionOptions
     ) {
         guard let windowScene = scene as? UIWindowScene else { return }
+
         let window = UIWindow(windowScene: windowScene)
-        window.backgroundColor = UIColor(red: 0.969, green: 0.973, blue: 0.988, alpha: 1)
+        window.backgroundColor = UIColor(red: 0.97, green: 0.98, blue: 0.99, alpha: 1)
         window.rootViewController = QimingWebViewController()
         self.window = window
         window.makeKeyAndVisible()

@@ -7,7 +7,8 @@ export default {
     icon: "ri/chat-search-line",
     title: "chat-ai",
     rank: chatai,
-    showLink: false
+    showLink: false,
+    roles: ["admin", "teacher"]
   },
   children: [
     {

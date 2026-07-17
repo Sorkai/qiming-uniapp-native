@@ -4,7 +4,8 @@ export default {
   meta: {
     icon: "ri:file-list-3-line",
     title: "题目组卷器",
-    rank: 8
+    rank: 8,
+    roles: ["admin", "teacher"]
   },
   children: [
     {
@@ -78,6 +79,17 @@ export default {
       component: () => import("@/views/exam-paper/editor/index.vue"),
       meta: {
         title: "编辑试卷",
+        showLink: false,
+        showParent: false,
+        hiddenTag: true
+      }
+    },
+    {
+      path: "/exam-paper/publish/:id",
+      name: "ExamPaperPublish",
+      component: () => import("@/views/exam-paper/editor/index.vue"),
+      meta: {
+        title: "发布试卷",
         showLink: false,
         showParent: false,
         hiddenTag: true

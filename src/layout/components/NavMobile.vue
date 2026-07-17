@@ -1,31 +1,21 @@
 <script setup lang="ts">
-import type { Component } from "vue";
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStoreHook } from "@/store/modules/user";
-import DocumentChecked from "~icons/ep/document-checked";
-import HomeFilled from "~icons/ep/home-filled";
-import Reading from "~icons/ep/reading";
-import User from "~icons/ep/user";
-import UserFilled from "~icons/ep/user-filled";
-import EditPen from "~icons/ep/edit-pen";
-import MagicLine from "~icons/ri/magic-line";
 
 type MobileNavItem = {
   title: string;
-  icon: Component;
+  icon: string;
   path: string;
-  menu?: string;
-  mode?: string;
 };
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStoreHook();
 
-const isAdmin = computed(() => userStore.roles?.includes("admin"));
-const isTeacher = computed(() => userStore.roles?.includes("teacher"));
-const isAdminOrTeacher = computed(() => isAdmin.value || isTeacher.value);
+const isAdminOrTeacher = computed(() =>
+  userStore.roles?.some(role => role === "admin" || role === "teacher")
+);
 
 const profilePath = computed(() =>
   isAdminOrTeacher.value ? "/account-settings" : "/account"
@@ -34,52 +24,22 @@ const profilePath = computed(() =>
 const adminMobileNavItems: MobileNavItem[] = [
   {
     title: "首页",
-    icon: HomeFilled,
-    path: "/welcome/index"
+    icon: "ep:home-filled",
+    path: "/welcome"
   },
   {
     title: "课程",
-    icon: Reading,
+    icon: "ep:reading",
     path: "/course/list"
   },
   {
     title: "教案",
-    icon: EditPen,
+    icon: "ep:edit-pen",
     path: "/course/teacherplan"
   },
   {
     title: "考核",
-    icon: DocumentChecked,
-    path: "/course/assessment"
-  }
-];
-
-const teacherMobileNavItems = adminMobileNavItems;
-
-const managerMobileNavItems: MobileNavItem[] = [
-  {
-    title: "\u9996\u9875",
-    icon: HomeFilled,
-    path: "/welcome/index"
-  },
-  {
-    title: "\u7528\u6237",
-    icon: UserFilled,
-    path: "/user/list"
-  },
-  {
-    title: "\u8bfe\u7a0b",
-    icon: Reading,
-    path: "/course/list"
-  },
-  {
-    title: "AI App",
-    icon: MagicLine,
-    path: "/ai-app/workspace"
-  },
-  {
-    title: "\u8003\u6838",
-    icon: DocumentChecked,
+    icon: "ep:document-checked",
     path: "/course/assessment"
   }
 ];
@@ -87,94 +47,48 @@ const managerMobileNavItems: MobileNavItem[] = [
 const defaultMobileNavItems = computed<MobileNavItem[]>(() => [
   {
     title: "首页",
-    icon: HomeFilled,
-    path: "/account",
-    menu: "home"
+    icon: "ep:home-filled",
+    path: "/account?menu=home"
   },
   {
     title: "课程",
-    icon: Reading,
-    path: "/account",
-    menu: "course"
+    icon: "ep:reading",
+    path: "/account?menu=course"
   },
   {
-    title: "AI App",
-    icon: MagicLine,
-    path: "/account/ai-app",
-    mode: "student"
+    title: "AI助手",
+    icon: "ep:chat-dot-round",
+    path: "/account/ai-app?mode=student"
   },
   {
     title: "我的",
-    icon: User,
-    path: profilePath.value,
-    menu: "profile"
+    icon: "ep:user",
+    path: isAdminOrTeacher.value ? profilePath.value : "/account?menu=profile"
   }
 ]);
 
 const navItems = computed<MobileNavItem[]>(() =>
-  isAdmin.value
-    ? managerMobileNavItems
-    : isTeacher.value
-      ? teacherMobileNavItems
-      : defaultMobileNavItems.value
+  isAdminOrTeacher.value ? adminMobileNavItems : defaultMobileNavItems.value
 );
 
 const visibleNavItems = computed(() =>
   navItems.value.filter(item => router.resolve(item.path).matched.length > 0)
 );
 
-const activePath = computed(() => route.path);
-
-const getQueryValue = (value: unknown) =>
-  Array.isArray(value) ? value[0] : value;
-
-const isActive = (item: MobileNavItem) => {
-  if (item.menu) {
-    const menu = getQueryValue(route.query.menu);
-    return (
-      activePath.value === item.path &&
-      (menu === item.menu || (!menu && item.menu === "home"))
-    );
-  }
-  if (item.mode) {
-    return (
-      activePath.value === item.path &&
-      getQueryValue(route.query.mode) === item.mode
-    );
-  }
-  return (
-    activePath.value === item.path ||
-    activePath.value.startsWith(`${item.path}/`)
-  );
-};
-
-const buildJumpQuery = (item: MobileNavItem) => {
-  const query: Record<string, any> = { ...route.query };
-  if (item.menu) {
-    query.menu = item.menu;
-  } else {
-    delete query.menu;
-  }
-
-  if (item.mode) {
-    query.mode = item.mode;
-  } else {
-    delete query.mode;
-  }
-  return query;
-};
-
-const handleJump = (item: MobileNavItem) => {
-  const query = buildJumpQuery(item);
-  const samePath = route.path === item.path;
-  const sameMenu = getQueryValue(route.query.menu) === item.menu;
-  const sameMode = getQueryValue(route.query.mode) === item.mode;
-  if (samePath && sameMenu && sameMode) return;
-
-  router.push({
-    path: item.path,
-    query
+const isActive = (path: string) => {
+  const target = router.resolve(path);
+  if (route.path !== target.path) return false;
+  return Object.entries(target.query).every(([key, value]) => {
+    const current = route.query[key];
+    return Array.isArray(current)
+      ? current.includes(String(value))
+      : current === value;
   });
+};
+
+const handleJump = (path: string) => {
+  if (route.path === path) return;
+  router.push(path);
 };
 </script>
 
@@ -182,12 +96,12 @@ const handleJump = (item: MobileNavItem) => {
   <div class="nav-mobile-container">
     <div
       v-for="item in visibleNavItems"
-      :key="`${item.path}:${item.menu || item.mode || item.title}`"
+      :key="item.path"
       class="nav-mobile-item"
-      :class="{ active: isActive(item) }"
-      @click="handleJump(item)"
+      :class="{ active: isActive(item.path) }"
+      @click="handleJump(item.path)"
     >
-      <component :is="item.icon" class="nav-icon" />
+      <IconifyIconOnline :icon="item.icon" class="nav-icon" />
       <span class="nav-title">{{ item.title }}</span>
     </div>
   </div>
@@ -203,12 +117,10 @@ const handleJump = (item: MobileNavItem) => {
   width: 100%;
   height: var(--pure-mobile-tab-height);
   padding-bottom: var(--pure-safe-area-bottom);
-  background: var(--qiming-native-dock-bg, rgb(255 255 255 / 98%));
-  border-top: 1px solid var(--qiming-native-dock-border, rgb(226 232 240 / 90%));
-  box-shadow: var(--qiming-native-dock-shadow, 0 -8px 24px rgb(15 23 42 / 6%));
+  background: rgb(255 255 255 / 88%);
+  border-top: 1px solid rgb(226 232 240 / 90%);
+  box-shadow: 0 -8px 24px rgb(15 23 42 / 6%);
   backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  opacity: 1;
 }
 
 .nav-mobile-item {
@@ -222,11 +134,8 @@ const handleJump = (item: MobileNavItem) => {
   transition: all 0.3s;
 
   .nav-icon {
-    display: block;
-    flex: 0 0 auto;
     font-size: 20px;
-    margin-bottom: 5px;
-    line-height: 1;
+    margin-bottom: 3px;
   }
 
   .nav-title {
@@ -234,7 +143,6 @@ const handleJump = (item: MobileNavItem) => {
     overflow: hidden;
     font-size: 11px;
     font-weight: 500;
-    line-height: 1.1;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -255,7 +163,7 @@ const handleJump = (item: MobileNavItem) => {
 
 @media screen and (max-width: 768px) {
   .nav-mobile-container {
-    height: var(--pure-mobile-tab-height);
+    height: calc(var(--pure-mobile-tab-height) + 4px);
   }
 
   .nav-mobile-item {
@@ -268,31 +176,6 @@ const handleJump = (item: MobileNavItem) => {
       transform: scale(0.96);
       transform-origin: center top;
     }
-  }
-}
-</style>
-<style lang="scss">
-html.qiming-native-webview.ua-mobile .nav-mobile-container {
-  height: var(--pure-mobile-tab-height);
-  padding-bottom: var(--pure-safe-area-bottom);
-  background: var(--qiming-native-dock-bg);
-  border-top-color: var(--qiming-native-dock-border);
-  box-shadow: var(--qiming-native-dock-shadow);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  opacity: 1;
-  isolation: isolate;
-}
-
-html.qiming-native-webview.ua-mobile.dark .nav-mobile-item {
-  color: var(--qiming-native-text-secondary);
-
-  &.active {
-    color: var(--el-color-primary);
-  }
-
-  &:active {
-    background: rgb(148 163 184 / 10%);
   }
 }
 </style>

@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="nx"
-    :class="{ 'is-dragging-scroll': isHomeDragging }"
-  >
+  <div class="nx" :class="{ 'is-dragging-scroll': isHomeDragging }">
     <!-- ============== NAV ============== -->
     <header class="nx-nav" :class="{ 'is-scrolled': isScrolled }">
       <div class="nx-nav__inner">
@@ -195,10 +192,10 @@
         </svg>
 
         <div class="nx-hero__inner">
-          <h1 class="nx-hero__title">面向真实教学过程的智能教育平台。</h1>
+          <h1 class="nx-hero__title">为每一门课，留住完整的教学过程。</h1>
           <p class="nx-hero__sub">
-            启明智教围绕备课、授课、练习、测评与学情诊断，把教师工作台、学生学习端和
-            AI 助教接到同一条教学闭环里。
+            从备课、授课到练习、测评和学情分析，课程资料、学生进度与 AI
+            助教都在一处。
           </p>
           <div class="nx-hero__cta">
             <button
@@ -370,10 +367,10 @@
       <!-- ============== CORE TECH ============= -->
       <section class="nx-section nx-section--gray">
         <header class="nx-shead nx-shead--center">
-          <p class="nx-eyebrow">研发成果</p>
-          <h2 class="nx-stitle">支撑教学闭环的核心能力。</h2>
+          <p class="nx-eyebrow">教学底座</p>
+          <h2 class="nx-stitle">让课程数据真正连起来。</h2>
           <p class="nx-ssub">
-            面向教育场景沉淀模型、检索、编排、评估与课件生成能力，让平台不是演示概念，而是能进入日常教学。
+            课程内容、学生表现和教学任务共用一套数据，教师不必在多个系统之间反复切换。
           </p>
         </header>
         <div class="nx-tech-grid">
@@ -391,7 +388,7 @@
       <section id="features" class="nx-section nx-section--features">
         <header class="nx-shead">
           <p class="nx-eyebrow">平台能力</p>
-          <h2 class="nx-stitle">把高频教学任务做成清晰的工作面。</h2>
+          <h2 class="nx-stitle">常用教学工作，都在一个地方。</h2>
         </header>
 
         <!-- big bento card -->
@@ -403,7 +400,7 @@
             <div>
               <p class="nx-bento__eyebrow">课程工作台</p>
               <h3 class="nx-bento__title">
-                把课程、章节与学习计划，放在同一处。
+                课程、章节和学习计划，都放在一起。
               </h3>
             </div>
             <button class="nx-arrow" type="button" @click="handleEntry">
@@ -423,7 +420,9 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">错题诊断</p>
-                <h3 class="nx-bento__title">不止记录答案，更追踪错因。</h3>
+                <h3 class="nx-bento__title">
+                  看见为什么答错，再安排下一次练习。
+                </h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -440,7 +439,7 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">智能组卷</p>
-                <h3 class="nx-bento__title">从命题到阅卷，一条线走完。</h3>
+                <h3 class="nx-bento__title">从出题到阅卷，不必来回切换。</h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -460,7 +459,7 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">学情画像</p>
-                <h3 class="nx-bento__title">能力雷达，教师与学生同步可见。</h3>
+                <h3 class="nx-bento__title">课程进度、成绩和错题一起看。</h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -477,7 +476,7 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">学习路径</p>
-                <h3 class="nx-bento__title">按学情生成下一步学习建议。</h3>
+                <h3 class="nx-bento__title">根据当前掌握情况，给出下一步。</h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -494,7 +493,9 @@
             <div class="nx-bento__head">
               <div>
                 <p class="nx-bento__eyebrow">虚拟实验与 AI 课件</p>
-                <h3 class="nx-bento__title">把复杂知识做成可看的过程。</h3>
+                <h3 class="nx-bento__title">
+                  把抽象知识做成可播放、可交互的课件。
+                </h3>
               </div>
               <button class="nx-arrow" type="button" @click="handleEntry">
                 <span aria-hidden="true">→</span>
@@ -517,7 +518,7 @@
             <div>
               <p class="nx-bento__eyebrow">综合赛事</p>
               <h3 class="nx-bento__title">
-                OJ 判题、作文比赛与赛事管理一站式完成。
+                发布、报名、评审和判题，在同一套流程里完成。
               </h3>
             </div>
             <button class="nx-arrow" type="button" @click="handleEntry">
@@ -560,9 +561,9 @@
       <section id="agents" class="nx-section nx-section--gray">
         <header class="nx-shead nx-shead--center">
           <p class="nx-eyebrow">智能工作台</p>
-          <h2 class="nx-stitle">教师和学生看到的是同一条教学进程。</h2>
+          <h2 class="nx-stitle">同一门课，教师和学生各有清楚的视图。</h2>
           <p class="nx-ssub">
-            点击左侧切换模块，查看课程、错题、试卷、课件、学情和赛事如何在同一套数据下协同。
+            切换模块，查看课程、错题、试卷、课件、学情和赛事如何共用同一套课程数据。
           </p>
         </header>
 
@@ -608,7 +609,7 @@
       <section id="workflow" class="nx-section">
         <header class="nx-shead">
           <p class="nx-eyebrow">教学流程</p>
-          <h2 class="nx-stitle">从备课到诊断，过程清楚，结果可追踪。</h2>
+          <h2 class="nx-stitle">备课、上课、练习、评价，前后自然衔接。</h2>
         </header>
 
         <ol class="nx-steps">
@@ -626,7 +627,7 @@
       <section id="voice" class="nx-section nx-section--gray">
         <header class="nx-shead">
           <p class="nx-eyebrow">使用反馈</p>
-          <h2 class="nx-stitle">每个角色都能找到自己的下一步。</h2>
+          <h2 class="nx-stitle">老师、学生和管理者，都少走一步。</h2>
         </header>
 
         <div class="nx-quotes">
@@ -658,8 +659,8 @@
       <!-- ============== CTA ============== -->
       <section class="nx-cta">
         <div class="nx-cta__inner">
-          <h2>进入启明智教，看看完整教学闭环。</h2>
-          <p>用真实课程、试卷、错题和 AI 助教，呈现一套可以落地使用的平台。</p>
+          <h2>用一门真实课程，开始体验启明智教。</h2>
+          <p>看看课程、试卷、错题和 AI 助教如何在同一处协同。</p>
           <div class="nx-cta__btns">
             <button
               class="nx-btn nx-btn--primary nx-btn--lg"
@@ -689,29 +690,48 @@
           <img :src="logo" alt="启明智教" />
           <div>
             <strong>启明智教</strong>
-            <p>
-              长春工业大学计算机科学与工程学院 · 吉林省云创迅捷软件开发有限公司
-            </p>
+            <p>长春工业大学计算机科学与工程学院</p>
           </div>
         </div>
-        <p class="nx-foot__legal">
-          吉ICP备2025035820号-1 · 吉公网安备22017302000511号 · ©2024 Est.
-        </p>
+        <div class="nx-foot__legal" aria-label="备案信息">
+          <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noreferrer"
+            title="工信部ICP备案查询"
+          >
+            <img
+              class="nx-foot__icp-icon"
+              :src="icpBeianIcon"
+              alt=""
+              aria-hidden="true"
+            />
+            <span>吉ICP备2025035820号-1</span>
+          </a>
+          <a
+            href="https://beian.mps.gov.cn/#/query/webSearch?code=22017302000511"
+            target="_blank"
+            rel="noreferrer"
+            title="公安联网备案查询"
+          >
+            <img
+              src="https://jsd.kai233.top/web/img/batb.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span>吉公网安备22017302000511号</span>
+          </a>
+          <span class="nx-foot__legal-year">©{{ currentYear }} Est.</span>
+        </div>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  markRaw,
-  onBeforeMount,
-  onMounted,
-  onUnmounted,
-  ref
-} from "vue";
-import { useRoute, useRouter, type LocationQueryRaw } from "vue-router";
+import { computed, markRaw, onMounted, onUnmounted, ref } from "vue";
+import { useWindowScroll } from "@vueuse/core";
+import { useRouter } from "vue-router";
 import { Setting, SwitchButton, User } from "@element-plus/icons-vue";
 import { storageLocal } from "@pureadmin/utils";
 import { ElMessage } from "element-plus";
@@ -722,11 +742,9 @@ import { getToken, removeToken, userKey } from "@/utils/auth";
 import type { DataInfo } from "@/utils/auth";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
 
 import logo from "@/assets/logo.png";
+import icpBeianIcon from "@/assets/beian/icp-beian.webp";
 import avatarVideo from "@/assets/生成数字人待机视频.mp4";
 import ScriptedDemo from "./ScriptedDemo.vue";
 import ScriptedMiniDemo from "./ScriptedMiniDemo.vue";
@@ -762,122 +780,23 @@ import IconTarget from "@/assets/home-icons/target.svg?component";
 import IconZap from "@/assets/home-icons/zap.svg?component";
 
 const router = useRouter();
-const route = useRoute();
 const userStore = useUserStoreHook();
-const isScrolled = ref(false);
+const { y: scrollY } = useWindowScroll();
+const isScrolled = computed(() => scrollY.value > 20);
 const showLoginDialog = ref(false);
 const activeShowcaseIndex = ref(0);
 const isHomeDragging = ref(false);
+const currentYear = new Date().getFullYear();
 let showcaseTimer: number | undefined;
 const rawIcon = (icon: any) => markRaw(icon);
-type HomeDragScrollTarget = HTMLElement | Window;
-const homeDragState: {
-  active: boolean;
-  moved: boolean;
-  suppressClick: boolean;
-  startX: number;
-  startY: number;
-  lastX: number;
-  lastY: number;
-  scrollTarget: HomeDragScrollTarget | null;
-} = {
+const homeDragState = {
   active: false,
   moved: false,
   suppressClick: false,
   startX: 0,
   startY: 0,
   lastX: 0,
-  lastY: 0,
-  scrollTarget: null
-};
-
-const nativeDemoRoles = ["student", "teacher", "admin"] as const;
-type NativeDemoRole = (typeof nativeDemoRoles)[number];
-
-const getNativeHashQuery = () => {
-  if (typeof window === "undefined") return new URLSearchParams();
-  const hashQuery = window.location.hash.split("?")[1] || "";
-  return new URLSearchParams(hashQuery || window.location.search.slice(1));
-};
-
-const buildNativeRouteQuery = () => {
-  const query: LocationQueryRaw = { ...route.query };
-  getNativeHashQuery().forEach((value, key) => {
-    if (query[key] == null) query[key] = value;
-  });
-  return query;
-};
-
-const buildNativeRuntimeQuery = () => {
-  const query: LocationQueryRaw = {};
-  const nativeQuery = buildNativeRouteQuery();
-  if (String(nativeQuery.qimingNative || "") === "1") {
-    query.qimingNative = "1";
-  } else if (
-    typeof window !== "undefined" &&
-    localStorage.getItem("qimingNativeWebView") === "1"
-  ) {
-    query.qimingNative = "1";
-  }
-
-  const nativeStatusTop =
-    nativeQuery.nativeStatusTop ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("qimingNativeStatusTop") || ""
-      : "");
-  if (nativeStatusTop) query.nativeStatusTop = String(nativeStatusTop);
-  return query;
-};
-
-const clearNativeDemoRoleState = () => {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem("qiming-demo-role");
-  sessionStorage.removeItem("qiming-demo-role");
-};
-
-const isNativeHomeEntry = (query: LocationQueryRaw) => {
-  if (String(query.qimingNative || "") === "1") return true;
-  if (typeof window === "undefined") return false;
-  return (
-    window.location.hash.includes("qimingNative=1") ||
-    localStorage.getItem("qimingNativeWebView") === "1" ||
-    document.documentElement.classList.contains("qiming-native-webview")
-  );
-};
-
-const redirectNativeDemoHomeEntry = () => {
-  if (route.path !== "/home") return false;
-  const query = buildNativeRouteQuery();
-  const demoRole = String(query.demoRole || "");
-  if (
-    !isNativeHomeEntry(query) ||
-    !nativeDemoRoles.includes(demoRole as NativeDemoRole)
-  ) {
-    return false;
-  }
-
-  delete query.menu;
-  delete query.mode;
-
-  if (demoRole === "student") {
-    router.replace({
-      path: "/account",
-      query: { ...query, menu: "home" }
-    });
-    return true;
-  }
-
-  router.replace({
-    path: "/welcome/index",
-    query
-  });
-  return true;
-};
-
-const shouldUseHomeRevealMotion = () => {
-  if (typeof window === "undefined") return false;
-  const isSmallViewport = window.matchMedia("(max-width: 680px)").matches;
-  return !isSmallViewport && !isNativeHomeEntry(buildNativeRouteQuery());
+  lastY: 0
 };
 
 const userInfo = computed(() => {
@@ -930,32 +849,32 @@ const capabilityPills = [
 
 const coreTechs = [
   {
-    title: "垂直场景大模型精调与对齐",
-    desc: "基于百万级高质量教育语料，在指令遵循与教育心理学框架下进行强化学习对齐，减少生成幻觉。"
+    title: "面向课程内容的教育模型",
+    desc: "结合教材、教案和课堂任务理解教师意图，生成内容始终围绕当前课程。"
   },
   {
-    title: "SAHR 语义自适应与交叉重排算法",
-    desc: "针对长文本（特别是教案、教材）切分导致上下文丢失的问题，引入自适应重构与双路向量检索机制。"
+    title: "长教材与教案检索",
+    desc: "在长文档中保留章节关系，查找资料时同时返回来源与相关上下文。"
   },
   {
-    title: "基于 MCP 协议的双向通信架构",
-    desc: "动态注册模型上下文服务，打破模型与后端系统的数据孤岛，实现即时、双向的指令与数据流动。"
+    title: "课程数据双向同步",
+    desc: "课程、题库、作业和学情信息及时更新，教师与学生看到的是同一份进度。"
   },
   {
-    title: "多模态意图识别与任务自动化编排",
-    desc: "让系统具备“听懂、看懂”的能力，通过意图槽位解析自动编排复杂教学工作流，化繁为简。"
+    title: "教学任务编排",
+    desc: "教师选定目标后，系统按顺序准备资料、课堂活动、练习和课后任务。"
   },
   {
-    title: "思维链错题语义偏离度诊断",
-    desc: "不仅仅是对与错，而是通过思维链推演学生解题逻辑，计算认知偏差量，精准锚定知识盲点。"
+    title: "错因定位",
+    desc: "结合答题步骤与知识点关系判断错误来源，再安排针对性的讲解和练习。"
   },
   {
-    title: "长短期记忆与三参数动态学情评估",
-    desc: "融合学生历史行为（LTSM）与题目难度特征（Item Response Theory），立体刻画学习者能力。"
+    title: "持续更新的学情评估",
+    desc: "汇总课程进度、练习与测评结果，让教师随时看到班级和个人的变化。"
   },
   {
-    title: "知识元拓扑驱动的 H5 动态课件",
-    desc: "解析知识点间的依赖图谱，自动化生成结构严谨、支持富交互及虚拟仿真的 HTML5 课件。"
+    title: "可交互课件生成",
+    desc: "根据知识点关系组织内容，生成可以播放、操作并直接用于课堂的课件。"
   }
 ];
 
@@ -963,20 +882,20 @@ const showcaseSlides = [
   {
     key: "course",
     shortTitle: "课程",
-    title: "课程工作台，让教与学共享同一份页面。",
+    title: "课程工作台，把资料、进度和计划放在一起。",
     docTitle: "嵌入式 Linux 开发实践教程",
     summary:
-      "把课程资源、章节进度、学习计划放在同一处。AI 会根据完成度，给学生生成下一组任务。",
-    color: "#FFB547",
+      "课程资源、章节进度和学习计划放在同一处，学生能清楚看到接下来要完成什么。",
+    color: "#eaf2fb",
     props: [
       { k: "学习进度", v: "86%" },
       { k: "章节", v: "12" }
     ],
     tasks: [
-      "第 3 章：进程与线程实验自动关联虚拟实验室",
-      "课件资源秒级同步到云端教学资源库",
-      "AI 自动提取章节核心考点并生成导学笔记",
-      "精准识别学生预习盲点，动态调整下节课件内容"
+      "第 3 章实验已关联虚拟实验室",
+      "课件资源已同步到课程空间",
+      "章节要点已整理为导学笔记",
+      "预习反馈已加入下节课的备课清单"
     ],
     agents: ["教学资源整理", "学生进度追踪", "AI 知识点导学", "个性化预习推荐"],
     icon: rawIcon(IconBook)
@@ -984,20 +903,19 @@ const showcaseSlides = [
   {
     key: "wrong",
     shortTitle: "错题",
-    title: "错题诊断，不止记录答案，更追踪错因。",
+    title: "错题诊断，先看错在哪里，再安排练习。",
     docTitle: "本周错题分析报告",
-    summary:
-      "系统识别概念偏差后，会自动生成同类强化练习，并把它推送到学生个人中心。",
-    color: "#E85847",
+    summary: "系统识别概念偏差后，生成同类练习，并把练习加入学生的待办。",
+    color: "#fbefed",
     props: [
       { k: "新练习", v: "3 题" },
       { k: "薄弱点", v: "表达式求值" }
     ],
     tasks: [
-      "运算优先级概念偏差已自动归因为知识点漏读",
-      "关联前序知识点：C 语言表达式求值递归深度",
-      "已自动生成同类针对性强化练习与多维解析视频",
-      "通过 AI 助教实时推送至学生错题中心，并标记重要性"
+      "运算优先级的概念偏差已定位",
+      "已关联前序知识点：C 语言表达式求值",
+      "同类强化练习与讲解已生成",
+      "练习已加入学生错题中心"
     ],
     agents: [
       "多维错因分析",
@@ -1013,7 +931,7 @@ const showcaseSlides = [
     title: "试卷中心，把组卷、答题、阅卷串成一条线。",
     docTitle: "算法期中测验",
     summary: "教师组卷、学生答题、阅卷与学情报告在同一空间完成。",
-    color: "#4A90E2",
+    color: "#eaf2fb",
     props: [
       { k: "平均分", v: "92" },
       { k: "待阅卷", v: "12 份" }
@@ -1034,7 +952,7 @@ const showcaseSlides = [
     docTitle: "数据结构动画课件",
     summary:
       "把章节内容转为 HTML5 动画与可交互演示，学生端直接播放、与虚拟校园联动。",
-    color: "#7B61FF",
+    color: "#f1eef9",
     props: [
       { k: "课件版本", v: "HTML5" },
       { k: "章节匹配", v: "已完成" }
@@ -1051,11 +969,11 @@ const showcaseSlides = [
   {
     key: "portrait",
     shortTitle: "学情",
-    title: "学情画像，让每位学生的能力被看见。",
-    docTitle: "全息学习画像",
+    title: "学情概览，把进度、成绩和错题放在一起。",
+    docTitle: "课程学情概览",
     summary:
       "课程进度、考试成绩、错题分布共同构成学习画像，教师与学生同步可见。",
-    color: "#10B981",
+    color: "#eaf6f2",
     props: [
       { k: "维度", v: "8" },
       { k: "覆盖", v: "全班" }
@@ -1075,7 +993,7 @@ const showcaseSlides = [
     title: "综合赛事，把竞赛与日常教学打通。",
     docTitle: "校内编程赛",
     summary: "OJ 判题、作文比赛、综合赛事在同一空间发布、报名、评审。",
-    color: "#F59E0B",
+    color: "#fbeeee",
     props: [
       { k: "已上线", v: "12 项" },
       { k: "参与人数", v: "1,280" }
@@ -1091,25 +1009,33 @@ const activeShowcase = computed(
 );
 
 const scriptedDemoCopy = {
-  title: "智能工作流控制台",
+  title: "课程工作台",
   subtitle: ""
 };
 
 const awspStack = [
-  { key: "智", label: "教学智能体", desc: "理解任务意图" },
-  { key: "编", label: "任务编排", desc: "串联教学流程" },
-  { key: "学", label: "学情状态", desc: "沉淀学生表现" },
-  { key: "评", label: "评价闭环", desc: "反馈下一步行动" }
+  { icon: "lucide:sparkles", label: "教学助手", desc: "理解任务意图" },
+  { icon: "lucide:workflow", label: "任务编排", desc: "串联教学流程" },
+  {
+    icon: "lucide:chart-no-axes-combined",
+    label: "学情状态",
+    desc: "记录学生表现"
+  },
+  {
+    icon: "lucide:clipboard-check",
+    label: "课后反馈",
+    desc: "反馈下一步行动"
+  }
 ];
 
 const scriptedScenes = {
   course: {
     ...scriptedDemoCopy,
     module: "课程工作台",
-    title: "课程工作台 · AI 备课流水线",
-    command: "开启 AI 备课流水线",
+    title: "课程工作台：备课安排",
+    command: "整理本节课的备课安排",
     path: "intelledu.com/workflow/course",
-    accent: "#FFB547",
+    accent: "#4a90e2",
     steps: [
       { label: "课程目标", detail: "读取章节与课标" },
       { label: "学情匹配", detail: "识别预习盲点" },
@@ -1132,10 +1058,10 @@ const scriptedScenes = {
   wrong: {
     ...scriptedDemoCopy,
     module: "错题诊断",
-    title: "错题诊断 · 错因追踪",
+    title: "错题诊断：错因追踪",
     command: "追踪错因并生成同类练习",
     path: "intelledu.com/workflow/wrong-exercise",
-    accent: "#E85847",
+    accent: "#e16b5b",
     steps: [
       { label: "答案采集", detail: "同步错题轨迹" },
       { label: "错因推演", detail: "定位概念偏差" },
@@ -1158,10 +1084,10 @@ const scriptedScenes = {
   exam: {
     ...scriptedDemoCopy,
     module: "智能组卷",
-    title: "智能组卷 · 自动阅卷",
+    title: "智能组卷：命题与阅卷",
     command: "从命题到阅卷自动排线",
     path: "intelledu.com/workflow/exam-paper",
-    accent: "#4A90E2",
+    accent: "#4a90e2",
     steps: [
       { label: "蓝图约束", detail: "题型难度配平" },
       { label: "智能抽题", detail: "知识点覆盖校验" },
@@ -1184,10 +1110,10 @@ const scriptedScenes = {
   portrait: {
     ...scriptedDemoCopy,
     module: "学情画像",
-    title: "学情画像 · 能力雷达",
+    title: "学情概览：课程表现",
     command: "汇聚学习行为并刷新能力雷达",
     path: "intelledu.com/workflow/profile",
-    accent: "#10B981",
+    accent: "#2d9d78",
     steps: [
       { label: "行为沉淀", detail: "课程/考试/错题入库" },
       { label: "能力估计", detail: "IRT + 长短期记忆" },
@@ -1210,10 +1136,10 @@ const scriptedScenes = {
   path: {
     ...scriptedDemoCopy,
     module: "学习路径",
-    title: "学习路径 · 个性推荐",
+    title: "学习路径：下一步建议",
     command: "自动生成教研与个性化学习路径",
     path: "intelledu.com/workflow/path",
-    accent: "#7B61FF",
+    accent: "#7c65c1",
     steps: [
       { label: "知识图谱", detail: "解析前后置关系" },
       { label: "目标拆解", detail: "映射课程能力点" },
@@ -1236,10 +1162,10 @@ const scriptedScenes = {
   animation: {
     ...scriptedDemoCopy,
     module: "虚拟实验 · AI 课件",
-    title: "虚拟实验 · 动态课件",
+    title: "虚拟实验与动态课件",
     command: "把抽象知识点编排成动态课件",
     path: "intelledu.com/workflow/virtual-lab",
-    accent: "#F59E0B",
+    accent: "#d99a32",
     steps: [
       { label: "素材解析", detail: "PPT/视频/教材入流" },
       { label: "知识建模", detail: "抽取依赖拓扑" },
@@ -1262,10 +1188,10 @@ const scriptedScenes = {
   competition: {
     ...scriptedDemoCopy,
     module: "综合赛事",
-    title: "综合赛事 · 自动评测",
+    title: "综合赛事：发布与评测",
     command: "串联 OJ 判题、作文评审与赛事管理",
     path: "intelledu.com/workflow/competition",
-    accent: "#FF6B6B",
+    accent: "#d96666",
     steps: [
       { label: "赛事发布", detail: "规则报名一键生成" },
       { label: "在线评测", detail: "OJ/作文自动评分" },
@@ -1293,13 +1219,13 @@ const activeScriptedScene = computed(() => {
 });
 
 const bentoSurfaces = {
-  course: "rgb(255 181 71 / 22%)",
-  wrong: "rgb(232 88 71 / 15%)",
-  exam: "rgb(74 144 226 / 16%)",
-  portrait: "rgb(16 185 129 / 15%)",
-  path: "rgb(123 97 255 / 15%)",
-  animation: "rgb(245 158 11 / 17%)",
-  competition: "rgb(255 107 107 / 16%)"
+  course: "rgb(74 144 226 / 12%)",
+  wrong: "rgb(225 107 91 / 10%)",
+  exam: "rgb(74 144 226 / 11%)",
+  portrait: "rgb(45 157 120 / 10%)",
+  path: "rgb(124 101 193 / 10%)",
+  animation: "rgb(217 154 50 / 11%)",
+  competition: "rgb(217 102 102 / 10%)"
 };
 
 const getBentoStyle = (key: keyof typeof bentoSurfaces) => ({
@@ -1477,19 +1403,19 @@ const bentoCompetitionSlides = [
 
 const tripleBento = [
   {
-    eyebrow: "学情画像",
-    title: "学习行为，自动沉淀为画像。",
-    copy: "课程进度、考试成绩、错题原因共同构成可分析的学习画像。"
+    eyebrow: "学情记录",
+    title: "学习过程，自动整理成记录。",
+    copy: "课程进度、考试成绩和错题原因按学生持续更新。"
   },
   {
     eyebrow: "AI 助教",
-    title: "答疑、解题、规划，一个对话框。",
-    copy: "围绕课程内容，提供即时答疑、错因分析与个性化建议。"
+    title: "答疑、解题和学习建议，都围绕当前课程。",
+    copy: "回答带着课程上下文，教师也能查看常见问题。"
   },
   {
     eyebrow: "成长档案",
-    title: "完整的学习路径，留在档案里。",
-    copy: "学生的学习记录、能力图谱、成长报告，按时间线持续生长。"
+    title: "每一次学习变化，都留在档案里。",
+    copy: "学习记录、能力变化和阶段报告按时间顺序保留。"
   }
 ];
 
@@ -1513,10 +1439,10 @@ const workflowItems = [
 ];
 
 const statsData = [
-  { number: "1,000+", label: "注册学员" },
-  { number: "50+", label: "授课教师" },
-  { number: "100+", label: "上线课程" },
-  { number: "98%", label: "学员满意度" }
+  { number: "教师端", label: "备课与授课" },
+  { number: "学生端", label: "学习与练习" },
+  { number: "管理端", label: "运营与治理" },
+  { number: "课程数据", label: "持续同步" }
 ];
 
 const testimonials = [
@@ -1524,32 +1450,24 @@ const testimonials = [
     tag: "学生",
     content:
       "错题分析能直接告诉我哪里理解偏了，还会给同类练习，比只看答案有用得多。",
-    name: "小明",
+    name: "陈同学",
     title: "课程学习者"
   },
   {
     tag: "教师",
     content: "试卷、作业和学情报告集中在一个工作台，备课和课后跟进都更省心。",
-    name: "张老师",
+    name: "周老师",
     title: "课程教师"
   },
   {
     tag: "家长",
     content: "孩子的学习进度、成绩趋势和薄弱点都能看清楚，学习计划也更有方向。",
-    name: "李女士",
+    name: "王女士",
     title: "学生家长"
   }
 ];
 
 /* ---------- Handlers ---------- */
-const getHomeAppScrollRoot = () =>
-  typeof document === "undefined"
-    ? null
-    : (document.getElementById("app") as HTMLElement | null);
-const handleScroll = () => {
-  isScrolled.value =
-    window.scrollY > 20 || (getHomeAppScrollRoot()?.scrollTop ?? 0) > 20;
-};
 const setShowcase = (index: number) => {
   activeShowcaseIndex.value = index;
 };
@@ -1560,18 +1478,9 @@ const startShowcaseTimer = () => {
   }, 6000);
 };
 const scrollToSection = (id: string) => {
-  const target = document.getElementById(id);
-  if (!target) return;
-
-  const navHeight =
-    document.querySelector(".nx-nav")?.getBoundingClientRect().height ?? 0;
-  const targetTop =
-    target.getBoundingClientRect().top + window.scrollY - navHeight - 8;
-
-  window.scrollTo({
-    top: Math.max(0, targetTop),
-    behavior: "smooth"
-  });
+  document
+    .getElementById(id)
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 const isInteractiveDragTarget = (target: EventTarget | null) => {
   if (!(target instanceof Element)) return false;
@@ -1596,51 +1505,6 @@ const isInteractiveDragTarget = (target: EventTarget | null) => {
     )
   );
 };
-const canElementDragScroll = (element: HTMLElement, axis: "x" | "y") => {
-  const style = window.getComputedStyle(element);
-  const overflow = axis === "x" ? style.overflowX : style.overflowY;
-  const hasRoom =
-    axis === "x"
-      ? element.scrollWidth > element.clientWidth + 1
-      : element.scrollHeight > element.clientHeight + 1;
-  return hasRoom && /(auto|scroll|overlay)/.test(overflow);
-};
-const resolveHomeDragScrollTarget = (
-  target: EventTarget | null
-): HomeDragScrollTarget => {
-  let element = target instanceof Element ? target : null;
-  while (element && element !== document.body) {
-    if (
-      element instanceof HTMLElement &&
-      (canElementDragScroll(element, "x") || canElementDragScroll(element, "y"))
-    ) {
-      return element;
-    }
-    element = element.parentElement;
-  }
-
-  const appRoot = getHomeAppScrollRoot();
-  if (
-    appRoot &&
-    (canElementDragScroll(appRoot, "x") || canElementDragScroll(appRoot, "y"))
-  ) {
-    return appRoot;
-  }
-
-  return window;
-};
-const scrollHomeDragTarget = (
-  target: HomeDragScrollTarget | null,
-  left: number,
-  top: number
-) => {
-  if (target instanceof HTMLElement) {
-    target.scrollLeft += left;
-    target.scrollTop += top;
-  } else {
-    window.scrollBy({ left, top, behavior: "auto" });
-  }
-};
 const cleanupHomeDragListeners = () => {
   window.removeEventListener("pointermove", handleHomePointerMove, true);
   window.removeEventListener("pointerup", handleHomePointerUp, true);
@@ -1656,7 +1520,6 @@ const handleHomePointerDown = (event: PointerEvent) => {
   homeDragState.startY = event.clientY;
   homeDragState.lastX = event.clientX;
   homeDragState.lastY = event.clientY;
-  homeDragState.scrollTarget = resolveHomeDragScrollTarget(event.target);
   cleanupHomeDragListeners();
   window.addEventListener("pointermove", handleHomePointerMove, {
     capture: true,
@@ -1680,7 +1543,11 @@ const handleHomePointerMove = (event: PointerEvent) => {
 
   const deltaX = event.clientX - homeDragState.lastX;
   const deltaY = event.clientY - homeDragState.lastY;
-  scrollHomeDragTarget(homeDragState.scrollTarget, -deltaX, -deltaY);
+  window.scrollBy({
+    left: -deltaX,
+    top: -deltaY,
+    behavior: "auto"
+  });
   homeDragState.lastX = event.clientX;
   homeDragState.lastY = event.clientY;
 };
@@ -1693,7 +1560,6 @@ const handleHomePointerUp = () => {
   }
   homeDragState.active = false;
   homeDragState.moved = false;
-  homeDragState.scrollTarget = null;
   isHomeDragging.value = false;
   cleanupHomeDragListeners();
 };
@@ -1710,41 +1576,21 @@ const handleEntry = () => {
   if (isLogged) {
     const roleType =
       info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
-    const nativeQuery = buildNativeRuntimeQuery();
-    if (roleType === 2 || roleType === 3) {
-      router.push({
-        path: "/welcome/index",
-        query: nativeQuery
-      });
-    } else {
-      router.push({
-        path: "/account",
-        query: { ...nativeQuery, menu: "home" }
-      });
-    }
+    if (roleType === 2 || roleType === 3) router.push("/welcome/index");
+    else router.push("/account");
   } else {
     showLoginDialog.value = true;
   }
 };
 const handleLoginSuccess = async () => {
-  clearNativeDemoRoleState();
   await initRouter();
   const info = storageLocal().getItem<DataInfo<number>>(userKey);
   const token = getToken();
   const roleType =
     info?.roleType ?? (token as any)?.roleType ?? userInfo.value?.roleType;
-  const nativeQuery = buildNativeRuntimeQuery();
-  if (Number(roleType) === 2 || Number(roleType) === 3) {
-    router.replace({
-      path: "/welcome/index",
-      query: nativeQuery
-    });
-  } else {
-    router.replace({
-      path: "/account",
-      query: { ...nativeQuery, menu: "home" }
-    });
-  }
+  if (Number(roleType) === 2 || Number(roleType) === 3)
+    router.push("/welcome/index");
+  else router.push("/account");
 };
 const handleCommand = (command: string) => {
   switch (command) {
@@ -1762,69 +1608,32 @@ const handleCommand = (command: string) => {
   }
 };
 
-onBeforeMount(() => {
-  redirectNativeDemoHomeEntry();
-});
+let homeGsapContext: gsap.Context | undefined;
+const prefersReducedMotion = () =>
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 onMounted(() => {
-  if (redirectNativeDemoHomeEntry()) return;
-
-  window.addEventListener("scroll", handleScroll);
   document.addEventListener("pointerdown", handleHomePointerDown, true);
   document.addEventListener("click", handleHomeDragClickCapture, true);
+  if (prefersReducedMotion()) return;
+
   startShowcaseTimer();
-
-  if (shouldUseHomeRevealMotion()) {
-    // GSAP: Bento Cards Reveal
-    gsap.from(".nx-bento", {
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: "#features",
-        start: "top 80%"
-      }
-    });
-
-    // GSAP: Hero satellites floating
+  homeGsapContext = gsap.context(() => {
     gsap.to(".nx-sat", {
-      y: "random(-10, 10)",
-      x: "random(-5, 5)",
-      rotation: "random(-2, 2)",
-      duration: "random(2, 4)",
+      y: (index: number) => (index % 2 === 0 ? -4 : 4),
+      duration: (index: number) => 3.8 + index * 0.25,
       repeat: -1,
       yoyo: true,
-      ease: "sine.inOut"
+      ease: "sine.inOut",
+      stagger: 0.18
     });
-
-    // GSAP: Workflow Steps Sequential Reveal
-    gsap.from(".nx-steps li", {
-      x: -30,
-      opacity: 0,
-      duration: 0.6,
-      stagger: 0.15,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: ".nx-steps",
-        start: "top 85%"
-      }
-    });
-  } else {
-    gsap.set([".nx-bento", ".nx-steps li"], {
-      clearProps: "all",
-      opacity: 1,
-      x: 0,
-      y: 0
-    });
-  }
+  });
 });
 onUnmounted(() => {
-  window.removeEventListener("scroll", handleScroll);
   document.removeEventListener("pointerdown", handleHomePointerDown, true);
   document.removeEventListener("click", handleHomeDragClickCapture, true);
   cleanupHomeDragListeners();
+  homeGsapContext?.revert();
   if (showcaseTimer) window.clearInterval(showcaseTimer);
 });
 </script>
@@ -1834,24 +1643,23 @@ onUnmounted(() => {
    启明智教首页视觉变量
    ========================================================= */
 .nx {
-  --nx-text: rgb(0 0 0 / 95%);
-  --nx-text-muted: rgb(0 0 0 / 55%);
-  --nx-text-faint: rgb(0 0 0 / 35%);
+  --nx-text: #202124;
+  --nx-text-muted: #5f6368;
+  --nx-text-faint: #777b80;
   --nx-bg: #fff;
-  --nx-bg-gray: rgb(246 245 244);
-  --nx-border: rgb(0 0 0 / 8%);
-  --nx-border-strong: rgb(0 0 0 / 14%);
+  --nx-bg-gray: #f7f7f5;
+  --nx-border: #e8e8e5;
+  --nx-border-strong: #d2d3d0;
   --nx-blue: rgb(0 117 222);
   --nx-blue-hover: rgb(0 100 190);
-  --nx-radius: 12px;
+  --nx-radius: 10px;
   --nx-radius-sm: 8px;
   --nx-radius-xs: 6px;
   --nx-container: 1320px;
   --nx-container-wide: 1480px;
   --nx-font:
-    "Inter", "NotionInter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", Helvetica, Arial, sans-serif;
 
   min-height: 100vh;
   font-family: var(--nx-font);
@@ -1881,13 +1689,8 @@ onUnmounted(() => {
    ========================================================= */
 .nx-nav {
   position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
+  inset: 0 0 auto;
   z-index: 40;
-  width: 100%;
-  max-width: 100vw;
-  box-sizing: border-box;
   height: 60px;
   color: rgb(246 245 244);
   background: transparent;
@@ -2020,9 +1823,15 @@ onUnmounted(() => {
   border: 1px solid transparent;
   border-radius: var(--nx-radius-sm);
   transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:focus-visible {
+    outline: 3px solid rgb(0 117 222 / 28%);
+    outline-offset: 2px;
+  }
 
   &--primary {
     color: #fff;
@@ -2107,8 +1916,13 @@ onUnmounted(() => {
     transform 0.15s;
 
   &:hover {
-    background: #000;
-    transform: scale(1.04);
+    background: #34373b;
+    transform: scale(1.02);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgb(0 117 222 / 28%);
+    outline-offset: 3px;
   }
 
   &--sm {
@@ -2122,13 +1936,13 @@ onUnmounted(() => {
    HERO  (dark navy product style)
    ========================================================= */
 .nx-hero {
-  --hero-bg: rgb(2 9 58);
-  --hero-fg: rgb(246 245 244);
-  --hero-fg-muted: rgb(246 245 244 / 70%);
-  --hero-doodle: rgb(132 156 255 / 28%);
+  --hero-bg: #10183d;
+  --hero-fg: #f7f7f5;
+  --hero-fg-muted: #c9ceda;
+  --hero-doodle: rgb(137 158 210 / 20%);
 
   position: relative;
-  padding: 132px 32px 80px;
+  padding: 124px 32px 76px;
   overflow: hidden;
   color: var(--hero-fg);
   background: var(--hero-bg);
@@ -2154,26 +1968,28 @@ onUnmounted(() => {
 .nx-hero__inner {
   position: relative;
   z-index: 2;
-  max-width: 920px;
+  max-width: 1040px;
   margin: 0 auto;
   text-align: center;
 }
 
 .nx-hero__title {
   margin: 0;
-  font-size: clamp(40px, 5.4vw, 64px);
-  font-weight: 700;
-  line-height: 1.05;
-  letter-spacing: -0.033em;
+  font-size: clamp(38px, 4.5vw, 56px);
+  font-weight: 680;
+  line-height: 1.15;
+  letter-spacing: 0;
   color: var(--hero-fg);
+  text-wrap: balance;
 }
 
 .nx-hero__sub {
-  max-width: 580px;
+  max-width: 640px;
   margin: 20px auto 0;
-  font-size: 17px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.65;
   color: var(--hero-fg-muted);
+  text-wrap: pretty;
 }
 
 .nx-hero__cta {
@@ -2235,10 +2051,10 @@ onUnmounted(() => {
   padding: 14px;
   background: #fff;
   border: 1px solid var(--nx-border);
-  border-radius: 14px;
+  border-radius: 10px;
   box-shadow:
     0 1px 2px rgb(0 0 0 / 4%),
-    0 12px 30px rgb(0 0 0 / 8%);
+    0 10px 26px rgb(7 15 45 / 10%);
 
   header {
     display: flex;
@@ -2852,27 +2668,23 @@ onUnmounted(() => {
 }
 
 .nx-tech-card {
-  padding: 32px;
+  padding: 30px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--nx-radius);
   border: 1px solid var(--nx-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-  transition: all 0.3s ease;
+  box-shadow: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.1);
+    background: #fbfbfa;
+    border-color: var(--nx-border-strong);
   }
 }
 
 .nx-tech-card__num {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--nx-brand);
-  margin-bottom: 16px;
-  opacity: 0.8;
+  display: none;
 }
 
 .nx-tech-card__title {
@@ -2922,13 +2734,14 @@ onUnmounted(() => {
 }
 
 .nx-stitle {
-  max-width: 720px;
+  max-width: 820px;
   margin: 8px 0 0;
-  font-size: clamp(32px, 4vw, 42px);
-  font-weight: 700;
-  line-height: 1.14;
-  letter-spacing: -0.024em;
+  font-size: clamp(30px, 3.4vw, 40px);
+  font-weight: 680;
+  line-height: 1.22;
+  letter-spacing: 0;
   color: var(--nx-text);
+  text-wrap: balance;
 }
 
 .nx-shead--center .nx-stitle {
@@ -2937,11 +2750,12 @@ onUnmounted(() => {
 }
 
 .nx-ssub {
-  max-width: 560px;
+  max-width: 620px;
   margin: 14px auto 0;
   font-size: 16px;
   line-height: 1.55;
   color: var(--nx-text-muted);
+  text-wrap: pretty;
 }
 
 /* =========================================================
@@ -2958,12 +2772,10 @@ onUnmounted(() => {
   background: #fff;
   border: 1px solid var(--nx-border);
   border-radius: var(--nx-radius);
-  transition: box-shadow 0.2s;
+  transition: border-color 0.2s ease;
 
   &:hover {
-    box-shadow:
-      0 1px 2px rgb(0 0 0 / 4%),
-      0 6px 20px rgb(0 0 0 / 6%);
+    border-color: var(--nx-border-strong);
   }
 
   &--wide {
@@ -3008,14 +2820,15 @@ onUnmounted(() => {
 .nx-bento__title {
   margin: 0;
   font-size: 22px;
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.018em;
+  font-weight: 650;
+  line-height: 1.38;
+  letter-spacing: 0;
   color: var(--nx-text);
+  text-wrap: balance;
 }
 
 .nx-bento--wide .nx-bento__title {
-  font-size: 28px;
+  font-size: 26px;
 }
 
 .nx-bento__copy {
@@ -3213,7 +3026,8 @@ onUnmounted(() => {
     font-size: 28px;
     font-weight: 700;
     line-height: 1.18;
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
+    text-wrap: balance;
   }
 
   > p {
@@ -3459,16 +3273,62 @@ onUnmounted(() => {
 }
 
 .nx-foot__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  justify-content: flex-end;
   margin: 0;
   font-size: 12px;
   color: var(--nx-text-muted);
   text-align: right;
+
+  a,
+  > span {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    min-height: 22px;
+    color: inherit;
+    white-space: nowrap;
+  }
+
+  a {
+    text-decoration: none;
+    transition: color 180ms ease;
+
+    &:hover {
+      color: var(--nx-blue);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--nx-blue);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+  }
+
+  img {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+  }
+}
+
+@media (width > 1024px) {
+  .nx-cta__inner {
+    max-width: 1100px;
+
+    h2 {
+      white-space: nowrap;
+    }
+  }
 }
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
-@media (max-width: 1024px) {
+@media (width <= 1024px) {
   .nx-sat {
     display: none;
   }
@@ -3504,181 +3364,20 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 680px) {
-  .nx {
-    min-height: 100%;
-  }
-
-  .nx-section {
-    scroll-margin-top: calc(76px + var(--qiming-native-status-top, 0px));
-  }
-
-  .nx-nav {
-    height: calc(64px + var(--qiming-native-status-top, 0px));
-    padding-top: var(--qiming-native-status-top, 0);
-    color: rgb(246 245 244);
-    background: rgb(2 9 58 / 78%);
-    border-bottom-color: rgb(255 255 255 / 8%);
-    backdrop-filter: saturate(170%) blur(14px);
-  }
-
-  .nx-nav.is-scrolled {
-    color: var(--nx-text);
-    background: rgb(255 255 255 / 94%);
-  }
-
+@media (width <= 680px) {
   .nx-nav__inner {
-    gap: 12px;
-    padding: 0 18px;
+    padding: 0 16px;
   }
-
-  .nx-nav__brand {
-    flex: 1 1 auto;
-    min-width: 0;
-    max-width: 168px;
-    gap: 14px;
-    font-size: 15px;
-  }
-
-  .nx-nav__brand img {
-    width: 34px;
-    height: 34px;
-    margin-right: 10px;
-    border-radius: 8px;
-  }
-
-  .nx-nav__brand span,
-  .nx-nav__user span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .nx-nav__brand span {
-    max-width: 96px;
-  }
-
-  .nx-nav:not(.is-scrolled) .nx-nav__brand img {
-    box-shadow:
-      0 0 0 2px #fff,
-      0 4px 12px rgb(0 0 0 / 22%);
-  }
-
   .nx-nav__links {
     display: none;
   }
 
-  .nx-nav__right {
-    flex-shrink: 0;
-    gap: 10px;
-    margin-left: auto;
-  }
-
-  .nx-nav__user {
-    width: 34px;
-    height: 34px;
-    padding: 4px;
-    overflow: hidden;
-  }
-
-  .nx-nav__user > span:not(.el-avatar),
-  .nx-nav__user .el-icon--right {
-    display: none;
-  }
-
-  .nx-nav__user :deep(.el-avatar) {
-    display: inline-flex;
-    flex: 0 0 auto;
-  }
-
-  .nx-nav__user :deep(.el-avatar),
-  .nx-nav__user :deep(.el-avatar img) {
-    width: 26px !important;
-    height: 26px !important;
-  }
-
-  .nx-link {
-    display: none;
-  }
-
-  .nx-nav__right .nx-btn {
-    height: 34px;
-    padding: 0 12px;
-    font-size: 13px;
-    border-radius: 8px;
-  }
-
   .nx-hero {
-    padding: calc(88px + var(--qiming-native-status-top, 0px)) 18px 46px;
+    padding: 100px 16px 56px;
   }
-
-  .nx-doodle {
-    top: 72px;
-    width: 360px;
-    height: 360px;
-    opacity: 0.55;
-  }
-
-  .nx-doodle--left {
-    left: -240px;
-  }
-
-  .nx-doodle--right {
-    right: -250px;
-  }
-
-  .nx-hero__inner {
-    max-width: 100%;
-    padding: 0 6px;
-    text-align: center;
-  }
-
-  .nx-hero__title {
-    font-size: clamp(32px, 11vw, 42px);
-    line-height: 1.08;
-    letter-spacing: 0;
-  }
-
-  .nx-hero__sub {
-    max-width: 34em;
-    margin: 16px auto 0;
-    font-size: 15px;
-    line-height: 1.55;
-  }
-
-  .nx-hero__cta {
-    display: block;
-    margin-top: 22px;
-  }
-
-  .nx-hero__cta .nx-btn {
-    width: 100%;
-    height: 42px;
-    padding: 0 14px;
-    font-size: 14px;
-  }
-
-  .nx-hero__cta .nx-btn + .nx-btn {
-    margin-top: 10px;
-  }
-
-  .nx-pills {
-    display: none;
-  }
-
   .nx-hero__product {
-    padding: 0;
-    margin-top: 28px;
-  }
-
-  .nx-window {
-    max-height: 430px;
-    border-radius: 12px;
-  }
-
-  .nx-window__bar {
-    height: 28px;
-    padding: 0 10px;
+    padding: 0 16px;
+    margin-top: 36px;
   }
 
   .nx-window__body {
@@ -3709,44 +3408,10 @@ onUnmounted(() => {
   }
 
   .nx-doc {
-    max-height: 340px;
-    padding: 20px 16px;
+    padding: 24px 20px;
   }
-
-  .nx-doc__crumbs {
-    font-size: 11px;
-  }
-
   .nx-doc__title {
-    margin: 10px 0 10px;
-    font-size: 21px;
-    letter-spacing: 0;
-  }
-
-  .nx-doc__lede {
-    display: -webkit-box;
-    margin-bottom: 14px;
-    overflow: hidden;
-    font-size: 12.5px;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-  }
-
-  .nx-doc__props {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 10px 0;
-    margin-bottom: 12px;
-  }
-
-  .nx-doc__props > div {
-    flex: 1 1 86px;
-  }
-
-  .nx-doc__list li {
-    align-items: flex-start;
-    padding: 5px 0;
-    font-size: 12.5px;
+    font-size: 24px;
   }
 
   .nx-strip__items {
@@ -3754,154 +3419,24 @@ onUnmounted(() => {
   }
 
   .nx-section {
-    padding: 32px 16px;
+    padding: 64px 16px;
   }
-
-  .nx-section--features {
-    padding-inline: 16px;
-  }
-
-  .nx-shead {
-    margin-bottom: 10px;
-  }
-
-  .nx-shead--center {
-    text-align: left;
-  }
-
-  .nx-shead--center .nx-stitle,
-  .nx-shead--center .nx-ssub {
-    margin-right: 0;
-    margin-left: 0;
-  }
-
-  .nx-stitle {
-    font-size: 22px;
-    line-height: 1.18;
-    letter-spacing: 0;
-  }
-
-  .nx-ssub {
-    font-size: 14px;
-  }
-
-  .nx-strip {
-    padding: 36px 18px 42px;
-  }
-
   .nx-cta {
     padding: 72px 16px 88px;
   }
 
-  .nx-bento {
-    margin-bottom: 14px;
-    border-radius: 12px;
-  }
-
-  .nx-bento--wide {
-    min-height: 0;
-  }
-
-  .nx-bento--wide > .nx-bento__head {
-    padding: 14px 16px 10px;
-  }
-
   .nx-bento__head {
-    gap: 12px;
-    padding: 14px 16px 10px;
+    padding: 22px 22px 18px;
   }
-
-  .nx-bento__eyebrow {
-    margin-bottom: 5px;
-    font-size: 13px;
-  }
-
   .nx-bento__title {
-    font-size: 17px;
-    line-height: 1.22;
-    letter-spacing: 0;
+    font-size: 19px;
   }
-
   .nx-bento--wide .nx-bento__title {
-    font-size: 18px;
-  }
-
-  .nx-bento--wide .nx-bento__media {
-    padding: 0 12px 12px;
-  }
-
-  .nx-bento:not(.nx-bento--wide) .nx-bento__media {
-    padding: 0;
-    margin: 0 12px 12px;
-  }
-
-  .nx-section--features .nx-bento__inset--scripted,
-  .nx-section--features
-    .nx-bento:not(.nx-bento--wide)
-    .nx-bento__inset--scripted {
-    min-height: 268px;
-    border-radius: 10px;
-  }
-
-  .nx-section--features
-    .nx-bento:not(.nx-bento--wide)
-    .nx-bento__inset--scripted {
-    min-height: 248px;
-  }
-
-  .nx-bento__inset--lg.nx-bento__inset--scripted,
-  .nx-tabpanel__media .nx-bento__inset--lg {
-    height: 330px;
-    min-height: 0;
-    border-radius: 12px;
-  }
-
-  .nx-tabpanel__inner {
-    gap: 18px;
-  }
-
-  .nx-tabpanel__copy {
-    h3 {
-      margin-bottom: 8px;
-      font-size: 20px;
-      letter-spacing: 0;
-    }
-
-    > p {
-      margin-bottom: 12px;
-      font-size: 14px;
-    }
-
-    ul {
-      grid-template-columns: 1fr;
-      gap: 7px;
-    }
-  }
-
-  .nx-tabbar {
-    justify-content: flex-start;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 2px;
-  }
-
-  .nx-tabbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .nx-tabbar__btn {
-    flex: 0 0 auto;
-  }
-
-  .nx-arrow {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    font-size: 22px;
   }
 
   .nx-steps {
     grid-template-columns: 1fr;
-    gap: 0;
   }
   .nx-steps li + li::before {
     display: none;
@@ -3921,39 +3456,19 @@ onUnmounted(() => {
     gap: 16px;
   }
   .nx-foot__legal {
+    justify-content: flex-start;
     text-align: left;
   }
 }
 
-@media (max-width: 420px) {
-  .nx-nav__brand span {
-    max-width: 92px;
+@media (prefers-reduced-motion: reduce) {
+  .nx *,
+  .nx *::before,
+  .nx *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
-
-  .nx-nav__right .nx-btn {
-    padding: 0 12px;
-  }
-
-  .nx-hero__title {
-    font-size: 34px;
-  }
-
-  .nx-hero__cta .nx-btn {
-    flex-basis: 100%;
-  }
-
-  .nx-doc__props {
-    display: none;
-  }
-
-  .nx-bento__title {
-    font-size: 18px;
-  }
-}
-
-:global(html.qiming-native-webview) .nx-section--features .nx-bento,
-:global(html.qiming-native-webview) .nx-steps li {
-  opacity: 1 !important;
-  transform: none !important;
 }
 </style>

@@ -49,6 +49,37 @@ export function resolveApiURL(
   }`;
 }
 
+function isMiniProgramWebViewRuntime() {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return false;
+  }
+
+  const root = document.documentElement;
+  const searchParams = new URLSearchParams(window.location.search);
+  const hashQuery = window.location.hash.includes("?")
+    ? window.location.hash.slice(window.location.hash.indexOf("?") + 1)
+    : "";
+  const hashParams = new URLSearchParams(hashQuery);
+
+  try {
+    return (
+      root.classList.contains("qiming-mini-program-webview") ||
+      root.dataset.qimingMiniProgram === "true" ||
+      searchParams.get("qimingMiniProgram") === "1" ||
+      hashParams.get("qimingMiniProgram") === "1" ||
+      localStorage.getItem("qimingMiniProgramWebView") === "1" ||
+      sessionStorage.getItem("qimingMiniProgramWebView") === "1"
+    );
+  } catch {
+    return (
+      root.classList.contains("qiming-mini-program-webview") ||
+      root.dataset.qimingMiniProgram === "true" ||
+      searchParams.get("qimingMiniProgram") === "1" ||
+      hashParams.get("qimingMiniProgram") === "1"
+    );
+  }
+}
+
 // 相关配置请参考：www.axios-js.com/zh-cn/docs/#axios-request-config-1
 const defaultConfig: AxiosRequestConfig = {
   // 请求超时时间，上传大文件时设置为0表示不超时
@@ -64,19 +95,6 @@ const defaultConfig: AxiosRequestConfig = {
   paramsSerializer: {
     serialize: stringify as unknown as CustomParamsSerializer
   }
-};
-
-const isNativeDemoPreview = () => {
-  if (typeof window === "undefined") return false;
-
-  const queryText = `${window.location.search}&${window.location.hash}`;
-  const hasNativeFlag =
-    queryText.includes("qimingNative=1") ||
-    localStorage.getItem("qimingNativeWebView") === "1" ||
-    sessionStorage.getItem("qimingNativeWebView") === "1" ||
-    document.documentElement.classList.contains("qiming-native-webview");
-
-  return hasNativeFlag && !!localStorage.getItem("qiming-demo-role");
 };
 
 class PureHttp {
@@ -117,18 +135,19 @@ class PureHttp {
         config.baseURL = resolveApiBaseURL(config.baseURL as string);
         if (typeof config.beforeRequestCallback === "function") {
           config.beforeRequestCallback(config);
+          return config;
         }
         if (PureHttp.initConfig.beforeRequestCallback) {
           PureHttp.initConfig.beforeRequestCallback(config);
-        }
-        /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
-        const whiteList = ["/refresh-token", "/login"];
-        const headers = config.headers as Record<string, any> | undefined;
-        const hasExplicitAuthorization =
-          !!headers?.Authorization || !!headers?.authorization;
-        if (hasExplicitAuthorization) {
           return config;
         }
+        /** 请求白名单，放置一些不需要`token`的接口（通过设置请求白名单，防止`token`过期后再请求造成的死循环问题） */
+        const whiteList = [
+          "/refresh-token",
+          "/login",
+          "/edu/v1/user/login",
+          "/edu/v1/user/register"
+        ];
         return whiteList.some(url => config.url.endsWith(url))
           ? config
           : new Promise(resolve => {
@@ -205,8 +224,19 @@ class PureHttp {
       },
       (error: PureHttpError) => {
         const $error = error;
-        if ($error.response?.status === 401 && !isNativeDemoPreview()) {
-          useUserStoreHook().logOut();
+        if ($error.response?.status === 401) {
+          if (isMiniProgramWebViewRuntime()) {
+            window.dispatchEvent(
+              new CustomEvent("qiming:http-unauthorized", {
+                detail: {
+                  url: $error.config?.url,
+                  method: $error.config?.method
+                }
+              })
+            );
+          } else {
+            useUserStoreHook().logOut();
+          }
         }
         $error.isCancelRequest = Axios.isCancel($error);
         // 关闭进度条动画
