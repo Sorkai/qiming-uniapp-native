@@ -74,6 +74,35 @@ organization, or commercial environment without the project owner's prior writte
 - **启明智教精调的垂直领域大模型**
 - **----还有更多----**
 
+## 分支职责
+
+本仓库的移动端开发线按平台拆分。`main` 只作为三端共用的集成基线，不再把
+Android、iOS 或微信小程序的专属改动混在一个临时分支里。
+
+| 分支 | 对应客户端 | 主要职责 |
+| --- | --- | --- |
+| `main` | 三端共用基线 | 同步 Web 业务、公共组件、接口、路由和跨平台修复；不承载单个平台的临时补丁 |
+| `android-native` | Android APK | HBuilderX / App-Plus Android、三星真机调试、Android 离线包和 APK 验收 |
+| `ios-native` | iOS App | Xcode / UIKit / WKWebView、Simulator、真机签名、IPA / TestFlight 验收 |
+| `wechat-miniprogram` | 微信小程序 | `mp-weixin`、微信开发者工具、`web-view` H5、预览、上传和 EdgeOne 发布 |
+
+两个远端使用完全相同的分支名：
+
+- `origin`: `Sorkai/qiming-uniapp-native`
+- `farrran`: `Farrran69311/qiming-uniapp-native`
+
+切换平台开发线：
+
+```bash
+git switch android-native
+git switch ios-native
+git switch wechat-miniprogram
+```
+
+共享业务先在 `main` 完成同步和验证，再按需合入三个平台分支。Android、iOS、
+微信小程序的专属提交不得反向合入 `main`；需要三端共同生效的修改应先提炼为
+平台无关改动，再进入 `main`。
+
 ## Android / iOS / 微信小程序多端工程设计
 
 本仓库不是 Android 工程旁边临时补一个 iOS 工程，也不是另起炉灶做小程序，
@@ -86,8 +115,7 @@ organization, or commercial environment without the project owner's prior writte
   Android 打包配置、Android 设备调试和 Android 专属原生能力。
 - **iOS 原生线:** `ios-native/` 承载 Xcode/UIKit/WKWebView iOS Simulator
   验证壳；iOS 打包与 HBuilderX iOS 能力在 `native-app/` 的 iOS 配置中衔接。
-  若当前分支尚未包含 `ios-native/`，请切到或合并 iOS 工具分支
-  `codex/ios-native-tooling`。
+  iOS 开发、验收和发版统一在 `ios-native` 分支推进。
 - **微信小程序线:** `native-app/` 继续作为 uni-app 小程序源码入口，通过
   `build:mp-weixin` 生成 `dist/build/mp-weixin`，微信开发者工具负责模拟器、
   预览、上传和自动化验证；小程序 H5 业务域名为 `https://aiedu-mp.intelledu.cn`。
@@ -128,12 +156,18 @@ pnpm sync:web:push
 
 `sync:web` 会拉取 `web-upstream/agent`、执行增量合并，并默认验证类型检查、
 Android App-Plus H5/容器资源和微信小程序产物。发生冲突、工作树不干净或目标远端
-无法快进时会停止，不会强制覆盖。需要把同一验收提交发布为两个仓库的
-`main` 与 `wechat-miniprogram` 时，显式执行：
+无法快进时会停止，不会强制覆盖。共享业务同步应在 `main` 分支执行并推送到两个
+远端：
 
 ```bash
-node scripts/sync-web-upstream.mjs --push --publish-branches main,wechat-miniprogram
+git switch main
+pnpm sync:web:check
+pnpm sync:web:push
 ```
+
+`main` 验收后，再分别合入 `android-native`、`ios-native` 和
+`wechat-miniprogram`。不要用 `--publish-branches` 把同一个平台提交直接覆盖到三条
+发布线。
 
 Android 真机运行 HBuilder 调试基座后，可直接从 WebView 读取正文、图表和横向
 溢出数据，不需要安装额外浏览器驱动：
@@ -242,7 +276,7 @@ pnpm mini:open -- --pure-simulator --dev-server http://localhost:8851 --role tea
 WECHAT_MINIPROGRAM_APPID=wx5a9db47d4dcce103 pnpm mini:upload -- --dev-server https://aiedu-mp.intelledu.cn --entry /home --version <version> --desc "<release note>"
 ```
 
-微信端从 `main` 单独拉分支推进，继续复用 `native-app/` 的 uni-app 工程。
+微信端固定在 `wechat-miniprogram` 分支推进，继续复用 `native-app/` 的 uni-app 工程。
 `mini:build` 会生成 `native-app/dist/build/mp-weixin` 并写入三端启动路径矩阵；
 `mini:open` 通过微信开发者工具 CLI 打开模拟器。调试 web-view 时传入
 `--dev-server`、`--role` 和 `--entry`；未传时脚本会沿用上一次生成配置里的启动条件。
