@@ -53,6 +53,12 @@ test("account audit ignores SVG style text and expects rendered page content", (
     androidAudit,
     /if \(userInfo \|\| destination\)[\s\S]*location\.reload\(\)/
   );
+  assert.match(androidAudit, /\.course-detail-root/);
+  assert.match(androidAudit, /\.course-detail-root \.el-scrollbar__wrap/);
+  assert.match(androidAudit, /\.rightTreeWarp/);
+  assert.match(androidAudit, /\.ai-draggable-dialog/);
+  assert.match(androidAudit, /\.exam-do-container/);
+  assert.match(androidAudit, /\.exam-result-page/);
   assert.match(sharedRouteMatrix, /expect: \["课程信息", "AI总结"\]/);
   assert.match(sharedRouteMatrix, /expect: \["启明智教 · 2D 校园导览"\]/);
   assert.match(
