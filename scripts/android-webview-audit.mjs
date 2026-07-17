@@ -505,7 +505,9 @@ const auditExpression = `(() => {
     ".welcome-header",
     ".stats-overview",
     ".chart-card",
-    ".chart-card canvas"
+    ".chart-card canvas",
+    ".ai-float-button",
+    ".nav-mobile-container"
   ];
   const measured = {};
   for (const selector of selectors) {
@@ -608,6 +610,16 @@ const auditExpression = `(() => {
     document.querySelectorAll("iframe[src*='virtual-people/index.html']")
   );
   const floatingDigitalHuman = document.querySelector(".floating-human-2d");
+  const aiFloatButton = Array.from(
+    document.querySelectorAll(".ai-float-button")
+  ).find(visible);
+  const mobileDock = Array.from(
+    document.querySelectorAll(".nav-mobile-container")
+  ).find(visible);
+  const floatRect = aiFloatButton?.getBoundingClientRect();
+  const dockRect = mobileDock?.getBoundingClientRect();
+  const floatDockClearance =
+    floatRect && dockRect ? round(dockRect.top - floatRect.bottom) : null;
 
   let storedUserInfo = {};
   try {
@@ -679,6 +691,13 @@ const auditExpression = `(() => {
       floating2DVisible: Boolean(
         floatingDigitalHuman && visible(floatingDigitalHuman)
       )
+    },
+    floatingAssistantDock: {
+      floatButton: aiFloatButton ? describe(aiFloatButton) : null,
+      mobileDock: mobileDock ? describe(mobileDock) : null,
+      clearance: floatDockClearance,
+      overlaps:
+        floatDockClearance === null ? false : floatDockClearance < 8
     },
     touchTargets: {
       total: touchTargets.length,
@@ -958,6 +977,11 @@ try {
       !report.digitalHuman?.floating2DVisible)
   ) {
     failures.push("compact digital human 2D fallback is not visible");
+  }
+  if (report.floatingAssistantDock?.overlaps) {
+    failures.push(
+      `AI float button overlaps the mobile dock (clearance ${report.floatingAssistantDock.clearance}px)`
+    );
   }
   const textScope = accountMenuText
     ? String(report.account?.mainText || "")

@@ -6,6 +6,10 @@ const read = relativePath =>
   readFileSync(new URL(relativePath, import.meta.url), "utf8");
 
 const packageJson = JSON.parse(read("../../package.json"));
+const assistantFloatButton = read(
+  "../components/AiScreenCapture/FloatButton.vue"
+);
+const mobileNav = read("../layout/components/NavMobile.vue");
 const userProfile = read("account/components/UserProfile.vue");
 const accountShell = read("account/index.vue");
 const aiAppShell = read("account/ai-app/index.vue");
@@ -47,6 +51,26 @@ test("native device runs rebuild the embedded H5 before launch", () => {
     packageJson.scripts["native:run:ios"],
     /^pnpm native:prepare && /
   );
+});
+
+test("mobile AI assistant stays above the rendered bottom dock", () => {
+  assert.match(assistantFloatButton, /getVisibleBottomDock/);
+  assert.match(
+    assistantFloatButton,
+    /querySelectorAll<HTMLElement>\("\.nav-mobile-container"\)/
+  );
+  assert.match(
+    assistantFloatButton,
+    /window\.innerHeight - dockTop \+ MOBILE_DOCK_GAP/
+  );
+  assert.match(
+    assistantFloatButton,
+    /window\.innerHeight - size - bottomOffset/
+  );
+  assert.match(mobileNav, /\.nav-mobile-container\s*\{[\s\S]*position: fixed/);
+  assert.match(mobileNav, /bottom: 0/);
+  assert.match(androidAudit, /floatingAssistantDock/);
+  assert.match(androidAudit, /floatDockClearance < 8/);
 });
 
 test("standalone account, AI platform and course shells consume native insets", () => {
