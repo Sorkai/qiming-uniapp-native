@@ -55,8 +55,14 @@ test("student detail flows remove layered mobile gutters", () => {
   assert.match(studentPaperDetail, /@media \(width <= 768px\)/);
   assert.match(studentPaperDetail, /margin: 0 !important/);
   assert.match(studentPaperDetail, /\.paper-info-card,[\s\S]*padding: 8px/);
-  assert.match(homeworkDetail, /\.main-content[\s\S]*padding: 0 8px/);
-  assert.match(examDetail, /\.main-content[\s\S]*padding: 0 8px/);
+  assert.match(
+    homeworkDetail,
+    /\.main-content[\s\S]*max-width: calc\(100vw - 12px\) !important[\s\S]*padding: 0 6px[\s\S]*margin: 0 6px !important/
+  );
+  assert.match(
+    examDetail,
+    /\.main-content[\s\S]*max-width: calc\(100vw - 12px\) !important[\s\S]*padding: 0 6px[\s\S]*margin: 0 6px !important/
+  );
 });
 
 test("wrong exercise keeps phone content wide and reports unavailable APIs", () => {

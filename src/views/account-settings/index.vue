@@ -278,8 +278,13 @@ getMine().then(res => {
     z-index: 2100;
     width: min(84vw, 300px) !important;
     max-width: calc(100vw - 44px);
-    padding-top: max(8px, env(safe-area-inset-top, 0px));
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+    padding-top: calc(
+      8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+    );
+    padding-bottom: calc(
+      8px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+    );
     overflow-y: auto !important;
     background: var(--pure-theme-menu-bg) !important;
     border-right: 1px solid var(--pure-border-color);
@@ -290,6 +295,10 @@ getMine().then(res => {
 .account-settings-drawer-content {
   height: 100%;
   outline: none;
+}
+
+.account-settings-main {
+  padding: 8px;
 }
 
 .account-settings-backdrop {
@@ -353,11 +362,21 @@ getMine().then(res => {
 @media (width <= 768px) {
   .account-settings-shell {
     min-width: 0;
+    min-height: 100dvh;
   }
 
   .account-settings-main {
+    width: 100%;
     min-width: 0;
-    padding: 8px;
+    box-sizing: border-box;
+    padding-top: calc(
+      8px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+    );
+    padding-right: 8px;
+    padding-bottom: calc(
+      8px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+    );
+    padding-left: 8px;
   }
 
   .account-settings-menu-toggle {

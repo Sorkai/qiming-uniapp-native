@@ -374,7 +374,11 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .homework-detail-container {
   min-height: 100vh;
-  padding: 70px 0 30px;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: calc(70px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    0
+    calc(30px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
   background-color: #f5f7fa;
   transition: background-color 0.3s;
 
@@ -389,7 +393,11 @@ onBeforeUnmount(() => {
     right: 0;
     left: 0;
     z-index: 1000;
-    height: 60px;
+    height: calc(
+      60px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+    );
+    box-sizing: border-box;
+    padding-top: var(--pure-safe-area-top, env(safe-area-inset-top, 0));
     background-color: #fff;
     box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
     transition: background-color 0.3s;
@@ -404,7 +412,8 @@ onBeforeUnmount(() => {
       align-items: center;
       justify-content: space-between;
       max-width: 1200px;
-      height: 100%;
+      height: 60px;
+      box-sizing: border-box;
       padding: 0 32px;
       margin: 0 auto;
 
@@ -592,7 +601,13 @@ onBeforeUnmount(() => {
 
 @media (width <= 768px) {
   .homework-detail-container {
-    padding: 68px 0 16px;
+    padding: calc(
+        68px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      0
+      calc(
+        16px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+      );
     margin: 0 !important;
   }
 
@@ -611,8 +626,10 @@ onBeforeUnmount(() => {
 
   .homework-detail-container .main-content {
     width: 100%;
+    max-width: calc(100vw - 12px) !important;
     min-width: 0;
-    padding: 0 8px;
+    padding: 0 6px;
+    margin: 0 6px !important;
   }
 
   .homework-detail-container .main-content :deep(.el-card__header),

@@ -716,7 +716,11 @@ onMounted(async () => {
 /* ============== 容器 ============== */
 .practice-container {
   min-height: 100vh;
-  padding: 70px 0 30px;
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: calc(70px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)))
+    0
+    calc(30px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px)));
   background-color: transparent;
 }
 
@@ -736,7 +740,10 @@ onMounted(async () => {
   top: 0;
   right: 0;
   left: 0;
-  height: 60px;
+  z-index: 1000;
+  height: calc(60px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px)));
+  box-sizing: border-box;
+  padding-top: var(--pure-safe-area-top, env(safe-area-inset-top, 0));
   background: linear-gradient(135deg, #fff, #f8faff);
   border-bottom: 1px solid rgb(220 226 247 / 60%);
   box-shadow: 0 2px 12px rgb(151 180 247 / 12%);
@@ -753,7 +760,8 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   max-width: 1200px;
-  height: 100%;
+  height: 60px;
+  box-sizing: border-box;
   padding: 0 32px;
   margin: 0 auto;
 }
@@ -1451,8 +1459,18 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .practice-container {
     width: 100%;
-    padding: 68px 0 30px;
+    padding: calc(
+        68px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      0
+      calc(
+        30px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+      );
     margin: 0 !important;
+  }
+
+  .practice-container[data-embedded="true"] {
+    padding: 8px 0 0;
   }
 
   .practice-container .header .header-content {

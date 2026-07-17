@@ -1632,6 +1632,8 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .exam-do-container {
   min-height: 100vh;
+  min-height: 100dvh;
+  box-sizing: border-box;
   background: #f5f7fa;
   display: flex;
   flex-direction: column;
@@ -2151,8 +2153,12 @@ onBeforeUnmount(() => {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
-    padding: 10px max(8px, env(safe-area-inset-right, 0px)) 10px
+    padding: calc(
+        10px + var(--pure-safe-area-top, env(safe-area-inset-top, 0px))
+      )
+      max(8px, env(safe-area-inset-right, 0px)) 10px
       max(8px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
 
     .header-left {
       grid-column: 1 / -1;
@@ -2195,8 +2201,12 @@ onBeforeUnmount(() => {
     flex-direction: column;
     min-width: 0;
     gap: 8px;
-    padding: 8px max(8px, env(safe-area-inset-right, 0px)) 16px
+    padding: 8px max(8px, env(safe-area-inset-right, 0px))
+      calc(
+        16px + var(--pure-safe-area-bottom, env(safe-area-inset-bottom, 0px))
+      )
       max(8px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
   }
 
   .question-nav {
