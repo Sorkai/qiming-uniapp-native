@@ -96,22 +96,24 @@ watchEffect(() => {
     <div
       class="welcome-header mb-6 px-4 py-5 md:px-6 md:py-5 rounded-[24px] relative overflow-hidden flex flex-col lg:flex-row justify-between items-center text-slate-800 dark:text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:scale-[1.01]"
     >
-      <div class="z-10 text-center lg:text-left group w-full lg:w-auto">
+      <div
+        class="welcome-copy-block z-10 text-center lg:text-left group w-full lg:w-auto"
+      >
         <h1
-          class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight transition-transform duration-300 group-hover:translate-x-2 min-h-[60px] flex items-center justify-center lg:justify-start tracking-tight"
+          class="welcome-title text-3xl md:text-5xl font-extrabold mb-4 leading-tight transition-transform duration-300 group-hover:translate-x-2 min-h-[60px] flex items-center justify-center lg:justify-start tracking-tight"
         >
           {{ displayedText }}
           <span v-if="isTyping" class="cursor-blink ml-1">|</span>
           <span v-else class="wave ml-2">👋</span>
         </h1>
         <p
-          class="text-lg md:text-2xl font-medium leading-relaxed text-slate-600 dark:text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8 mx-auto lg:mx-0"
+          class="welcome-description text-lg md:text-2xl font-medium leading-relaxed text-slate-600 dark:text-blue-50 opacity-90 max-w-2xl transition-all duration-300 group-hover:opacity-100 mb-8 mx-auto lg:mx-0"
         >
           欢迎回到智慧教学平台。您的 AI
           助手已经为您准备好了今天的课程方案和学生进度报告。
         </p>
         <div
-          class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start items-center"
+          class="welcome-actions mt-8 flex flex-wrap gap-4 justify-center lg:justify-start items-center"
         >
           <el-button
             :color="isDark ? '#a5b4fc' : '#ffffff'"
@@ -121,7 +123,7 @@ watchEffect(() => {
             }"
             round
             size="large"
-            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
+            class="welcome-action font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
             @click="router.push('/course/teacherplan')"
           >
             <div class="flex items-center">
@@ -133,7 +135,7 @@ watchEffect(() => {
             :color="isDark ? '#a5b4fc' : '#ffffff'"
             round
             size="large"
-            class="font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
+            class="welcome-action font-bold text-lg px-8 transition-all duration-300 hover:scale-105 shadow-sm"
             :style="{
               color: isDark ? '#ffffff' : '#a5b4fc',
               border: isDark ? 'none' : '1px solid #e2e8f0'
@@ -179,15 +181,15 @@ watchEffect(() => {
     </div>
 
     <!-- Statistics Grid -->
-    <StatsOverview class="mb-8" />
+    <StatsOverview class="stats-overview mb-8" />
 
     <!-- 统计API图表部分 -->
-    <el-row :gutter="24" justify="space-around">
+    <el-row class="dashboard-chart-grid" :gutter="24" justify="space-around">
       <!-- 只有管理员才能看到这两个图表 -->
       <template v-if="isAdminUser">
         <re-col
           v-motion
-          class="mb-[24px]"
+          class="dashboard-chart-col mb-[24px]"
           :value="12"
           :md="12"
           :sm="24"
@@ -211,7 +213,7 @@ watchEffect(() => {
 
         <re-col
           v-motion
-          class="mb-[24px]"
+          class="dashboard-chart-col mb-[24px]"
           :value="12"
           :md="12"
           :sm="24"
@@ -237,7 +239,7 @@ watchEffect(() => {
       <re-col
         id="efficient-index-report"
         v-motion
-        class="mb-[24px]"
+        class="dashboard-chart-col mb-[24px]"
         :value="24"
         :md="10"
         :sm="24"
@@ -259,7 +261,14 @@ watchEffect(() => {
       </re-col>
 
       <!-- 所有用户(包括教师)都可以看到课程统计 -->
-      <re-col v-motion class="mb-[24px]" :value="24" :md="14" :sm="24" :xs="24">
+      <re-col
+        v-motion
+        class="dashboard-chart-col mb-[24px]"
+        :value="24"
+        :md="14"
+        :sm="24"
+        :xs="24"
+      >
         <el-card shadow="never" class="chart-card analysis-chart-card h-full">
           <template #header>
             <div class="flex items-center justify-between">
@@ -371,14 +380,75 @@ watchEffect(() => {
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 768px),
+  screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
   .welcome-container {
+    margin-right: max(8px, env(safe-area-inset-right, 0px));
+    margin-left: max(8px, env(safe-area-inset-left, 0px));
     padding-right: 0 !important;
     padding-left: 0 !important;
   }
 
+  .welcome-header {
+    padding: 16px 14px !important;
+    margin-bottom: 12px !important;
+    border-radius: 16px !important;
+    transform: none !important;
+  }
+
+  .welcome-copy-block {
+    min-width: 0;
+  }
+
+  .welcome-title {
+    min-height: 40px !important;
+    margin-bottom: 8px !important;
+    font-size: 26px !important;
+    line-height: 1.25 !important;
+    transform: none !important;
+  }
+
+  .welcome-description {
+    margin-bottom: 16px !important;
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+  }
+
+  .welcome-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px !important;
+    width: 100%;
+    margin-top: 0 !important;
+  }
+
+  :deep(.welcome-action.el-button) {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 10px !important;
+    margin-left: 0 !important;
+    font-size: 15px !important;
+    transform: none !important;
+  }
+
+  .stats-overview {
+    margin-bottom: 12px !important;
+  }
+
+  .dashboard-chart-grid {
+    margin-right: -4px !important;
+    margin-left: -4px !important;
+  }
+
+  .dashboard-chart-col {
+    padding-right: 4px !important;
+    padding-left: 4px !important;
+    margin-bottom: 12px !important;
+  }
+
   .chart-card {
-    border-radius: 16px;
+    border-radius: 12px;
 
     &:hover {
       box-shadow: none;
@@ -386,13 +456,63 @@ watchEffect(() => {
     }
 
     :deep(.el-card__header) {
-      padding: 16px 12px 12px;
+      padding: 14px 10px 10px;
+
+      .text-lg {
+        min-width: 0;
+        font-size: 16px;
+        line-height: 1.4;
+      }
     }
 
     :deep(.el-card__body) {
       min-width: 0;
-      padding: 10px 8px 16px;
+      padding: 8px 4px 12px;
     }
+  }
+
+  .analysis-chart-card {
+    :deep(.el-card__body) {
+      padding-top: 6px;
+    }
+  }
+}
+
+@media screen and (max-width: 340px) {
+  .welcome-container {
+    margin-right: max(6px, env(safe-area-inset-right, 0px));
+    margin-left: max(6px, env(safe-area-inset-left, 0px));
+  }
+
+  .welcome-title {
+    font-size: 24px !important;
+  }
+
+  :deep(.welcome-action.el-button) {
+    padding: 0 6px !important;
+    font-size: 14px !important;
+  }
+}
+
+@media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .welcome-header {
+    padding: 12px 16px !important;
+  }
+
+  .welcome-title {
+    min-height: 32px !important;
+    font-size: 24px !important;
+  }
+
+  .welcome-description {
+    margin-bottom: 10px !important;
+    font-size: 14px !important;
+  }
+
+  .welcome-actions {
+    max-width: 420px;
+    margin-right: auto !important;
+    margin-left: auto !important;
   }
 }
 

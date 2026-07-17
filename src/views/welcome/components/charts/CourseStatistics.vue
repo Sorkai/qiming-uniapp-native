@@ -982,7 +982,7 @@ onMounted(async () => {
                 </div>
                 <div class="analysis-brand-copy flex flex-col">
                   <span
-                    class="text-xl font-black bg-gradient-to-r from-blue-600 to-sky-600 bg-clip-text text-transparent uppercase tracking-wider text-glow"
+                    class="text-xl font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider"
                     >分析课程数据</span
                   >
                   <span
@@ -1199,11 +1199,19 @@ onMounted(async () => {
   --el-select-input-focus-border-color: #2563eb;
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 991px) {
   .analysis-toolbar {
-    gap: 12px !important;
-    padding: 12px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 10px !important;
     border-radius: 16px !important;
+  }
+
+  .analysis-toolbar-main {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
   }
 
   .analysis-toolbar-main,
@@ -1225,7 +1233,8 @@ onMounted(async () => {
 
   .analysis-actions {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 8px !important;
     align-self: stretch;
   }
 
@@ -1235,13 +1244,14 @@ onMounted(async () => {
   }
 
   .analysis-panel-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 12px !important;
     margin-top: 0;
   }
 
   .analysis-panel {
-    padding: 12px !important;
-    border-radius: 16px !important;
+    padding: 8px !important;
+    border-radius: 12px !important;
   }
 
   .analysis-panel-header {
@@ -1282,14 +1292,51 @@ onMounted(async () => {
   }
 
   :deep(.custom-radio-group .el-radio-button__inner) {
-    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 6px 8px;
     font-size: 12px;
     white-space: normal;
+  }
+
+  :deep(.custom-radio-group .el-radio-button) {
+    flex: 1 1 0;
+  }
+
+  :deep(.analysis-action-btn.el-button) {
+    min-width: 0;
+    min-height: 44px;
+    padding: 0 8px;
+    transform: none !important;
+  }
+
+  :deep(.analysis-exam-select .el-input__wrapper),
+  :deep(.analysis-toolbar-select .el-input__wrapper) {
+    min-height: 44px;
   }
 
   :deep(.pure-pagination) {
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  :deep(.pure-pagination .btn-prev),
+  :deep(.pure-pagination .btn-next),
+  :deep(.pure-pagination .number),
+  :deep(.pure-pagination .more) {
+    min-width: 44px;
+    height: 44px;
+    margin: 0;
+    line-height: 44px;
+  }
+}
+
+@media screen and (max-width: 359px) {
+  :deep(.pure-pagination .number:not(.is-active)),
+  :deep(.pure-pagination .more) {
+    display: none;
   }
 }
 </style>

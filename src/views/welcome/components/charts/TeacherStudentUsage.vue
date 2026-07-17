@@ -2,6 +2,7 @@
 import { onMounted, ref, computed, watch } from "vue";
 import { useDark, useECharts, useResizeObserver } from "@pureadmin/utils";
 import { getTeacherUsage, getStudentUsage } from "@/api/statistics";
+import { useAppStoreHook } from "@/store/modules/app";
 
 defineOptions({
   name: "TeacherStudentUsage"
@@ -10,6 +11,8 @@ defineOptions({
 const loading = ref(true);
 const teacherData = ref<{ date: string; usageNum: number }[]>([]);
 const studentData = ref<{ date: string; usageNum: number }[]>([]);
+const appStore = useAppStoreHook();
+const isMobile = computed(() => appStore.getDevice === "mobile");
 
 const { isDark } = useDark();
 const theme = computed(() => (isDark.value ? "dark" : "light"));
@@ -79,16 +82,17 @@ const renderChart = () => {
       data: ["教研活动", "学生学习"],
       bottom: 0,
       icon: "circle",
-      itemGap: 24,
+      itemGap: isMobile.value ? 12 : 24,
       textStyle: {
         color: isDark.value ? "#fafafa" : "#4b5563"
       }
     },
     grid: {
-      top: 30,
-      left: 40,
-      right: 20,
-      bottom: 50
+      top: isMobile.value ? 24 : 30,
+      left: isMobile.value ? 8 : 40,
+      right: isMobile.value ? 8 : 20,
+      bottom: isMobile.value ? 64 : 50,
+      containLabel: isMobile.value
     },
     xAxis: [
       {
@@ -178,7 +182,7 @@ const renderChart = () => {
 };
 
 watch(
-  () => [teacherData.value, studentData.value],
+  () => [teacherData.value, studentData.value, isMobile.value],
   () => {
     renderChart();
   },
@@ -207,8 +211,21 @@ onMounted(() => {
   <div class="w-full">
     <el-skeleton :loading="loading" animated :rows="6">
       <template #default>
-        <div ref="chartRef" style="width: 100%; height: 350px" />
+        <div
+          ref="chartRef"
+          class="usage-chart"
+          style="width: 100%; height: 350px"
+        />
       </template>
     </el-skeleton>
   </div>
 </template>
+
+<style scoped>
+@media screen and (max-width: 768px),
+  screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .usage-chart {
+    height: 320px !important;
+  }
+}
+</style>

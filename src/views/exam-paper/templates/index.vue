@@ -971,4 +971,109 @@ $primary-gradient: linear-gradient(135deg, #4a7fc8 0%, #739cf9 100%);
     border-top: 1px solid #ebeef5;
   }
 }
+
+@media (width <= 768px) {
+  .templates-page {
+    min-width: 0;
+    padding: 8px;
+    margin: 0 !important;
+    overflow-x: visible;
+  }
+
+  .templates-page .page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+  }
+
+  .templates-page .page-header .header-content {
+    align-items: flex-start;
+    min-width: 0;
+  }
+
+  .templates-page .page-header .header-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .templates-page .page-header .page-title {
+    font-size: 20px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .templates-page .page-header .page-desc {
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .templates-page .page-header .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .templates-page .page-header .header-actions :deep(.el-button) {
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+  }
+
+  .templates-page .templates-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .templates-page .template-card {
+    min-width: 0;
+  }
+
+  .templates-page .template-card .template-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 8px;
+    margin-top: 8px;
+  }
+
+  .templates-page .template-card .template-actions :deep(.el-button) {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    white-space: normal;
+  }
+
+  .templates-page .preview-summary,
+  .templates-page .preview-header .group-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .templates-page :deep(.el-dialog) {
+    width: calc(100vw - 16px) !important;
+    max-width: 680px;
+  }
+
+  .templates-page :deep(.el-dialog__body) {
+    padding: 12px;
+  }
+}
+
+@media (width <= 380px) {
+  .templates-page {
+    padding: 6px;
+  }
+
+  .templates-page .page-header {
+    padding: 8px;
+  }
+
+  .templates-page .template-card .template-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 </style>

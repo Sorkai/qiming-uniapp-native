@@ -589,4 +589,128 @@ onBeforeUnmount(() => {
     text-align: center;
   }
 }
+
+@media (width <= 768px) {
+  .homework-detail-container {
+    padding: 68px 0 16px;
+    margin: 0 !important;
+  }
+
+  .homework-detail-container .header .header-content {
+    padding: 0 8px;
+  }
+
+  .homework-detail-container .header .header-content .back-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .homework-detail-container .header .header-content .placeholder {
+    min-width: 44px;
+  }
+
+  .homework-detail-container .main-content {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .homework-detail-container .main-content :deep(.el-card__header),
+  .homework-detail-container .main-content :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .homework-detail-container .main-content .card-header .meta-info {
+    gap: 6px 10px;
+    font-size: 13px;
+  }
+
+  .homework-detail-container .main-content .questions-container .description,
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    min-width: 0;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow-wrap: anywhere;
+  }
+
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-type,
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-score {
+    margin-left: 0;
+  }
+
+  .homework-detail-container .question-content {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-wrap: anywhere;
+  }
+
+  .homework-detail-container :deep(.el-radio-group),
+  .homework-detail-container :deep(.el-checkbox-group) {
+    display: grid;
+    gap: 8px;
+  }
+
+  .homework-detail-container :deep(.el-radio),
+  .homework-detail-container :deep(.el-checkbox) {
+    min-height: 44px;
+    height: auto;
+    margin-right: 0;
+    white-space: normal;
+  }
+
+  .homework-detail-container .submit-container :deep(.el-button) {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .homework-detail-container :deep(.el-dialog) {
+    width: calc(100vw - 16px) !important;
+    max-width: 420px;
+  }
+}
+
+@media (width <= 380px) {
+  .homework-detail-container .header .header-content,
+  .homework-detail-container .main-content {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .homework-detail-container .main-content :deep(.el-card__header),
+  .homework-detail-container .main-content :deep(.el-card__body),
+  .homework-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    padding: 6px;
+  }
+}
 </style>

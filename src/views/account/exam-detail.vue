@@ -880,4 +880,146 @@ onBeforeUnmount(() => {
     box-shadow: 0 -2px 8px rgb(0 0 0 / 30%);
   }
 }
+
+@media (width <= 768px) {
+  .exam-detail-container {
+    padding: 68px 0 84px;
+    margin: 0 !important;
+  }
+
+  .exam-detail-container .header .header-content {
+    gap: 6px;
+    padding: 0 8px;
+  }
+
+  .exam-detail-container .header .header-content .back-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .exam-detail-container .header .header-content .title {
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .exam-detail-container .header .header-content .timer {
+    min-width: 0;
+    max-width: 132px;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .exam-detail-container .main-content {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .exam-detail-container .main-content :deep(.el-card__header),
+  .exam-detail-container .main-content :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .exam-detail-container .main-content .card-header .meta-info {
+    gap: 6px 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+
+  .exam-detail-container .main-content .questions-container .description,
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    min-width: 0;
+    padding: 8px;
+    margin-bottom: 12px;
+  }
+
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow-wrap: anywhere;
+  }
+
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-type,
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item
+    .question-title
+    .question-score {
+    margin-left: 0;
+  }
+
+  .exam-detail-container .question-content {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-wrap: anywhere;
+  }
+
+  .exam-detail-container :deep(.el-radio-group),
+  .exam-detail-container :deep(.el-checkbox-group) {
+    display: grid;
+    gap: 8px;
+  }
+
+  .exam-detail-container :deep(.el-radio),
+  .exam-detail-container :deep(.el-checkbox) {
+    min-height: 44px;
+    height: auto;
+    margin-right: 0;
+    white-space: normal;
+  }
+
+  .exam-detail-container .start-exam-btn :deep(.el-button),
+  .exam-detail-container .footer-actions :deep(.el-button) {
+    min-height: 44px;
+  }
+
+  .exam-detail-container .footer-actions {
+    gap: 8px;
+    height: auto;
+    min-height: 60px;
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom, 0px));
+    flex-wrap: wrap;
+  }
+
+  .exam-detail-container :deep(.el-dialog) {
+    width: calc(100vw - 16px) !important;
+    max-width: 420px;
+  }
+}
+
+@media (width <= 380px) {
+  .exam-detail-container .header .header-content,
+  .exam-detail-container .main-content {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .exam-detail-container .main-content :deep(.el-card__header),
+  .exam-detail-container .main-content :deep(.el-card__body),
+  .exam-detail-container
+    .main-content
+    .questions-container
+    .questions-list
+    .question-item {
+    padding: 6px;
+  }
+}
 </style>

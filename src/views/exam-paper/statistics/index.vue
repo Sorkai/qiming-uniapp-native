@@ -1172,4 +1172,94 @@ $radius-xl: 20px;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+@media (width <= 768px) {
+  .statistics-container {
+    min-width: 0;
+    padding: 8px;
+    margin: 0 !important;
+    overflow-x: visible;
+  }
+
+  .statistics-container .page-header {
+    min-width: 0;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+  }
+
+  .statistics-container .page-header .header-actions :deep(.el-input__wrapper),
+  .statistics-container .page-header .header-actions :deep(.el-select__wrapper),
+  .statistics-container .page-header .header-actions :deep(.el-button) {
+    min-height: 44px;
+  }
+
+  .statistics-container .stats-section,
+  .statistics-container .charts-row,
+  .statistics-container .detail-row {
+    min-width: 0;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .statistics-container .stats-section > *,
+  .statistics-container .charts-row > *,
+  .statistics-container .detail-row > * {
+    min-width: 0;
+  }
+
+  .statistics-container .stats-section .stat-card {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .statistics-container .stats-section .stat-card:hover {
+    transform: none;
+  }
+
+  .statistics-container .chart-card,
+  .statistics-container .detail-card {
+    min-width: 0;
+    padding: 8px;
+    border-radius: 10px;
+  }
+
+  .statistics-container .chart-card .card-header,
+  .statistics-container .detail-card .card-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .statistics-container .distribution-item,
+  .statistics-container .trend-item {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .statistics-container .distribution-meta {
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .statistics-container .count {
+    text-align: left;
+  }
+}
+
+@media (width <= 380px) {
+  .statistics-container {
+    padding: 6px;
+  }
+
+  .statistics-container .page-header,
+  .statistics-container .stats-section .stat-card,
+  .statistics-container .chart-card,
+  .statistics-container .detail-card {
+    padding: 6px;
+  }
+}
 </style>

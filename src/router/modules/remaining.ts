@@ -68,7 +68,7 @@ export default [
       title: "账号管理",
       showLink: false,
       rank: 105,
-      roles: ["admin", "teacher", "student"]
+      roles: ["student"]
     }
   },
   {

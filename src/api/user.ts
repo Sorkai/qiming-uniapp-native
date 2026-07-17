@@ -139,26 +139,28 @@ export type StsUploadCompleteResult = {
   };
 };
 
-export type FileListResult = {
+export type FileResource = {
+  fileId: number;
+  fileUrl: string;
+  fileName: string;
+  extension: string;
+  size: number;
+  resourceType: string;
+};
+
+export type FileListPayload = {
   total: number;
-  fileList: Array<{
-    fileId: number;
-    fileUrl: string;
-    fileName: string;
-    extension: string;
-    size: number;
-    resourceType: string;
-  }>;
+  fileList: FileResource[];
+};
+
+export type FileListResult = {
+  code?: number;
+  msg?: string;
+  total?: number;
+  fileList?: FileResource[];
   data?: {
     total?: number;
-    fileList?: Array<{
-      fileId: number;
-      fileUrl: string;
-      fileName: string;
-      extension: string;
-      size: number;
-      resourceType: string;
-    }>;
+    fileList?: FileResource[];
   };
 };
 
