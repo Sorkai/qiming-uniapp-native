@@ -136,6 +136,10 @@ test("Android route runner resolves real student deep-link fixtures", () => {
 test("Android dynamic fixture gaps remain explicit partial skips", () => {
   const androidRunner = read("../../scripts/android-real-device-audit.mjs");
   assert.match(androidRunner, /--fixture-check/);
+  assert.match(androidRunner, /--allow-exam-start/);
+  assert.match(androidRunner, /requiresWriteOptIn: true/);
+  assert.match(androidRunner, /getRouteFixtureUnavailable/);
+  assert.match(androidRunner, /fixturePolicyAssertions: 3/);
   assert.match(androidRunner, /status: "skipped"/);
   assert.match(androidRunner, /\? "resolved" : "partial"/);
   assert.match(androidRunner, /student-paper-api-unavailable/);

@@ -15,7 +15,8 @@ function printUsage() {
     `Usage: node scripts/android-real-device-audit.mjs [options]\n\nOptions:\n  --role <student|teacher|admin>  Audit one role from the shared matrix\n  --route, --only <name>          Audit one named route\n  --from-route <name>             Resume inclusively from one matrix route\n  --serial <adb-serial>            Target one Android device\n  --api-origin <url>              API origin used for real login/fixtures\n  --fixture-check                 Resolve real API fixtures without touching a device\n  --wait-ms <ms>                  Per-route navigation wait\n  --min-content-ratio <ratio>     Minimum main-content/viewport width ratio\n  --min-usable-content-ratio <r>  Minimum width after route-root padding\n  --max-routes <count>            Limit routes after all other filters\n  --out-dir <path>                Artifact output directory\n  --list                          List selected routes and exit\n  --list-json                     Print selected route definitions as JSON\n  --self-test                     Validate the shared matrix without a device\n  -h, --help                      Show this help and exit\n`
   );
   process.stdout.write(
-    "  --package <application-id>       Android package owning the WebView\n"
+    "  --allow-exam-start              Allow exam-do to start or resume a real session\n" +
+      "  --package <application-id>       Android package owning the WebView\n"
   );
 }
 
@@ -48,6 +49,9 @@ const maxRoutes = Number(readArg("--max-routes", "0"));
 const listOnly = argv.includes("--list");
 const listJson = argv.includes("--list-json");
 const fixtureCheck = argv.includes("--fixture-check");
+const allowExamStart =
+  argv.includes("--allow-exam-start") ||
+  process.env.QIMING_AUDIT_ALLOW_EXAM_START === "1";
 const selfTest = argv.includes("--self-test");
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const outDir = resolve(
@@ -81,6 +85,14 @@ const androidDynamicRoutes = [
     expect: ["总题数"],
     fixtureKind: "course-exam",
     requiredRequestPath: "/edu/frontend/v1/exam/detail"
+  },
+  {
+    role: "student",
+    name: "student-paper-detail",
+    entry: "/student-exam-center/detail/{paperId}",
+    expect: ["考试时长"],
+    fixtureKind: "paper-detail",
+    requiredRequestPath: "/edu/frontend/v1/paper/detail/{paperId}"
   },
   {
     role: "student",
@@ -301,6 +313,22 @@ function unavailableFixture(reason, evidence) {
   return { reason, evidence };
 }
 
+function getRouteFixtureUnavailable(
+  route,
+  fixtureResult,
+  { allowWriteRoutes = false } = {}
+) {
+  if (fixtureResult?.unavailable) return fixtureResult.unavailable;
+  if (!route.requiresWriteOptIn || allowWriteRoutes) return null;
+  return unavailableFixture("exam-start-requires-explicit-opt-in", {
+    endpoint: "/edu/frontend/v1/exam/start",
+    httpStatus: null,
+    businessCode: null,
+    message:
+      "rerun with --allow-exam-start to start or resume a real exam session"
+  });
+}
+
 async function resolveStudentRouteFixtures(selectedRoutes) {
   const fixtureRoutes = selectedRoutes.filter(
     route =>
@@ -424,7 +452,7 @@ async function resolveStudentRouteFixtures(selectedRoutes) {
   }
 
   const paperRoutes = fixtureRoutes.filter(route =>
-    ["paper-list", "exam-do", "exam-result"].includes(
+    ["paper-list", "paper-detail", "exam-do", "exam-result"].includes(
       route.fixtureKind
     )
   );
@@ -648,6 +676,29 @@ if (selfTest) {
       );
     }
   }
+  const writeRoute = { requiresWriteOptIn: true };
+  const backendGap = unavailableFixture("backend-gap", { httpStatus: 404 });
+  if (
+    getRouteFixtureUnavailable(writeRoute, { unavailable: backendGap })
+      ?.reason !== "backend-gap"
+  ) {
+    failures.push("backend fixture gap did not take precedence");
+  }
+  if (
+    getRouteFixtureUnavailable(writeRoute, { fixtures: { paperId: 101 } })
+      ?.reason !== "exam-start-requires-explicit-opt-in"
+  ) {
+    failures.push("exam start route did not require explicit opt-in");
+  }
+  if (
+    getRouteFixtureUnavailable(
+      writeRoute,
+      { fixtures: { paperId: 101 } },
+      { allowWriteRoutes: true }
+    ) !== null
+  ) {
+    failures.push("explicit exam start opt-in did not release the route");
+  }
   for (const route of matrixRoutes.filter(item => !item.expectedForbidden)) {
     const visibleExpectations = [
       ...(route.expect || []),
@@ -774,6 +825,7 @@ if (selfTest) {
         courseFixtures: matrixRoutes.filter(route => route.requiresCourse)
           .length,
         dynamicFixtures: androidDynamicRoutes.length,
+        fixturePolicyAssertions: 3,
         requiredResponses: matrixRoutes.filter(
           route => route.requiredRequestPath
         ).length,
@@ -806,7 +858,9 @@ if (fixtureCheck) {
     .filter(route => route.requiresCourse || route.fixtureKind)
     .map(route => {
       const fixtureResult = routeFixtures.get(route.name);
-      const unavailable = fixtureResult?.unavailable;
+      const unavailable = getRouteFixtureUnavailable(route, fixtureResult, {
+        allowWriteRoutes: allowExamStart
+      });
       if (unavailable) {
         return {
           role: route.role,
@@ -864,7 +918,9 @@ let terminalInterruption = null;
 
 for (const [routeIndex, route] of routes.entries()) {
   const fixtureResult = routeFixtures.get(route.name);
-  const fixtureUnavailable = fixtureResult?.unavailable;
+  const fixtureUnavailable = getRouteFixtureUnavailable(route, fixtureResult, {
+    allowWriteRoutes: allowExamStart
+  });
   if (fixtureUnavailable) {
     const skipped = {
       role: route.role,
