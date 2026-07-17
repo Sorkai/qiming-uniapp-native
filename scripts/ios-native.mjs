@@ -1176,7 +1176,7 @@ function provisioningCertificateHashes(plistPath) {
     ])
   );
   if (!Number.isInteger(count) || count < 1) return [];
-  const hashes = [];
+  const certificates = [];
   for (let index = 0; index < count; index += 1) {
     const base64 = captureOptional("plutil", [
       "-extract",
@@ -1187,14 +1187,18 @@ function provisioningCertificateHashes(plistPath) {
       plistPath
     ]);
     if (!base64) return [];
-    hashes.push(
-      createHash("sha1")
-        .update(Buffer.from(base64, "base64"))
-        .digest("hex")
-        .toUpperCase()
-    );
+    certificates.push(base64);
   }
-  return hashes;
+  return certificateHashesFromBase64(certificates);
+}
+
+function certificateHashesFromBase64(certificates) {
+  return certificates.map(base64 =>
+    createHash("sha1")
+      .update(Buffer.from(base64, "base64"))
+      .digest("hex")
+      .toUpperCase()
+  );
 }
 
 function prepareSigningEntitlements(profile, entitlementsPath) {
@@ -1220,11 +1224,7 @@ function prepareSigningEntitlements(profile, entitlementsPath) {
     entitlementsPath
   ]);
   if (groupsRaw) {
-    const groups = JSON.parse(groupsRaw).map(group =>
-      String(group).endsWith(".*")
-        ? expandProfileAppId(String(group), bundleId)
-        : group
-    );
+    const groups = expandKeychainAccessGroups(JSON.parse(groupsRaw), bundleId);
     run("plutil", [
       "-replace",
       "keychain-access-groups",
@@ -1240,6 +1240,14 @@ function prepareSigningEntitlements(profile, entitlementsPath) {
       `Signing entitlements contain ${actualAppId || "no application-identifier"}, expected ${expandedAppId}.`
     );
   }
+}
+
+function expandKeychainAccessGroups(groups, expectedBundleId) {
+  return groups.map(group =>
+    String(group).endsWith(".*")
+      ? expandProfileAppId(String(group), expectedBundleId)
+      : group
+  );
 }
 
 function expandProfileAppId(applicationIdentifier, expectedBundleId) {
@@ -1418,6 +1426,10 @@ function selfTest() {
     `TEAM123456.${bundleId}`
   );
   assert.equal(
+    expandProfileAppId(`TEAM123456.${bundleId}`, bundleId),
+    `TEAM123456.${bundleId}`
+  );
+  assert.equal(
     parseSigningIdentities(
       '  1) 0123456789ABCDEF0123456789ABCDEF01234567 "Apple Distribution: Example (TEAM123456)"\n     1 valid identities found'
     )[0].teamId,
@@ -1426,56 +1438,73 @@ function selfTest() {
   assert.deepEqual(parseFlags(["--", "--target=simulator"]), {
     target: "simulator"
   });
-  const entitlementsPath = join(artifactRoot, "self-test-entitlements.plist");
-  const profilePath = join(artifactRoot, "self-test-profile.plist");
-  mkdirSync(artifactRoot, { recursive: true });
-  try {
-    prepareSigningEntitlements(
-      {
-        applicationIdentifier: "TEAM123456.cn.intelledu.*",
-        entitlementsXml: `<?xml version="1.0" encoding="UTF-8"?>
+  assert.deepEqual(
+    expandKeychainAccessGroups(
+      ["TEAM123456.cn.intelledu.*", "TEAM123456.shared"],
+      bundleId
+    ),
+    [`TEAM123456.${bundleId}`, "TEAM123456.shared"]
+  );
+  assert.deepEqual(certificateHashesFromBase64(["AQID"]), [
+    "7037807198C22A7D2B0807371D763779A84FDFCF"
+  ]);
+
+  if (process.platform === "darwin") {
+    const entitlementsPath = join(artifactRoot, "self-test-entitlements.plist");
+    const profilePath = join(artifactRoot, "self-test-profile.plist");
+    mkdirSync(artifactRoot, { recursive: true });
+    try {
+      prepareSigningEntitlements(
+        {
+          applicationIdentifier: "TEAM123456.cn.intelledu.*",
+          entitlementsXml: `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>application-identifier</key><string>TEAM123456.cn.intelledu.*</string>
 <key>keychain-access-groups</key><array><string>TEAM123456.cn.intelledu.*</string></array>
 </dict></plist>`
-      },
-      entitlementsPath
-    );
-    assert.equal(
-      plistValue(entitlementsPath, "application-identifier"),
-      `TEAM123456.${bundleId}`
-    );
-    assert.deepEqual(
-      JSON.parse(
-        capture("plutil", [
-          "-extract",
-          "keychain-access-groups",
-          "json",
-          "-o",
-          "-",
-          entitlementsPath
-        ])
-      ),
-      [`TEAM123456.${bundleId}`]
-    );
-    writeFileSync(
-      profilePath,
-      `<?xml version="1.0" encoding="UTF-8"?>
+        },
+        entitlementsPath
+      );
+      assert.equal(
+        plistValue(entitlementsPath, "application-identifier"),
+        `TEAM123456.${bundleId}`
+      );
+      assert.deepEqual(
+        JSON.parse(
+          capture("plutil", [
+            "-extract",
+            "keychain-access-groups",
+            "json",
+            "-o",
+            "-",
+            entitlementsPath
+          ])
+        ),
+        [`TEAM123456.${bundleId}`]
+      );
+      writeFileSync(
+        profilePath,
+        `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>DeveloperCertificates</key><array><data>AQID</data></array>
 </dict></plist>`,
-      "utf8"
-    );
-    assert.deepEqual(provisioningCertificateHashes(profilePath), [
-      "7037807198C22A7D2B0807371D763779A84FDFCF"
-    ]);
-  } finally {
-    rmSync(entitlementsPath, { force: true });
-    rmSync(profilePath, { force: true });
+        "utf8"
+      );
+      assert.deepEqual(provisioningCertificateHashes(profilePath), [
+        "7037807198C22A7D2B0807371D763779A84FDFCF"
+      ]);
+    } finally {
+      rmSync(entitlementsPath, { force: true });
+      rmSync(profilePath, { force: true });
+    }
   }
-  console.log("iOS native helper self-test OK: 14 assertions");
+  console.log(
+    `iOS native helper self-test OK: 14 portable assertions; Apple plist integration ${
+      process.platform === "darwin" ? "passed" : "skipped on non-macOS"
+    }`
+  );
 }
 
 function parseFlags(values) {
