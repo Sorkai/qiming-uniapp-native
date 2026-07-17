@@ -135,6 +135,32 @@ Android App-Plus H5/容器资源和微信小程序产物。发生冲突、工作
 node scripts/sync-web-upstream.mjs --push --publish-branches main,wechat-miniprogram
 ```
 
+Android 真机运行 HBuilder 调试基座后，可直接从 WebView 读取正文、图表和横向
+溢出数据，不需要安装额外浏览器驱动：
+
+```bash
+pnpm native:audit:android
+node scripts/android-webview-audit.mjs --strict \
+  --out artifacts/android/webview-audit.json
+node scripts/android-webview-audit.mjs --strict \
+  --role teacher --entry /welcome/index --expect-text 教师 \
+  --out artifacts/android/teacher-welcome.json
+pnpm native:audit:android:all
+pnpm native:audit:android:self-test
+```
+
+脚本默认审计当前 `hybrid/html/index.html` 页面，并在文档横向溢出、正文可用宽度
+低于视口 88% 或可见图表画布为空时失败。可用 `--url-pattern`、`--serial` 和
+`--min-content-ratio` 针对多设备或特殊页面调整验收条件。`--role` 会使用真实
+三角色账号登录并重新灌入 HBuilder WebView 会话；配合 `--entry`、
+`--expect-text` 可以对指定业务路由做真实权限与页面校验。
+`native:audit:android:all` 复用微信真实会话审计的同一套路由矩阵，按学生、教师、
+管理员顺序在已连接三星真机上逐页检查角色、正文宽度、横向溢出、可见图表和关键
+文案，并把每页报告与汇总写入 `artifacts/android/real-device-audit-*`。
+`native:audit:android:self-test` 不连接设备，会校验共享路由矩阵、动态课程 ID 替换、
+账户菜单场景、三角色云盘接口证据和必需接口业务码解析。
+微信端可运行 `pnpm mini:real-audit:self-test` 做同样的离线矩阵与业务码检查。
+
 ## 技术栈与依赖
 
 - **前端框架:** UniApp (Vue 3 语法 / 组合式 API)
@@ -151,7 +177,10 @@ node scripts/sync-web-upstream.mjs --push --publish-branches main,wechat-minipro
 - 安装 [HBuilderX](https://www.dcloud.io/hbuilderx.html) 开发者工具
 - 微信小程序开发需安装微信开发者工具，并在“设置 -> 安全设置”中开启服务端口
 - 准备真实 Android 物理测试设备或 Android 模拟器（需开启“开发者模式”和“USB 调试”）；当前仓库不是 Gradle/Kotlin 工程，初期不要求安装完整 Android Studio
-- iOS 开发需在 macOS 上安装 Xcode；Simulator 包可使用 Xcode 命令行工具验证，真机/TestFlight 还需要 Apple Distribution 证书和 `cn.intelledu.qiming` provisioning profile
+- iOS Simulator 与真机构建都必须在 macOS 上安装并选择完整 Xcode；单独的
+  Command Line Tools 只能做 Swift 语法等静态检查，不能提供 iPhone SDK 或
+  `simctl`。真机/TestFlight 还需要 Apple Distribution 证书和
+  `cn.intelledu.qiming` provisioning profile
 
 ### 2. 克隆项目代码
 
