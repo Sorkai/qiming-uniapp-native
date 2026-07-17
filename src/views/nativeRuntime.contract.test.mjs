@@ -21,6 +21,12 @@ const mainRuntime = read("../main.ts");
 const globalStyles = read("../style/index.scss");
 const nativeSync = read("../../scripts/sync-app-h5.mjs");
 const wechatMiniProgram = read("../../scripts/wechat-miniprogram.mjs");
+const platformResourcePreview = read(
+  "../components/PlatformResourcePreview/resource-preview.ts"
+);
+const edgeOneBuild = read("../../scripts/build-edgeone-wechat-h5.mjs");
+const edgeFileProxy = read("../../edge-functions/mindmap-file/[[default]].js");
+const viteConfig = read("../../vite.config.ts");
 
 test("Android native status bar keeps an extra top clearance", () => {
   assert.match(mainRuntime, /isAndroidNative \? 6 : 0/);
@@ -59,6 +65,27 @@ test("WeChat bootstrap installs the nested uni-app outside the root workspace", 
     wechatMiniProgram,
     /\[\s*"--ignore-workspace",\s*"--dir",\s*"native-app",\s*"install",\s*"--frozen-lockfile"\s*\]/
   );
+});
+
+test("mobile production resource previews use the fixed EdgeOne file proxy", () => {
+  assert.match(
+    platformResourcePreview,
+    /VITE_PLATFORM_FILE_PROXY_ORIGIN[\s\S]*platformFileProxyPrefix/
+  );
+  assert.match(
+    viteConfig,
+    /mode === "app" \|\| isEdgeOneWechatH5[\s\S]*aiedu-mp\.intelledu\.cn/
+  );
+  assert.match(edgeOneBuild, /cpSync\(edgeFunctionsDir[\s\S]*edge-functions/);
+  assert.match(
+    edgeFileProxy,
+    /const upstreamOrigin = "https:\/\/aiedu-file\.intelledu\.cn"/
+  );
+  assert.match(
+    edgeFileProxy,
+    /allowedMethods = new Set\(\["GET", "HEAD", "OPTIONS"\]\)/
+  );
+  assert.match(edgeFileProxy, /redirectUrl\.origin !== upstreamOrigin/);
 });
 
 test("WeChat DevTools smoke closes only its existing build before launch", () => {
@@ -158,7 +185,10 @@ test("account audit ignores SVG style text and expects rendered page content", (
   assert.match(androidAudit, /\.ai-draggable-dialog/);
   assert.match(androidAudit, /\.exam-do-container/);
   assert.match(androidAudit, /\.exam-result-page/);
-  assert.match(sharedRouteMatrix, /expect: \["课程信息", "AI总结"\]/);
+  assert.match(
+    sharedRouteMatrix,
+    /name: "student-account-home"[\s\S]*readyExpect: \["课程信息", "AI总结"\][\s\S]*selector: "\.quick-access-card\.course-access"[\s\S]*expect: \["我的课程"\][\s\S]*afterActionAccountMenuText: "课程"/
+  );
   assert.match(sharedRouteMatrix, /expect: \["启明智教 · 2D 校园导览"\]/);
   assert.match(
     sharedRouteMatrix,

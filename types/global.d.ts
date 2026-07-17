@@ -75,6 +75,7 @@ declare global {
     VITE_API_URL: string;
     VITE_PROXY_TARGET: string;
     VITE_MINDMAP_FILE_PROXY_TARGET: string;
+    VITE_PLATFORM_FILE_PROXY_ORIGIN: string;
     VITE_MOCK_SCOPE: "all" | "exam-paper-only" | string;
   }
 

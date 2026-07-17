@@ -18,6 +18,7 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     VITE_API_URL,
     VITE_PROXY_TARGET,
     VITE_MINDMAP_FILE_PROXY_TARGET,
+    VITE_PLATFORM_FILE_PROXY_ORIGIN,
     VITE_MOCK_SCOPE
   } = wrapperEnv(loadEnv(mode, root));
   const isEdgeOneWechatH5 = process.env.QIMING_EDGEONE_WECHAT_H5 === "1";
@@ -25,6 +26,11 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     mode === "app" && !VITE_API_URL ? VITE_PROXY_TARGET : VITE_API_URL;
   const resolvedPublicPath =
     mode === "app" ? VITE_PUBLIC_PATH || "./" : VITE_PUBLIC_PATH;
+  const resolvedPlatformFileProxyOrigin =
+    VITE_PLATFORM_FILE_PROXY_ORIGIN ||
+    (mode === "app" || isEdgeOneWechatH5
+      ? "https://aiedu-mp.intelledu.cn"
+      : "");
   return {
     base: resolvedPublicPath,
     root,
@@ -116,6 +122,12 @@ export default ({ mode, command }: ConfigEnv): UserConfigExport => {
     },
     define: {
       "import.meta.env.VITE_API_URL": JSON.stringify(resolvedApiUrl),
+      "import.meta.env.VITE_MINDMAP_FILE_PROXY_TARGET": JSON.stringify(
+        VITE_MINDMAP_FILE_PROXY_TARGET
+      ),
+      "import.meta.env.VITE_PLATFORM_FILE_PROXY_ORIGIN": JSON.stringify(
+        resolvedPlatformFileProxyOrigin
+      ),
       __INTLIFY_PROD_DEVTOOLS__: false,
       __APP_INFO__: JSON.stringify(__APP_INFO__)
     }

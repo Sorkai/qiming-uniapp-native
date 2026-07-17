@@ -68,15 +68,13 @@ const platformFileProxyPrefix = "/mindmap-file";
 const platformFileProxyTarget = clean(
   import.meta.env.VITE_MINDMAP_FILE_PROXY_TARGET
 ).replace(/\/$/, "");
+const platformFileProxyOrigin = clean(
+  import.meta.env.VITE_PLATFORM_FILE_PROXY_ORIGIN
+).replace(/\/$/, "");
 
 export function normalizePlatformResourceFetchUrl(url: string) {
   const source = clean(url);
-  if (
-    !source ||
-    !import.meta.env.DEV ||
-    !platformFileProxyTarget ||
-    !/^https?:\/\//i.test(source)
-  ) {
+  if (!source || !platformFileProxyTarget || !/^https?:\/\//i.test(source)) {
     return source;
   }
 
@@ -84,7 +82,11 @@ export function normalizePlatformResourceFetchUrl(url: string) {
     const resource = new URL(source);
     const fileTarget = new URL(platformFileProxyTarget);
     if (resource.origin !== fileTarget.origin) return source;
-    return `${platformFileProxyPrefix}${resource.pathname}${resource.search}`;
+    const proxyPath = `${platformFileProxyPrefix}${resource.pathname}${resource.search}`;
+    if (import.meta.env.DEV) return proxyPath;
+    return platformFileProxyOrigin
+      ? `${platformFileProxyOrigin}${proxyPath}`
+      : source;
   } catch {
     return source;
   }

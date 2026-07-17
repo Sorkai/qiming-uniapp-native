@@ -641,14 +641,20 @@ if (selfTest) {
     }
   }
   const interactionRoutes = matrixRoutes.filter(route => route.action);
-  if (interactionRoutes.length !== 7) {
+  if (interactionRoutes.length !== 13) {
     failures.push(
-      `expected 7 shared interaction routes, got ${interactionRoutes.length}`
+      `expected 13 shared interaction routes, got ${interactionRoutes.length}`
     );
   }
   for (const route of interactionRoutes) {
     if (!route.action.selector || !Array.isArray(route.readyExpect)) {
       failures.push(`invalid interaction contract: ${route.name}`);
+    }
+    if (
+      route.action.afterText !== undefined &&
+      (!route.action.afterSelector || !String(route.action.afterText).trim())
+    ) {
+      failures.push(`invalid post-action text: ${route.name}`);
     }
   }
   for (const route of androidDynamicRoutes) {
@@ -984,8 +990,12 @@ for (const [routeIndex, route] of routes.entries()) {
   if (serial) commandArgs.push("--serial", serial);
   commandArgs.push("--package", packageName);
   if (expected) commandArgs.push("--expect-text", expected);
-  if (route.accountMenuText) {
-    commandArgs.push("--account-menu-text", route.accountMenuText);
+  const expectedAccountMenuText =
+    route.action && route.afterActionAccountMenuText
+      ? route.afterActionAccountMenuText
+      : route.accountMenuText;
+  if (expectedAccountMenuText) {
+    commandArgs.push("--account-menu-text", expectedAccountMenuText);
   }
   if (route.expectedForbidden) commandArgs.push("--expect-forbidden");
   const readyExpected = route.readyExpect?.find(Boolean) || "";
@@ -996,6 +1006,12 @@ for (const [routeIndex, route] of routes.entries()) {
     commandArgs.push("--action-selector", route.action.selector);
     if (route.action.text) {
       commandArgs.push("--action-text", route.action.text);
+    }
+    if (route.action.afterSelector) {
+      commandArgs.push("--action-after-selector", route.action.afterSelector);
+    }
+    if (route.action.afterText) {
+      commandArgs.push("--action-after-text", route.action.afterText);
     }
     commandArgs.push(
       "--post-action-wait-ms",
