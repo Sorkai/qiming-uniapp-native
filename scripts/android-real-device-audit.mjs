@@ -12,7 +12,7 @@ const argv = process.argv.slice(2);
 
 function printUsage() {
   process.stdout.write(
-    `Usage: node scripts/android-real-device-audit.mjs [options]\n\nOptions:\n  --role <student|teacher|admin>  Audit one role from the shared matrix\n  --route, --only <name>          Audit one named route\n  --serial <adb-serial>            Target one Android device\n  --api-origin <url>              API origin used for real login/fixtures\n  --wait-ms <ms>                  Per-route navigation wait\n  --min-content-ratio <ratio>     Minimum main-content/viewport width ratio\n  --max-routes <count>            Limit the selected route count\n  --out-dir <path>                Artifact output directory\n  --list                          List selected routes and exit\n  --list-json                     Print selected route definitions as JSON\n  --self-test                     Validate the shared matrix without a device\n  -h, --help                      Show this help and exit\n`
+    `Usage: node scripts/android-real-device-audit.mjs [options]\n\nOptions:\n  --role <student|teacher|admin>  Audit one role from the shared matrix\n  --route, --only <name>          Audit one named route\n  --serial <adb-serial>            Target one Android device\n  --api-origin <url>              API origin used for real login/fixtures\n  --wait-ms <ms>                  Per-route navigation wait\n  --min-content-ratio <ratio>     Minimum main-content/viewport width ratio\n  --min-usable-content-ratio <r>  Minimum width after route-root padding\n  --max-routes <count>            Limit the selected route count\n  --out-dir <path>                Artifact output directory\n  --list                          List selected routes and exit\n  --list-json                     Print selected route definitions as JSON\n  --self-test                     Validate the shared matrix without a device\n  -h, --help                      Show this help and exit\n`
   );
   process.stdout.write(
     "  --package <application-id>       Android package owning the WebView\n"
@@ -42,6 +42,7 @@ const apiOrigin = readArg(
 );
 const waitMs = Number(readArg("--wait-ms", "4500"));
 const minContentRatio = readArg("--min-content-ratio", "0.88");
+const minUsableContentRatio = readArg("--min-usable-content-ratio", "0.92");
 const maxRoutes = Number(readArg("--max-routes", "0"));
 const listOnly = argv.includes("--list");
 const listJson = argv.includes("--list-json");
@@ -187,6 +188,15 @@ if (selfTest) {
       failures.push(`invalid required request path: ${route.name}`);
     }
   }
+  for (const route of matrixRoutes.filter(item => !item.expectedForbidden)) {
+    const visibleExpectations = [
+      ...(route.expect || []),
+      ...(route.readyExpect || [])
+    ].filter(Boolean);
+    if (visibleExpectations.length === 0) {
+      failures.push(`visible page expectation missing: ${route.name}`);
+    }
+  }
   const cloudRequirements = [
     "student-account-cloud-disk",
     "teacher-cloud-disk",
@@ -271,6 +281,8 @@ for (const route of routes) {
     String(waitMs),
     "--min-content-ratio",
     minContentRatio,
+    "--min-usable-content-ratio",
+    minUsableContentRatio,
     "--api-origin",
     apiOrigin,
     "--out",
@@ -300,6 +312,10 @@ for (const route of routes) {
   if (route.requiredRequestPath) {
     commandArgs.push("--required-request-path", route.requiredRequestPath);
   }
+  const routePath = new URL(routeEntry, "https://qiming.local").pathname;
+  if (routePath === "/account/ai-app" || routePath.startsWith("/ai-app/")) {
+    commandArgs.push("--expect-compact-digital-human");
+  }
   if (activeRole !== route.role) {
     commandArgs.push("--role", route.role);
   }
@@ -326,9 +342,14 @@ for (const route of routes) {
     );
   }
   if (!report) {
-    failures.push(
-      `audit output unavailable: ${parseError || auditResult.stderr.trim() || `exit ${auditResult.status}`}`
-    );
+    const auditFailureDetails = [
+      parseError,
+      auditResult.stderr.trim(),
+      `exit ${auditResult.status}`
+    ]
+      .filter(Boolean)
+      .join("; ");
+    failures.push(`audit output unavailable: ${auditFailureDetails}`);
   }
 
   const result = {
@@ -346,7 +367,7 @@ for (const route of routes) {
   if (roleMatches) activeRole = route.role;
 
   process.stdout.write(
-    `[${result.ok ? "OK" : "FAIL"}] ${route.role.padEnd(7)} ${route.name.padEnd(34)} width=${report?.mainContentWidthRatio ?? "?"} overflow=${report?.document?.overflowX ?? "?"} ${failures.join(", ")}\n`
+    `[${result.ok ? "OK" : "FAIL"}] ${route.role.padEnd(7)} ${route.name.padEnd(34)} width=${report?.mainContentWidthRatio ?? "?"} usable=${report?.mainContentUsableWidthRatio ?? "?"} overflow=${report?.document?.overflowX ?? "?"} ${failures.join(", ")}\n`
   );
 }
 
@@ -357,6 +378,7 @@ const summary = {
   apiOrigin: new URL(apiOrigin).origin,
   waitMs,
   minContentRatio: Number(minContentRatio),
+  minUsableContentRatio: Number(minUsableContentRatio),
   totals: {
     routes: results.length,
     ok: results.filter(result => result.ok).length,

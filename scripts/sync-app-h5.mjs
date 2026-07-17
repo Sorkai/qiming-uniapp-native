@@ -19,6 +19,35 @@ if (!existsSync(distDir) || !statSync(distDir).isDirectory()) {
   throw new Error("dist does not exist. Run pnpm build:app-h5 first.");
 }
 
+const distIndexPath = join(distDir, "index.html");
+if (!existsSync(distIndexPath)) {
+  throw new Error("dist/index.html is missing. Run pnpm build:app-h5 first.");
+}
+const distIndexSource = readFileSync(distIndexPath, "utf8");
+if (/(?:src|href)=["']\/(?:static|img|fonts)\//.test(distIndexSource)) {
+  throw new Error(
+    "dist appears to use root-relative assets; rebuild with pnpm build:app-h5 before syncing to file:// native WebView"
+  );
+}
+const distVersionPath = join(distDir, "version.json");
+if (existsSync(distVersionPath)) {
+  try {
+    const distVersion = JSON.parse(readFileSync(distVersionPath, "utf8"));
+    if (distVersion.mode === "wechat-h5-source-build") {
+      throw new Error(
+        "dist is a WeChat H5 build; run pnpm build:app-h5 before syncing native assets"
+      );
+    }
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(
+        "dist/version.json is invalid; rebuild before syncing native assets"
+      );
+    }
+    throw error;
+  }
+}
+
 const resolvedTarget = resolve(targetDir);
 const allowedRoot = resolve(root, "native-app", "src", "hybrid");
 const targetRelativePath = relative(allowedRoot, resolvedTarget);
@@ -354,11 +383,15 @@ const bridgeScript = `
   }
   document.documentElement.classList.add('qiming-native-webview');
   document.documentElement.setAttribute('data-qiming-native', 'true');
-  var nativeTop = 'env(safe-area-inset-top, 0px)';
+  var isAndroidNative = /Android/i.test(window.navigator.userAgent);
+  if (isAndroidNative) document.documentElement.classList.add('qiming-native-android');
+  var nativeTop = isAndroidNative
+    ? 'calc(env(safe-area-inset-top, 0px) + 6px)'
+    : 'env(safe-area-inset-top, 0px)';
   var nativeBottom = 'env(safe-area-inset-bottom, 0px)';
   if (window.plus && plus.navigator) {
     var statusbarHeight = Number(plus.navigator.getStatusbarHeight && plus.navigator.getStatusbarHeight());
-    if (statusbarHeight > 0) nativeTop = statusbarHeight + 'px';
+    if (statusbarHeight > 0) nativeTop = (Math.min(Math.max(statusbarHeight, 22), 28) + (isAndroidNative ? 6 : 0)) + 'px';
     try {
       plus.navigator.setStatusBarStyle('light');
     } catch (_) {}
@@ -367,8 +400,9 @@ const bridgeScript = `
       try {
         var statusbarHeight = Number(plus.navigator.getStatusbarHeight && plus.navigator.getStatusbarHeight());
         if (statusbarHeight > 0) {
-          document.documentElement.style.setProperty('--qiming-native-safe-top', statusbarHeight + 'px');
-          document.documentElement.style.setProperty('--qiming-native-status-top', statusbarHeight + 'px');
+          var resolvedStatusTop = Math.min(Math.max(statusbarHeight, 22), 28) + (isAndroidNative ? 6 : 0);
+          document.documentElement.style.setProperty('--qiming-native-safe-top', resolvedStatusTop + 'px');
+          document.documentElement.style.setProperty('--qiming-native-status-top', resolvedStatusTop + 'px');
         }
         plus.navigator.setStatusBarStyle('light');
       } catch (_) {}

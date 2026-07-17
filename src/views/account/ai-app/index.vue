@@ -402,6 +402,7 @@ const sidebarWidth = ref(
 const sidebarCollapsed = ref(isCompactAiViewport());
 const sidebarResizing = ref(false);
 const humanCollapsed = ref(false);
+const canMountInline3D = ref(false);
 let sidebarWasCompact = isCompactAiViewport();
 const toggleSidebar = () => (sidebarCollapsed.value = !sidebarCollapsed.value);
 const toggleHuman = () => (humanCollapsed.value = !humanCollapsed.value);
@@ -478,6 +479,10 @@ const syncSidebarWidthLimit = () => {
   sidebarWasCompact = compact;
   sidebarMaxWidth.value = getSidebarMaxWidth();
   setSidebarWidth(sidebarWidth.value);
+  canMountInline3D.value =
+    typeof window !== "undefined" &&
+    window.innerWidth > 1280 &&
+    /^https?:$/.test(window.location.protocol);
 };
 
 type DigitalHumanState = "standby" | "listening" | "thinking" | "saying";
@@ -565,6 +570,7 @@ const virtualHumanRef = ref<{
   resumeRender?: () => void;
 } | null>(null);
 const floatingHumanRef = ref<{
+  speak?: (text: string) => void;
   setSpeechState?: (state: string) => void;
   setAmplitude?: (value: number) => void;
   applyViseme?: (id: string, weight: number) => void;
@@ -579,6 +585,8 @@ const speechRenderTargets = () => [
   floatingHumanRef.value
 ];
 
+let localDigitalHumanSpeechTimer: ReturnType<typeof setTimeout> | null = null;
+
 const localDigitalHumanSpeech = (content: string) => {
   const text = content
     .replace(/```[\s\S]*?```/g, "")
@@ -586,12 +594,23 @@ const localDigitalHumanSpeech = (content: string) => {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 900);
-  if (!text || !virtualHumanRef.value?.speak) return;
+  if (!text) return;
 
   digitalHumanStreamState.value = "saying";
-  speechRenderTargets().forEach(target => target?.setSpeechState?.("speaking"));
-  virtualHumanRef.value.triggerMotion?.("explain", 4200);
-  virtualHumanRef.value.speak(text);
+  if (localDigitalHumanSpeechTimer) clearTimeout(localDigitalHumanSpeechTimer);
+
+  if (virtualHumanRef.value?.speak) {
+    virtualHumanRef.value.triggerMotion?.("explain", 4200);
+    virtualHumanRef.value.speak(text);
+  }
+  floatingHumanRef.value?.speak?.(text);
+  localDigitalHumanSpeechTimer = setTimeout(
+    () => {
+      digitalHumanStreamState.value = null;
+      localDigitalHumanSpeechTimer = null;
+    },
+    Math.min(Math.max(text.length * 80, 1600), 5200)
+  );
 };
 
 const updateMessageSpeech = (
@@ -2425,19 +2444,22 @@ const handleNewChat = async (payload: { course: string }) => {
 };
 
 const syncHumanRenderState = () => {
-  const shouldPause =
-    document.hidden || activeRail.value !== "chat" || humanCollapsed.value;
-  const renderTargets = [virtualHumanRef.value, floatingHumanRef.value];
-  renderTargets.forEach(target => {
-    if (shouldPause) {
-      target?.pauseRender?.();
-    } else {
-      target?.resumeRender?.();
-    }
-  });
+  const shouldPauseAll = document.hidden || activeRail.value !== "chat";
+  if (shouldPauseAll) {
+    virtualHumanRef.value?.pauseRender?.();
+    floatingHumanRef.value?.pauseRender?.();
+    return;
+  }
+
+  floatingHumanRef.value?.resumeRender?.();
+  if (!canMountInline3D.value || humanCollapsed.value) {
+    virtualHumanRef.value?.pauseRender?.();
+  } else {
+    virtualHumanRef.value?.resumeRender?.();
+  }
 };
 
-watch([activeRail, humanCollapsed], () => {
+watch([activeRail, humanCollapsed, canMountInline3D], () => {
   syncHumanRenderState();
 });
 
@@ -2480,6 +2502,7 @@ onUnmounted(() => {
   clearAllExplanationImagePolling();
   quickSpeechRecognition?.stop?.();
   quickSpeechRecognition = null;
+  if (localDigitalHumanSpeechTimer) clearTimeout(localDigitalHumanSpeechTimer);
   clearQuickAttachments();
   document.removeEventListener("visibilitychange", handleVisibilityChange);
   window.removeEventListener("resize", syncSidebarWidthLimit);
@@ -2697,6 +2720,7 @@ onUnmounted(() => {
             <!-- 数字人面板：保留原右侧 VRM 数字人模块 -->
             <transition appear name="panel-reveal">
               <div
+                v-if="canMountInline3D"
                 class="ai-human-column h-full min-w-0 flex flex-col gap-4 transition-all duration-200 ease-out relative"
                 :class="{ 'is-collapsed': humanCollapsed }"
               >
@@ -3385,6 +3409,7 @@ onUnmounted(() => {
     </div>
 
     <FloatingDigitalHuman2D
+      v-if="activeRail === 'chat'"
       ref="floatingHumanRef"
       :role-label="currentUserRoleLabel"
       :course-name="selectedCourseName"

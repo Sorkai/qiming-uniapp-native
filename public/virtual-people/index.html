@@ -733,9 +733,7 @@
           <label class="voice-field" for="ttsEngineSelect">
             <span>引擎</span>
             <select id="ttsEngineSelect">
-              <option value="auto">优先本地女声</option>
-              <option value="local">仅本地女声</option>
-              <option value="browser">浏览器音色</option>
+              <option value="browser">系统中文音色</option>
             </select>
           </label>
           <label class="voice-field" for="browserVoiceSelect">
@@ -747,9 +745,8 @@
         </div>
         <div class="voice-actions">
           <button id="voicePreviewBtn" class="secondary mini-btn" type="button">试听</button>
-          <button id="reloadLocalTtsBtn" class="secondary mini-btn" type="button">加载本地女声</button>
         </div>
-        <div id="ttsStatusText" class="voice-status">本地女声准备中</div>
+        <div id="ttsStatusText" class="voice-status">使用系统中文音色</div>
       </div>
 
       <!-- 快捷消息互动区 -->
@@ -791,11 +788,11 @@
         </select>
         <select id="moodSelect">
           <option value="neutral">neutral</option>
-        </select>
-        <option value="relaxed">relaxed</option>
-        <option value="sad">sad</option>
-        <option value="angry">angry</option>
-        <option value="surprised">surprised</option>
+          <option value="happy">happy</option>
+          <option value="relaxed">relaxed</option>
+          <option value="sad">sad</option>
+          <option value="angry">angry</option>
+          <option value="surprised">surprised</option>
         </select>
         <button id="applyMoodBtn" type="button">只应用表情</button>
         <button id="resetFaceBtn" type="button">重置表情口型</button>
@@ -827,7 +824,6 @@
         <span id="selectionText">未选中</span>
       </div>
 
-      <div id="motionList" class="motion-list"></div>
     </div>
   </aside>
 
@@ -957,8 +953,8 @@
       surprised: { nodAmp: 0.02, swayAmp: 0.014, blinkChance: 0.0025 },
     };
 
-    const clock = new THREE.Timer();
-    clock.connect(document);
+    const clock = typeof THREE.Timer === 'function' ? new THREE.Timer() : new THREE.Clock();
+    if (typeof clock.connect === 'function') clock.connect(document);
     const canvas = document.getElementById('canvas');
     const searchInput = document.getElementById('searchInput');
     const searchAutocomplete = searchInput.parentElement;
@@ -992,6 +988,17 @@
     const speechText = document.getElementById('speechText');
     const speechMeta = document.getElementById('speechMeta');
     const isEmbeddedAiApp = document.body.classList.contains('embedded-ai-app');
+    const parentTargetOrigin = /^https?:$/.test(window.location.protocol)
+      ? window.location.origin
+      : '*';
+    function emitParent(type, detail = {}) {
+      if (!isEmbeddedAiApp || window.parent === window) return;
+      try {
+        window.parent.postMessage({ source: 'qiming-virtual-people', type, ...detail }, parentTargetOrigin);
+      } catch (error) {
+        console.warn('[virtual-people] parent message failed', error);
+      }
+    }
     const backgroundSelect = document.getElementById('backgroundSelect');
     const resetCameraBtn = document.getElementById('resetCameraBtn');
     const teacherToTargetBtn = document.getElementById('teacherToTargetBtn');
@@ -1156,7 +1163,7 @@
       if (isEmbeddedAiApp && event.source !== window.parent) return;
       const isSameOrigin = event.origin === window.location.origin;
       const isTrustedFileParent =
-        window.location.protocol === 'file:' &&
+        !['http:', 'https:'].includes(window.location.protocol) &&
         event.source === window.parent &&
         (event.origin === 'null' || event.origin === 'file://');
       if (!isSameOrigin && !isTrustedFileParent) return;
@@ -1303,6 +1310,12 @@
     const tempVectorF = new THREE.Vector3();
     const upAxis = new THREE.Vector3(0, 1, 0);
     const LOCAL_TTS_WORKER_URL = './tts/sherpa-baker/local-tts-worker.js';
+    const LOCAL_TTS_ENABLED = false;
+    const localTtsSupported =
+      LOCAL_TTS_ENABLED &&
+      /^https?:$/.test(window.location.protocol) &&
+      window.crossOriginIsolated === true &&
+      typeof SharedArrayBuffer !== 'undefined';
     const LOCAL_TTS_SOURCE = 'qiming-local-tts';
     const TTS_STORAGE_KEYS = {
       engine: 'qiming.virtualPeople.tts.engine',
@@ -1326,6 +1339,7 @@
     }
 
     function normalizeTtsEngine(value) {
+      if (!localTtsSupported) return 'browser';
       return ['auto', 'local', 'browser'].includes(value) ? value : 'auto';
     }
 
@@ -1671,6 +1685,13 @@
     }
 
     function ensureLocalTtsWorker({ force = false } = {}) {
+      if (!localTtsSupported) {
+        state.localTtsUnavailable = true;
+        state.localTtsLoading = false;
+        state.localTtsReady = false;
+        updateTtsControls();
+        return false;
+      }
       if (state.ttsEngine === 'browser' && !force) return false;
       if (state.localTtsWorker && !force) return true;
 
@@ -1805,6 +1826,17 @@
     }
 
     function initTtsSettings() {
+      state.ttsEngine = normalizeTtsEngine(state.ttsEngine);
+      if (ttsEngineSelect && !localTtsSupported) {
+        for (const option of ttsEngineSelect.options) {
+          option.hidden = option.value !== 'browser';
+        }
+        ttsEngineSelect.disabled = true;
+      }
+      if (reloadLocalTtsBtn && !localTtsSupported) {
+        reloadLocalTtsBtn.disabled = true;
+        reloadLocalTtsBtn.title = '本地模型未随应用发布，当前使用后端音色';
+      }
       updateTtsControls();
       if (state.ttsEngine === 'local') {
         window.setTimeout(() => {
@@ -3252,6 +3284,17 @@
     }
 
     async function loadMotionManifest() {
+      const inlineManifest = document.getElementById(
+        'qiming-motion-manifest-json'
+      );
+      if (inlineManifest?.textContent?.trim()) {
+        try {
+          return JSON.parse(inlineManifest.textContent);
+        } catch (error) {
+          throw new Error(`动作配置 JSON 格式错误：${error?.message || String(error)}`);
+        }
+      }
+
       let response;
       try {
         response = await fetch('./motions.json', { cache: 'no-store' });
@@ -3354,6 +3397,10 @@
         await playMotionByIndex(0);
       }
       applyTeacherPose();
+      emitParent('ready', {
+        phase: 'vrm-ready',
+        motionCount: state.motionList.length,
+      });
     }
 
     searchInput.addEventListener('input', filterMotions);
@@ -3410,7 +3457,7 @@
       writeStoredValue(TTS_STORAGE_KEYS.browserVoice, state.selectedVoiceName);
       updateTtsControls();
     });
-    reloadLocalTtsBtn.addEventListener('click', () => {
+    reloadLocalTtsBtn?.addEventListener('click', () => {
       ensureLocalTtsWorker({ force: true });
     });
     voicePreviewBtn.addEventListener('click', async () => {
@@ -3555,7 +3602,7 @@
     });
 
     function renderFrame() {
-      clock.update();
+      if (typeof clock.update === 'function') clock.update();
       // Avoid a large animation step after a hidden tab resumes.
       const delta = Math.min(clock.getDelta(), 0.1);
       controls.update();
@@ -3584,6 +3631,10 @@
 
     init().catch((error) => {
       console.error(error);
+      emitParent('error', {
+        phase: 'init',
+        message: error?.message || String(error),
+      });
       currentTitle.textContent = '加载失败';
       currentMeta.textContent = error?.message || String(error);
       setStatus('bad', '初始化失败');

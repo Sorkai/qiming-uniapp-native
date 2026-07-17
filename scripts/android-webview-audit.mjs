@@ -58,6 +58,12 @@ function printUsage() {
   process.stdout.write(
     "  --package <application-id>        Android package owning the WebView\n"
   );
+  process.stdout.write(
+    "  --expect-compact-digital-human   Require visible 2D and no mounted inline 3D iframe\n"
+  );
+  process.stdout.write(
+    "  --min-usable-content-ratio <n>  Minimum route content width after horizontal padding\n"
+  );
 }
 
 function runSelfTest() {
@@ -104,12 +110,16 @@ const port = Number(readArg("--port", "9223"));
 const urlPattern = readArg("--url-pattern", "hybrid/html/index.html");
 const outputPath = readArg("--out");
 const minContentRatio = Number(readArg("--min-content-ratio", "0.88"));
+const minUsableContentRatio = Number(
+  readArg("--min-usable-content-ratio", "0.92")
+);
 const entry = readArg("--entry");
 const expectedText = readArg("--expect-text");
 const readyExpectedText = readArg("--ready-expect-text");
 const actionSelector = readArg("--action-selector");
 const actionText = readArg("--action-text");
 const accountMenuText = readArg("--account-menu-text");
+const expectCompactDigitalHuman = hasFlag("--expect-compact-digital-human");
 const expectForbidden = hasFlag("--expect-forbidden");
 const requiredRequestPath = readArg("--required-request-path");
 const postActionWaitMs = Number(readArg("--post-action-wait-ms", "2000"));
@@ -158,6 +168,16 @@ if (
   minContentRatio > 1
 ) {
   throw new Error(`Invalid --min-content-ratio value: ${minContentRatio}`);
+}
+
+if (
+  !Number.isFinite(minUsableContentRatio) ||
+  minUsableContentRatio <= 0 ||
+  minUsableContentRatio > 1
+) {
+  throw new Error(
+    `Invalid --min-usable-content-ratio value: ${minUsableContentRatio}`
+  );
 }
 
 if (!Number.isFinite(waitMs) || waitMs < 0 || waitMs > 120_000) {
@@ -423,10 +443,34 @@ const auditExpression = `(() => {
   }) || "";
   const main = mainSelector ? document.querySelector(mainSelector) : null;
   const accountMain = document.querySelector(".account-main");
+  const appRoot = document.querySelector("#app");
+  const initialLoader = appRoot?.querySelector(":scope > .loader");
+  const appHasMountedContent = Boolean(
+    appRoot &&
+      Array.from(appRoot.children).some(
+        child => !child.matches("style, .loader")
+      )
+  );
   const activeAccountMenu = Array.from(
     document.querySelectorAll(".account-menu .el-menu-item.is-active")
   ).find(visible);
+  const textWithoutSvg = element => {
+    if (!element) return "";
+    const clone = element.cloneNode(true);
+    clone.querySelectorAll("svg").forEach(node => node.remove());
+    return String(clone.textContent || "").replace(/\\s+/g, " ").trim();
+  };
   const mainRect = main && visible(main) ? main.getBoundingClientRect() : null;
+  const mainStyle = mainRect && main ? getComputedStyle(main) : null;
+  const mainPaddingLeft = mainStyle
+    ? Number.parseFloat(mainStyle.paddingLeft) || 0
+    : 0;
+  const mainPaddingRight = mainStyle
+    ? Number.parseFloat(mainStyle.paddingRight) || 0
+    : 0;
+  const mainUsableWidth = mainRect
+    ? Math.max(0, mainRect.width - mainPaddingLeft - mainPaddingRight)
+    : null;
   const overflow = Array.from(document.querySelectorAll("body *"))
     .filter(visible)
     .map(describe)
@@ -462,6 +506,10 @@ const auditExpression = `(() => {
         widthRatio: parentRect?.width ? round(item.width / parentRect.width) : 0
       };
     });
+  const inlineDigitalHumanFrames = Array.from(
+    document.querySelectorAll("iframe[src*='virtual-people/index.html']")
+  );
+  const floatingDigitalHuman = document.querySelector(".floating-human-2d");
 
   let storedUserInfo = {};
   try {
@@ -480,6 +528,11 @@ const auditExpression = `(() => {
       .replace(/\\s+/g, " ")
       .trim()
       .slice(0, 1200),
+    appState: {
+      initialLoaderVisible: Boolean(initialLoader && visible(initialLoader)),
+      hasMountedContent: appHasMountedContent,
+      textLength: String(appRoot?.innerText || "").trim().length
+    },
     viewport: {
       width: innerWidth,
       height: innerHeight,
@@ -500,9 +553,7 @@ const auditExpression = `(() => {
       userId: Number(storedUserInfo.userId || localStorage.getItem("userId") || 0)
     },
     account: {
-      activeMenuText: String(activeAccountMenu?.textContent || "")
-        .replace(/\\s+/g, " ")
-        .trim(),
+      activeMenuText: textWithoutSvg(activeAccountMenu),
       mainText: String(accountMain?.innerText || accountMain?.textContent || "")
         .replace(/\\s+/g, " ")
         .trim()
@@ -510,9 +561,27 @@ const auditExpression = `(() => {
     },
     mainContentSelector: mainSelector || null,
     mainContentWidthRatio: mainRect ? round(mainRect.width / innerWidth) : null,
+    mainContentUsableWidthRatio:
+      mainUsableWidth === null ? null : round(mainUsableWidth / innerWidth),
+    mainContentGutters: mainRect
+      ? {
+          left: round(mainRect.left + mainPaddingLeft),
+          right: round(innerWidth - mainRect.right + mainPaddingRight),
+          paddingLeft: round(mainPaddingLeft),
+          paddingRight: round(mainPaddingRight)
+        }
+      : null,
     measured,
     overflow,
     chartCanvases,
+    digitalHuman: {
+      inline3DIframeCount: inlineDigitalHumanFrames.length,
+      inline3DVisibleCount: inlineDigitalHumanFrames.filter(visible).length,
+      floating2DMounted: Boolean(floatingDigitalHuman),
+      floating2DVisible: Boolean(
+        floatingDigitalHuman && visible(floatingDigitalHuman)
+      )
+    },
     touchTargets: {
       total: touchTargets.length,
       smallCount: smallTouchTargets.length,
@@ -615,14 +684,12 @@ try {
         localStorage.setItem("qimingRealAuditRole", ${JSON.stringify(role)});
         sessionStorage.setItem("qimingNativeWebView", "1");
       }
-      if (userInfo) {
+      if (userInfo || destination) {
         const nextHash = destination || location.hash.replace(/^#/, "") || "/home?qimingNative=1";
         setTimeout(() => {
           location.hash = "#" + nextHash;
           setTimeout(() => location.reload(), 50);
         }, 0);
-      } else if (destination) {
-        location.hash = "#" + destination;
       }
       return true;
     })()`;
@@ -745,12 +812,26 @@ try {
       `document width ${report.document.scrollWidth}px exceeds ${report.document.clientWidth}px`
     );
   }
+  if (strict && report.appState?.initialLoaderVisible) {
+    failures.push("initial app loader is still visible");
+  }
+  if (strict && report.appState && !report.appState.hasMountedContent) {
+    failures.push("#app has no mounted application content");
+  }
   if (
     typeof report.mainContentWidthRatio === "number" &&
     report.mainContentWidthRatio < minContentRatio
   ) {
     failures.push(
       `main content ratio ${report.mainContentWidthRatio} is below ${minContentRatio}`
+    );
+  }
+  if (
+    typeof report.mainContentUsableWidthRatio === "number" &&
+    report.mainContentUsableWidthRatio < minUsableContentRatio
+  ) {
+    failures.push(
+      `usable content ratio ${report.mainContentUsableWidthRatio} is below ${minUsableContentRatio}`
     );
   }
   const zeroCharts = report.chartCanvases.filter(
@@ -764,6 +845,21 @@ try {
     failures.push(
       `${zeroCharts.length} visible chart canvas element(s) are blank-sized`
     );
+  }
+  if (
+    expectCompactDigitalHuman &&
+    Number(report.digitalHuman?.inline3DIframeCount || 0) !== 0
+  ) {
+    failures.push(
+      `compact digital human mounted ${report.digitalHuman.inline3DIframeCount} inline 3D iframe(s)`
+    );
+  }
+  if (
+    expectCompactDigitalHuman &&
+    (!report.digitalHuman?.floating2DMounted ||
+      !report.digitalHuman?.floating2DVisible)
+  ) {
+    failures.push("compact digital human 2D fallback is not visible");
   }
   const textScope = accountMenuText
     ? String(report.account?.mainText || "")
@@ -857,6 +953,7 @@ try {
   report.strict = {
     enabled: strict,
     minContentRatio,
+    minUsableContentRatio,
     role: role || null,
     entry: entry || null,
     expectedText: expectedText || null,
@@ -865,6 +962,7 @@ try {
       ? { selector: actionSelector, text: actionText, postActionWaitMs }
       : null,
     accountMenuText: accountMenuText || null,
+    expectCompactDigitalHuman,
     expectForbidden,
     requiredRequestPath: requiredRequestPath || null,
     passed: failures.length === 0,

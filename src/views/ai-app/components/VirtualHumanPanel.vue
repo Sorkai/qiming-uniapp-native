@@ -5,18 +5,8 @@ import {
   FullScreen,
   Warning,
   Loading,
-  VideoPlay,
-  Download
+  VideoPlay
 } from "@element-plus/icons-vue";
-
-type TtsEngine = "browser" | "auto" | "local";
-
-const TTS_ENGINE_STORAGE_KEY = "qiming.virtualPeople.tts.engine";
-const ttsEngineOptions: Array<{ label: string; value: TtsEngine }> = [
-  { label: "浏览器音色", value: "browser" },
-  { label: "优先本地女声", value: "auto" },
-  { label: "仅本地女声", value: "local" }
-];
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
 const humanBaseUrl = computed(() => {
@@ -25,41 +15,18 @@ const humanBaseUrl = computed(() => {
 const humanUrl = computed(() => `${humanBaseUrl.value}?embed=ai-app`);
 const messageTargetOrigin = computed(() => {
   const target = new URL(humanBaseUrl.value);
-  return target.protocol === "file:" ? "*" : target.origin;
+  return target.origin === "null" || !/^https?:$/.test(target.protocol)
+    ? "*"
+    : target.origin;
 });
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
 const errored = ref(false);
 const reloadKey = ref(0);
-const ttsEngine = ref<TtsEngine>(readStoredTtsEngine());
 let probeTimer: ReturnType<typeof setTimeout> | null = null;
 let iframeReady = false;
 const pendingSpeakQueue: string[] = [];
-
-function normalizeTtsEngine(value: unknown): TtsEngine {
-  return value === "auto" || value === "local" || value === "browser"
-    ? value
-    : "browser";
-}
-
-function readStoredTtsEngine(): TtsEngine {
-  try {
-    return normalizeTtsEngine(
-      window.localStorage.getItem(TTS_ENGINE_STORAGE_KEY)
-    );
-  } catch (_err) {
-    return "browser";
-  }
-}
-
-function writeStoredTtsEngine(value: TtsEngine) {
-  try {
-    window.localStorage.setItem(TTS_ENGINE_STORAGE_KEY, value);
-  } catch (_err) {
-    // localStorage can be unavailable in restricted browser contexts.
-  }
-}
 
 function flushPendingSpeak() {
   const iframe = iframeRef.value;
@@ -88,21 +55,42 @@ function postControlMessage(payload: Record<string, unknown>) {
 }
 
 function handleLoad() {
-  loading.value = false;
-  errored.value = false;
-  iframeReady = true;
-  if (probeTimer) {
-    clearTimeout(probeTimer);
-    probeTimer = null;
-  }
-  postControlMessage({ type: "resumeRender" });
-  syncTtsEngine();
-  flushPendingSpeak();
+  iframeReady = false;
+  schedulePing();
 }
 
 function handleError() {
+  iframeReady = false;
+  if (probeTimer) clearTimeout(probeTimer);
+  probeTimer = null;
   loading.value = false;
   errored.value = true;
+}
+
+function handleChildMessage(event: MessageEvent) {
+  const iframe = iframeRef.value;
+  if (!iframe || event.source !== iframe.contentWindow) return;
+
+  const target = new URL(humanBaseUrl.value);
+  if (/^https?:$/.test(target.protocol) && event.origin !== target.origin)
+    return;
+
+  const data = event.data;
+  if (!data || typeof data !== "object") return;
+  if (data.source !== "qiming-virtual-people") return;
+
+  if (data.type === "ready") {
+    loading.value = false;
+    errored.value = false;
+    iframeReady = true;
+    if (probeTimer) clearTimeout(probeTimer);
+    probeTimer = null;
+    postControlMessage({ type: "resumeRender" });
+    syncTtsEngine();
+    flushPendingSpeak();
+  } else if (data.type === "error") {
+    handleError();
+  }
 }
 
 function refresh() {
@@ -118,18 +106,7 @@ function openFull() {
 }
 
 function syncTtsEngine() {
-  postControlMessage({ type: "setTtsEngine", engine: ttsEngine.value });
-}
-
-function setTtsEngine(value: TtsEngine) {
-  ttsEngine.value = value;
-  writeStoredTtsEngine(value);
-  syncTtsEngine();
-}
-
-function handleTtsEngineChange(event: Event) {
-  const value = (event.target as HTMLSelectElement | null)?.value;
-  setTtsEngine(normalizeTtsEngine(value));
+  postControlMessage({ type: "setTtsEngine", engine: "browser" });
 }
 
 function previewVoice() {
@@ -139,28 +116,25 @@ function previewVoice() {
   });
 }
 
-function loadLocalVoice() {
-  setTtsEngine("local");
-  postControlMessage({ type: "reloadLocalTts" });
-}
-
 function schedulePing() {
   if (probeTimer) clearTimeout(probeTimer);
-  // 如果 6 秒后 iframe 还没 onload，认为静态资源加载异常
+  // Wait for the child model-ready message, not only iframe document load.
   probeTimer = setTimeout(() => {
     if (loading.value) {
       errored.value = true;
       loading.value = false;
     }
-  }, 6000);
+  }, 30000);
 }
 
 onMounted(() => {
+  window.addEventListener("message", handleChildMessage);
   schedulePing();
 });
 
 onUnmounted(() => {
   if (probeTimer) clearTimeout(probeTimer);
+  window.removeEventListener("message", handleChildMessage);
 });
 
 // 对外暴露：让父组件可以触发数字人朗读 (自动带口型)
@@ -225,22 +199,10 @@ defineExpose({ speak, pauseRender, resumeRender });
     </div>
 
     <div class="virtual-human-panel__voicebar" aria-label="朗读音色">
-      <label class="virtual-human-panel__voice-label">
+      <div class="virtual-human-panel__voice-label">
         <span>朗读音色</span>
-        <select
-          :value="ttsEngine"
-          class="virtual-human-panel__voice-select"
-          @change="handleTtsEngineChange"
-        >
-          <option
-            v-for="option in ttsEngineOptions"
-            :key="option.value"
-            :value="option.value"
-          >
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
+        <strong>系统中文音色</strong>
+      </div>
       <el-button
         :icon="VideoPlay"
         class="virtual-human-panel__voice-btn"
@@ -249,15 +211,6 @@ defineExpose({ speak, pauseRender, resumeRender });
         @click="previewVoice"
       >
         试听
-      </el-button>
-      <el-button
-        :icon="Download"
-        class="virtual-human-panel__voice-btn"
-        size="small"
-        text
-        @click="loadLocalVoice"
-      >
-        加载本地
       </el-button>
     </div>
 

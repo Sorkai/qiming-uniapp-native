@@ -100,10 +100,10 @@ function normalizeNativeInitialHash() {
   window.history.replaceState(window.history.state, "", targetUrl);
 }
 
-function normalizeNativeStatusbarTop(value: string) {
+function normalizeNativeStatusbarTop(value: string, clearance = 0) {
   const statusTop = Number(value);
   if (!Number.isFinite(statusTop) || statusTop <= 0) return 0;
-  return Math.min(Math.max(statusTop, 22), 28);
+  return Math.min(Math.max(statusTop, 22), 28) + clearance;
 }
 
 function readCurrentHashRouteInfo() {
@@ -172,6 +172,9 @@ function applyNativeWebViewRuntime() {
   const root = document.documentElement;
   root.classList.add("qiming-native-webview");
   root.dataset.qimingNative = "true";
+  const isAndroidNative =
+    !isMiniProgram && /Android/i.test(window.navigator.userAgent);
+  root.classList.toggle("qiming-native-android", isAndroidNative);
   if (isMiniProgram) {
     root.classList.add("qiming-mini-program-webview");
     root.dataset.qimingMiniProgram = "true";
@@ -296,7 +299,10 @@ function applyNativeWebViewRuntime() {
     true
   );
 
-  const statusTop = normalizeNativeStatusbarTop(nativeStatusTop);
+  const statusTop = normalizeNativeStatusbarTop(
+    nativeStatusTop,
+    isAndroidNative ? 6 : 0
+  );
   if (statusTop > 0) {
     const statusTopPx = `${statusTop}px`;
     root.style.setProperty("--pure-safe-area-top", statusTopPx);

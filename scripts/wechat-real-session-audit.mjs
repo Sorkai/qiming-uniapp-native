@@ -87,7 +87,7 @@ const routes = [
     name: "student-account-home",
     entry: "/account?menu=home",
     accountMenuText: "首页",
-    expect: ["吴同学", "首页"]
+    expect: ["课程信息", "AI总结"]
   },
   {
     role: "student",
@@ -108,7 +108,7 @@ const routes = [
     name: "student-account-classroom",
     entry: "/account?menu=classroom",
     accountMenuText: "虚拟校园",
-    expect: ["虚拟校园"]
+    expect: ["启明智教 · 2D 校园导览"]
   },
   {
     role: "student",
@@ -238,7 +238,7 @@ const routes = [
     role: "student",
     name: "student-course-work",
     entry: "/course/1?section=homework-exam",
-    expect: [],
+    expect: ["作业考试"],
     requiresCourse: true,
     courseState: {
       section: "homework-exam",

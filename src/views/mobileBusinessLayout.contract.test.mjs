@@ -33,6 +33,22 @@ const studentResources = readView("course/student-resource/index.vue");
 const structuredResourcePreview = readView(
   "../components/PlatformResourcePreview/PlatformStructuredJsonPreview.vue"
 );
+const layContent = readView("../layout/components/lay-content/index.vue");
+const globalStyles = readView("../style/index.scss");
+const androidAudit = readView("../../scripts/android-webview-audit.mjs");
+
+test("Android route roots use compact gutters and audit usable width", () => {
+  assert.equal(
+    layContent.match(/main-content qiming-route-content/g)?.length,
+    4
+  );
+  assert.match(
+    globalStyles,
+    /qiming-native-android[\s\S]*\.qiming-route-content[\s\S]*max-width: calc\(100vw - 12px\)[\s\S]*margin: 6px 6px 0 !important[\s\S]*padding-right: 6px !important[\s\S]*padding-left: 6px !important/
+  );
+  assert.match(androidAudit, /mainContentUsableWidthRatio/);
+  assert.match(androidAudit, /--min-usable-content-ratio/);
+});
 
 test("student detail flows remove layered mobile gutters", () => {
   assert.match(studentPaperDetail, /@media \(width <= 768px\)/);
