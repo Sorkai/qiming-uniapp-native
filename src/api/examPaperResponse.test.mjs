@@ -23,7 +23,7 @@ test("all exam-paper requests pass through the response normalizer", () => {
     new URL("./examPaper.ts", import.meta.url),
     "utf8"
   );
-  const normalizedCalls = source.match(/examPaperHttp\.request/g) || [];
+  const normalizedCalls = source.match(/examPaperHttp\s*\.\s*request/g) || [];
   const rawCalls = source.match(/http\.request/g) || [];
 
   assert.ok(normalizedCalls.length >= 68);

@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import { adaptUserDetailToMine } from "./mobileApiAdapters";
 
 export type UserResult = {
   success: boolean;
@@ -213,11 +214,6 @@ export const refreshTokenApi = (data?: object) => {
   return http.request<RefreshTokenResult>("post", "/refresh-token", { data });
 };
 
-/** 账户设置-个人信息 */
-export const getMine = (data?: object) => {
-  return http.request<UserInfoResult>("get", "/mine", { data });
-};
-
 /** 账户设置-个人安全日志 */
 export const getMineLogs = (data?: object) => {
   return http.request<ResultTable>("get", "/mine-logs", { data });
@@ -246,6 +242,17 @@ export const getUserDetail = () => {
     "/edu/v1/user/detail",
     {}
   );
+};
+
+/**
+ * 账户设置-个人信息
+ *
+ * The legacy `/mine` endpoint is not part of the current user-center API.
+ * Keep the old response shape for existing account-settings consumers while
+ * sourcing the data from the canonical user-detail endpoint.
+ */
+export const getMine = (_data?: object): Promise<UserInfoResult> => {
+  return getUserDetail().then(adaptUserDetailToMine);
 };
 
 /** 文件上传 */

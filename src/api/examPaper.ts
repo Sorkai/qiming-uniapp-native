@@ -5,6 +5,7 @@ import type {
   RequestMethods
 } from "@/utils/http/types.d";
 import { normalizeExamPaperResponse } from "./examPaperResponse";
+import { adaptBackendCourseListToPaperOptions } from "./mobileApiAdapters";
 
 //==================== 类型定义 ====================
 
@@ -94,6 +95,22 @@ export interface ApiResponse<T = any> {
   msg: string;
   data: T;
 }
+
+/** 试卷筛选使用的课程选项参数 */
+export interface PaperCourseListParams {
+  pageNum?: number;
+  pageSize?: number;
+  courseName?: string;
+}
+
+type BackendCourseListData = {
+  courseList?: Array<{
+    courseId: number;
+    title: string;
+  }>;
+};
+
+type BackendCourseListResponse = ApiResponse<BackendCourseListData>;
 
 // AiEdu uses 200 for business success while legacy exam services use 0.
 // Normalize both at this API boundary so every exam-paper consumer has one contract.
@@ -994,12 +1011,25 @@ export const getLearningAnalytics = (params?: GetLearningAnalyticsParams) => {
 };
 
 /**
- * 获取课程列表（用于筛选）
+ * 获取课程列表（用于筛选）。
+ *
+ * The paper-specific endpoint is not available in the deployed backend. The
+ * canonical backend course list is equivalent for teacher/admin filters, so
+ * adapt its `{ courseId, title }` payload to the `{ id, name }` contract used
+ * by the exam-paper views.
  */
-export const getCourseList = () => {
-  return examPaperHttp.request<
-    ApiResponse<Array<{ id: number; name: string }>>
-  >("get", "/edu/backend/v1/paper/course/list");
+export const getCourseList = (params: PaperCourseListParams = {}) => {
+  const requestParams = {
+    pageNum: params.pageNum ?? 1,
+    pageSize: params.pageSize ?? 1000,
+    ...(params.courseName ? { courseName: params.courseName } : {})
+  };
+
+  return examPaperHttp
+    .request<BackendCourseListResponse>("get", "/edu/backend/v1/course/list", {
+      params: requestParams
+    })
+    .then(adaptBackendCourseListToPaperOptions);
 };
 
 // ==================== 题库和题目助手API ====================
