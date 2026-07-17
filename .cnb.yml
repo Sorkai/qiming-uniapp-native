@@ -11,6 +11,7 @@ main:
       imports:
         - https://cnb.cool/sorkai/vue-pure-admin-max-secrets/-/blob/main/envs.yml
       env:
+        NODE_OPTIONS: --max-old-space-size=8192
         VITE_PUBLIC_PATH: /
         VITE_ROUTER_HISTORY: hash
         VITE_CDN: "false"
@@ -66,6 +67,7 @@ dev:
       imports:
         - https://cnb.cool/sorkai/vue-pure-admin-max-secrets/-/blob/main/envs.yml
       env:
+        NODE_OPTIONS: --max-old-space-size=8192
         VITE_PUBLIC_PATH: /
         VITE_ROUTER_HISTORY: hash
         VITE_CDN: "false"
@@ -121,6 +123,7 @@ agent:
       imports:
         - https://cnb.cool/sorkai/vue-pure-admin-max-secrets/-/blob/main/envs.yml
       env:
+        NODE_OPTIONS: --max-old-space-size=8192
         VITE_PUBLIC_PATH: /
         VITE_ROUTER_HISTORY: hash
         VITE_CDN: "false"
