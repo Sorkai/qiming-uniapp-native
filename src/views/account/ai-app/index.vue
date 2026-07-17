@@ -3534,9 +3534,12 @@ onUnmounted(() => {
   background: var(--ai-app-shell-bg);
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
+  height: var(--qiming-native-vh, 100dvh);
   width: auto;
   min-width: 0;
   max-width: 100%;
+  padding-top: var(--pure-safe-area-top, 0);
+  padding-bottom: var(--pure-safe-area-bottom, 0);
   position: relative;
   text-rendering: optimizeLegibility;
 }

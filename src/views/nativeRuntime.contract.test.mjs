@@ -5,8 +5,10 @@ import test from "node:test";
 const read = relativePath =>
   readFileSync(new URL(relativePath, import.meta.url), "utf8");
 
+const packageJson = JSON.parse(read("../../package.json"));
 const userProfile = read("account/components/UserProfile.vue");
 const accountShell = read("account/index.vue");
+const aiAppShell = read("account/ai-app/index.vue");
 const courseHeader = read("account/course-detail/CourseHeader.vue");
 const courseSidebar = read("account/course-detail/CourseSidebar.vue");
 const androidAudit = read("../../scripts/android-webview-audit.mjs");
@@ -36,7 +38,18 @@ test("Android native status bar keeps an extra top clearance", () => {
   );
 });
 
-test("standalone account and course shells consume the top inset once", () => {
+test("native device runs rebuild the embedded H5 before launch", () => {
+  assert.match(
+    packageJson.scripts["native:run:android"],
+    /^pnpm native:prepare && /
+  );
+  assert.match(
+    packageJson.scripts["native:run:ios"],
+    /^pnpm native:prepare && /
+  );
+});
+
+test("standalone account, AI platform and course shells consume native insets", () => {
   assert.match(
     accountShell,
     /\.header\s*\{[\s\S]*height: calc\(72px \+ var\(--pure-safe-area-top, 0px\)\)[\s\S]*padding-top: var\(--pure-safe-area-top, 0\)/
@@ -44,6 +57,10 @@ test("standalone account and course shells consume the top inset once", () => {
   assert.match(
     accountShell,
     /\.account-content\s*\{[\s\S]*padding: calc\(84px \+ var\(--pure-safe-area-top, 0px\)\)/
+  );
+  assert.match(
+    aiAppShell,
+    /\.ai-app-root\s*\{[\s\S]*height: var\(--qiming-native-vh, 100dvh\)[\s\S]*padding-top: var\(--pure-safe-area-top, 0\)[\s\S]*padding-bottom: var\(--pure-safe-area-bottom, 0\)/
   );
   assert.match(
     courseHeader,
