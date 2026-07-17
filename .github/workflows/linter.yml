@@ -3,9 +3,13 @@ on:
   push:
     branches:
       - main
+      - dev
+      - agent
   pull_request:
     branches:
       - main
+      - dev
+      - agent
 
 jobs:
   build:
@@ -46,6 +50,7 @@ jobs:
           pnpm install --no-frozen-lockfile
           pnpm lint
           pnpm typecheck
+          pnpm test:contracts
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main

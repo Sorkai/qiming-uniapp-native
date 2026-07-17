@@ -4564,11 +4564,27 @@ onUnmounted(() => {
   }
   .resource-preview__tools {
     grid-column: 1 / -1;
+    flex-wrap: wrap;
     justify-content: flex-end;
     padding-top: 8px;
     padding-left: 0;
     border-top: 1px solid rgb(198 210 226 / 72%);
     border-left: 0;
+  }
+  .resource-preview__tool-button,
+  .resource-preview__font-reset,
+  .resource-tutor__suggestions button,
+  .tutor-attachment button,
+  .resource-tutor__quote button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .resource-preview__tool-button,
+  .resource-preview__font-reset,
+  .tutor-attachment button,
+  .resource-tutor__quote button {
+    width: 44px;
+    height: 44px;
   }
   .resource-preview__canvas {
     padding-top: 150px;

@@ -53,7 +53,7 @@
           </div>
 
           <template v-if="userInfo">
-            <el-dropdown trigger="hover" @command="handleCommand">
+            <el-dropdown trigger="click" @command="handleCommand">
               <div class="user-info">
                 <el-avatar :size="32" :src="formatAvatar(userInfo.avatar)" />
                 <span class="nickname">{{
@@ -2449,6 +2449,16 @@ onUnmounted(() => {
 
   /* stylelint-disable-next-line order/order */
   @media (width <= 767px) {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+
+    :deep(.layout-footer) {
+      position: static;
+      padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+      pointer-events: auto;
+    }
+
     .header {
       height: 72px;
 

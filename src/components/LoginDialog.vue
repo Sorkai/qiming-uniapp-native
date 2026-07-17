@@ -516,7 +516,20 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { message } from "@/utils/message";
 import { useI18n } from "vue-i18n";
 import { userRegister, userLogin, getUserDetail } from "@/api/user";
-import { setToken, getToken } from "@/utils/auth";
+import { setToken, getToken, removeToken } from "@/utils/auth";
+
+const rolesForRoleType = (roleType?: number) => {
+  switch (Number(roleType)) {
+    case 1:
+      return ["student"];
+    case 2:
+      return ["teacher"];
+    case 3:
+      return ["admin"];
+    default:
+      return ["common"];
+  }
+};
 
 const props = defineProps({
   visible: {
@@ -677,7 +690,7 @@ const fetchUserDetail = async () => {
         username: userInfo.mobile,
         nickname: userInfo.nickname,
         avatar: userInfo.avatar,
-        roles: ["admin"],
+        roles: rolesForRoleType(userInfo.roleType),
         permissions: ["*:*:*"],
         roleType: userInfo.roleType
       });
@@ -726,11 +739,16 @@ const handlePasswordLogin = async () => {
         refreshToken: res.data.accessToken,
         username: loginForm.username,
         nickname: loginForm.username,
-        roles: ["admin"],
-        permissions: ["*:*:*"]
+        roles: [],
+        permissions: ["*:*:*"],
+        roleType: 0
       });
 
-      await fetchUserDetail();
+      const detail = await fetchUserDetail();
+      if (!detail?.data?.userInfo) {
+        removeToken();
+        throw new Error("Unable to load the authenticated user role");
+      }
       message(t("login.pureLoginSuccess"), { type: "success" });
 
       setTimeout(() => {
@@ -839,11 +857,16 @@ const handleRegister = async () => {
         refreshToken: res.data.accessToken,
         username: registerForm.phone,
         nickname: registerForm.phone,
-        roles: ["admin"],
-        permissions: ["*:*:*"]
+        roles: [],
+        permissions: ["*:*:*"],
+        roleType: 0
       });
 
-      await fetchUserDetail();
+      const detail = await fetchUserDetail();
+      if (!detail?.data?.userInfo) {
+        removeToken();
+        throw new Error("Unable to load the registered user role");
+      }
       ElMessage.success("注册成功，已自动登录");
 
       setTimeout(() => {

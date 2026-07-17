@@ -34,6 +34,8 @@ main:
         - name: Build
           script: |
             set -eu
+            pnpm test:contracts
+            pnpm typecheck
             pnpm build
 
         - name: Verify build output
@@ -87,6 +89,8 @@ dev:
         - name: Build
           script: |
             set -eu
+            pnpm test:contracts
+            pnpm typecheck
             pnpm build
 
         - name: Verify build output
@@ -140,6 +144,8 @@ agent:
         - name: Build
           script: |
             set -eu
+            pnpm test:contracts
+            pnpm typecheck
             pnpm build
 
         - name: Verify build output

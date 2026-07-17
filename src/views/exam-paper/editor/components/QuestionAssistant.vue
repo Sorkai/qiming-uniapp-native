@@ -248,7 +248,7 @@ const applyAllAIQuestions = () => {
 <template>
   <el-dialog
     :model-value="visible"
-    width="900px"
+    width="min(900px, calc(100vw - 24px))"
     :close-on-click-modal="false"
     @update:model-value="handleClose"
   >

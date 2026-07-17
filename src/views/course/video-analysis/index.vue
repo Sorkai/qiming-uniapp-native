@@ -229,7 +229,13 @@
           </div>
 
           <!-- 有课程时显示表格 -->
-          <div v-else class="flex-1 overflow-auto custom-scrollbar">
+          <div
+            v-else
+            class="task-table-scroll flex-1 overflow-auto custom-scrollbar"
+            role="region"
+            aria-label="视频分析任务表格"
+            tabindex="0"
+          >
             <el-table
               :data="taskList"
               style="width: 100%"
@@ -302,7 +308,7 @@
                 label="操作"
                 width="160"
                 align="center"
-                fixed="right"
+                :fixed="isMobileLayout ? false : 'right'"
               >
                 <template #default="{ row }">
                   <el-button
@@ -338,7 +344,7 @@
     <el-dialog
       v-model="submitDialogVisible"
       title="提交视频分析任务"
-      width="520px"
+      width="min(520px, calc(100vw - 24px))"
       :close-on-click-modal="false"
     >
       <el-form
@@ -960,6 +966,15 @@ onUnmounted(() => {
   }
 }
 
+.task-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+}
+
 // 侧边栏卡片动效
 .sidebar-card {
   .header-section:hover .icon-box {
@@ -1153,5 +1168,17 @@ onUnmounted(() => {
 
 .video-analysis-container.is-mobile-layout :deep(.task-table) {
   min-width: 720px;
+}
+
+.video-analysis-container.is-mobile-layout .task-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.video-analysis-container.is-mobile-layout :deep(.task-table .el-button) {
+  min-height: 44px;
+  padding-right: 12px;
+  padding-left: 12px;
 }
 </style>

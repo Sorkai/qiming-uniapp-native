@@ -234,7 +234,7 @@
     <el-dialog
       v-model="showResultDialog"
       :title="resultDialogTitle"
-      width="400px"
+      width="min(400px, calc(100vw - 24px))"
     >
       <div class="result-content">
         <div v-if="submissionResult" class="score-info">
