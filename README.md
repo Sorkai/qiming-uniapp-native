@@ -74,6 +74,21 @@ organization, or commercial environment without the project owner's prior writte
 - **启明智教精调的垂直领域大模型**
 - **----还有更多----**
 
+## 分支职责
+
+本仓库的移动端开发线按平台拆分，两个远端使用相同的正式分支名：
+
+| 分支 | 对应客户端 | 主要职责 |
+| --- | --- | --- |
+| `main` | 三端共用基线 | 同步 Web 业务和跨平台公共修复，不放单个平台补丁 |
+| `android-native` | Android APK | HBuilderX / App-Plus Android、真机调试和 APK 验收 |
+| `ios-native` | iOS App | Xcode / UIKit / WKWebView、Simulator、签名、IPA / TestFlight 验收 |
+| `wechat-miniprogram` | 微信小程序 | `mp-weixin`、微信开发者工具、`web-view` H5、预览和上传 |
+
+`origin` 对应 `Sorkai/qiming-uniapp-native`，`farrran` 对应
+`Farrran69311/qiming-uniapp-native`。共享业务从 `main` 合入平台分支；平台专属提交
+不得反向合入 `main`。
+
 ## Android / iOS 双线工程设计
 
 本仓库不是 Android 工程旁边临时补一个 iOS 工程，而是一个共享业务层、
@@ -86,8 +101,7 @@ organization, or commercial environment without the project owner's prior writte
   Android 打包配置、Android 设备调试和 Android 专属原生能力。
 - **iOS 原生线:** `ios-native/` 承载 Xcode/UIKit/WKWebView iOS Simulator
   验证壳；iOS 打包与 HBuilderX iOS 能力在 `native-app/` 的 iOS 配置中衔接。
-  若当前分支尚未包含 `ios-native/`，请切到或合并 iOS 工具分支
-  `codex/ios-native-tooling`。
+  iOS 开发、验收和发版统一在 `ios-native` 分支推进。
 - **端专属边界:** 平台问题优先落在对应原生线、平台 class、平台脚本或平台
   测试中。Android 专属改动不应要求 iOS 迁就，iOS 专属改动也不应隐式改变
   Android 行为。
