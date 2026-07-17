@@ -20,11 +20,13 @@ const ttsEngineOptions: Array<{ label: string; value: TtsEngine }> = [
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
 const humanBaseUrl = computed(() => {
-  // 获取当前基础路径，动态兼容部署环境
-  const base = window.location.origin;
-  return `${base}/virtual-people/index.html`;
+  return new URL("virtual-people/index.html", window.location.href).href;
 });
 const humanUrl = computed(() => `${humanBaseUrl.value}?embed=ai-app`);
+const messageTargetOrigin = computed(() => {
+  const target = new URL(humanBaseUrl.value);
+  return target.protocol === "file:" ? "*" : target.origin;
+});
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
@@ -65,7 +67,10 @@ function flushPendingSpeak() {
   while (pendingSpeakQueue.length) {
     const text = pendingSpeakQueue.shift()!;
     try {
-      iframe.contentWindow.postMessage({ type: "speak", text }, "*");
+      iframe.contentWindow.postMessage(
+        { type: "speak", text },
+        messageTargetOrigin.value
+      );
     } catch (err) {
       console.warn("[VirtualHumanPanel] flush speak failed", err);
     }
@@ -76,7 +81,7 @@ function postControlMessage(payload: Record<string, unknown>) {
   const iframe = iframeRef.value;
   if (!iframe || !iframe.contentWindow) return;
   try {
-    iframe.contentWindow.postMessage(payload, "*");
+    iframe.contentWindow.postMessage(payload, messageTargetOrigin.value);
   } catch (err) {
     console.warn("[VirtualHumanPanel] control postMessage failed", err);
   }
@@ -167,7 +172,10 @@ function speak(text: string) {
     return;
   }
   try {
-    iframe.contentWindow.postMessage({ type: "speak", text }, "*");
+    iframe.contentWindow.postMessage(
+      { type: "speak", text },
+      messageTargetOrigin.value
+    );
   } catch (err) {
     console.warn("[VirtualHumanPanel] speak() postMessage failed", err);
   }

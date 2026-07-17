@@ -33,11 +33,13 @@ const emit = defineEmits<{
 
 // 数字人已集成到项目 public/virtual-people 目录下，由 Vite 统一托管
 const humanBaseUrl = computed(() => {
-  // 获取当前基础路径，动态兼容部署环境
-  const base = window.location.origin;
-  return `${base}/virtual-people/index.html`;
+  return new URL("virtual-people/index.html", window.location.href).href;
 });
 const humanUrl = computed(() => `${humanBaseUrl.value}?embed=ai-app`);
+const messageTargetOrigin = computed(() => {
+  const target = new URL(humanBaseUrl.value);
+  return target.protocol === "file:" ? "*" : target.origin;
+});
 
 const iframeRef = ref<HTMLIFrameElement | null>(null);
 const loading = ref(true);
@@ -49,7 +51,7 @@ function postControlMessage(payload: Record<string, unknown>) {
   const iframe = iframeRef.value;
   if (!iframe || !iframe.contentWindow) return;
   try {
-    iframe.contentWindow.postMessage(payload, window.location.origin);
+    iframe.contentWindow.postMessage(payload, messageTargetOrigin.value);
   } catch (err) {
     console.warn("[VirtualHumanPanel] control postMessage failed", err);
   }
