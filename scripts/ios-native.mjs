@@ -157,40 +157,8 @@ function staticCheck() {
       "The generated Info.plist must not disable App Transport Security."
     );
   }
-  const plistLint = spawnSync("plutil", ["-lint", "-"], {
-    cwd: repoRoot,
-    encoding: "utf8",
-    input: plist
-  });
-  if (plistLint.error) {
-    throw new Error(`plutil is unavailable: ${plistLint.error.message}`);
-  }
-  if (plistLint.status !== 0) {
-    throw new Error(
-      (
-        plistLint.stderr ||
-        plistLint.stdout ||
-        "Generated Info.plist is invalid."
-      ).trim()
-    );
-  }
-  const swiftParse = spawnSync("xcrun", ["swiftc", "-parse", ...sourceFiles], {
-    cwd: repoRoot,
-    encoding: "utf8",
-    maxBuffer: 8 * 1024 * 1024
-  });
-  if (swiftParse.error) {
-    throw new Error(`xcrun is unavailable: ${swiftParse.error.message}`);
-  }
-  if (swiftParse.status !== 0) {
-    throw new Error(
-      (
-        swiftParse.stderr ||
-        swiftParse.stdout ||
-        "The iOS Swift sources failed syntax parsing."
-      ).trim()
-    );
-  }
+  const plistValidation = validateGeneratedPlist(plist);
+  const swiftValidation = validateSwiftSyntax();
 
   const resourceFiles = countFiles(resourceSource);
   console.log(
@@ -211,9 +179,165 @@ function staticCheck() {
   console.log(
     "App Transport Security: strict HTTPS (no arbitrary-load exception)"
   );
-  console.log(
-    "Swift validation: syntax parse only; UIKit linking and iOS runtime still require full Xcode."
-  );
+  console.log(`Info.plist validation: ${plistValidation}`);
+  console.log(`Swift validation: ${swiftValidation}`);
+}
+
+function validateGeneratedPlist(plist) {
+  validatePortablePlist(plist);
+  const plistLint = spawnSync("plutil", ["-lint", "-"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    input: plist
+  });
+  if (plistLint.error?.code === "ENOENT") {
+    return "portable XML structure check (plutil unavailable)";
+  }
+  if (plistLint.error) {
+    throw new Error(`plutil failed to start: ${plistLint.error.message}`);
+  }
+  if (plistLint.status !== 0) {
+    throw new Error(
+      (
+        plistLint.stderr ||
+        plistLint.stdout ||
+        "Generated Info.plist is invalid."
+      ).trim()
+    );
+  }
+  return "portable XML structure check and plutil lint";
+}
+
+function validatePortablePlist(plist) {
+  if (!/^<\?xml version="1\.0" encoding="UTF-8"\?>/.test(plist)) {
+    throw new Error("Generated Info.plist is missing its XML declaration.");
+  }
+  if (!/<!DOCTYPE plist PUBLIC/.test(plist)) {
+    throw new Error("Generated Info.plist is missing its plist doctype.");
+  }
+  if (/&(?!amp;|lt;|gt;|quot;|apos;)/.test(plist)) {
+    throw new Error("Generated Info.plist contains an unescaped XML entity.");
+  }
+
+  const body = plist
+    .replace(/^<\?xml[^>]*>\s*/, "")
+    .replace(/^<!DOCTYPE plist PUBLIC[^>]*>\s*/, "");
+  const allowedTags = new Set([
+    "plist",
+    "dict",
+    "key",
+    "string",
+    "array",
+    "integer",
+    "true",
+    "false"
+  ]);
+  const stack = [];
+  const tagPattern = /<\s*(\/)?\s*([A-Za-z][\w.-]*)([^>]*)>/g;
+  let cursor = 0;
+  let rootCount = 0;
+  let match;
+
+  while ((match = tagPattern.exec(body))) {
+    const text = body.slice(cursor, match.index);
+    if (/[<>]/.test(text) || (stack.length === 0 && text.trim())) {
+      throw new Error("Generated Info.plist contains malformed XML text.");
+    }
+    const closing = Boolean(match[1]);
+    const tag = match[2];
+    const suffix = match[3].trim();
+    const selfClosing = !closing && suffix.endsWith("/");
+    const attributes = selfClosing ? suffix.slice(0, -1).trim() : suffix;
+    if (!allowedTags.has(tag)) {
+      throw new Error(
+        `Generated Info.plist contains unsupported tag <${tag}>.`
+      );
+    }
+    if (closing && suffix) {
+      throw new Error(
+        `Generated Info.plist has malformed closing tag </${tag}>.`
+      );
+    }
+    if (tag === "plist") {
+      if (closing) {
+        if (attributes) {
+          throw new Error(
+            "Generated Info.plist has malformed plist attributes."
+          );
+        }
+      } else if (attributes !== 'version="1.0"') {
+        throw new Error("Generated Info.plist must declare plist version 1.0.");
+      }
+    } else if (attributes) {
+      throw new Error(
+        `Generated Info.plist has unexpected attributes on <${tag}>.`
+      );
+    }
+
+    if (closing) {
+      const openTag = stack.pop();
+      if (openTag !== tag) {
+        throw new Error(
+          `Generated Info.plist closes </${tag}> while <${openTag || "none"}> is open.`
+        );
+      }
+    } else {
+      if (stack.length === 0) {
+        rootCount += 1;
+        if (tag !== "plist") {
+          throw new Error("Generated Info.plist root element must be <plist>.");
+        }
+      }
+      if (!selfClosing) stack.push(tag);
+    }
+    cursor = tagPattern.lastIndex;
+  }
+
+  const remainder = body.slice(cursor);
+  if (/[<>]/.test(remainder) || (stack.length === 0 && remainder.trim())) {
+    throw new Error("Generated Info.plist contains trailing malformed XML.");
+  }
+  if (stack.length) {
+    throw new Error(
+      `Generated Info.plist has unclosed tag <${stack[stack.length - 1]}>.`
+    );
+  }
+  if (rootCount !== 1) {
+    throw new Error(
+      "Generated Info.plist must contain exactly one plist root."
+    );
+  }
+}
+
+function validateSwiftSyntax() {
+  const candidates =
+    process.platform === "darwin"
+      ? [{ command: "xcrun", args: ["swiftc", "-parse", ...sourceFiles] }]
+      : [{ command: "swiftc", args: ["-parse", ...sourceFiles] }];
+  for (const candidate of candidates) {
+    const result = spawnSync(candidate.command, candidate.args, {
+      cwd: repoRoot,
+      encoding: "utf8",
+      maxBuffer: 8 * 1024 * 1024
+    });
+    if (result.error?.code === "ENOENT") continue;
+    if (result.error) {
+      throw new Error(
+        `${candidate.command} failed to start: ${result.error.message}`
+      );
+    }
+    if (result.status !== 0) {
+      throw new Error(
+        (
+          result.stderr ||
+          result.stdout ||
+          "The iOS Swift sources failed syntax parsing."
+        ).trim()
+      );
+    }
+    return `syntax parse passed via ${candidate.command}; UIKit linking and iOS runtime still require full Xcode`;
+  }
+  return "skipped because no Swift compiler is installed; macOS release validation still requires full Xcode";
 }
 
 function validateManifestMetadata({ requireDCloudAppId = false } = {}) {
@@ -1448,6 +1572,17 @@ function selfTest() {
   assert.deepEqual(certificateHashesFromBase64(["AQID"]), [
     "7037807198C22A7D2B0807371D763779A84FDFCF"
   ]);
+  const generatedPlist = renderInfoPlist();
+  assert.doesNotThrow(() => validatePortablePlist(generatedPlist));
+  assert.throws(
+    () =>
+      validatePortablePlist(generatedPlist.replace("<dict>", "<dict>A & B")),
+    /unescaped XML entity/
+  );
+  assert.throws(
+    () => validatePortablePlist(generatedPlist.replace("</plist>", "</dict>")),
+    /closes <\/dict>/
+  );
 
   if (process.platform === "darwin") {
     const entitlementsPath = join(artifactRoot, "self-test-entitlements.plist");
@@ -1501,7 +1636,7 @@ function selfTest() {
     }
   }
   console.log(
-    `iOS native helper self-test OK: 14 portable assertions; Apple plist integration ${
+    `iOS native helper self-test OK: 17 portable assertions; Apple plist integration ${
       process.platform === "darwin" ? "passed" : "skipped on non-macOS"
     }`
   );
