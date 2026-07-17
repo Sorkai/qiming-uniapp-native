@@ -68,6 +68,7 @@ jobs:
 
       - name: Self-test device audit tooling
         run: |
+          pnpm native:run:self-test
           pnpm native:audit:android:self-test
           pnpm mini:real-audit:self-test
           pnpm ios-native:self-test

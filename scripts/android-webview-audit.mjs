@@ -55,6 +55,9 @@ function printUsage() {
   process.stdout.write(
     `Usage: node scripts/android-webview-audit.mjs [options]\n\nOptions:\n  --strict                         Exit non-zero when an audit assertion fails\n  --role <student|teacher|admin>   Seed a real role session before auditing\n  --entry <route>                  Navigate to a hash route before auditing\n  --expect-text <text>             Require page/account body text\n  --ready-expect-text <text>       Require text before a configured action\n  --account-menu-text <text>       Require the active account menu and account body\n  --action-selector <selector>     Click a visible element matching selector/text\n  --action-text <text>             Text used with --action-selector\n  --required-request-path <path>   Require a successful API response and code 0/200\n  --expect-forbidden               Require the route to resolve to the 403 page\n  --serial <adb-serial>             Target one Android device\n  --port <port>                    Local CDP forwarding port (default: 9223)\n  --url-pattern <text>             WebView target URL pattern\n  --wait-ms <ms>                   Wait after navigation/session seed\n  --post-action-wait-ms <ms>       Wait after the configured action\n  --min-content-ratio <ratio>      Minimum main-content/viewport width ratio\n  --api-origin <url>               API origin used for real login\n  --out <path>                     Write the JSON report to a file\n  --self-test                      Run pure response-envelope checks and exit\n  -h, --help                       Show this help and exit\n`
   );
+  process.stdout.write(
+    "  --package <application-id>        Android package owning the WebView\n"
+  );
 }
 
 function runSelfTest() {
@@ -93,6 +96,10 @@ if (hasFlag("--self-test")) {
 
 const adb = process.env.ADB || "adb";
 const serial = readArg("--serial");
+const packageName = readArg(
+  "--package",
+  process.env.QIMING_ANDROID_PACKAGE || "io.dcloud.HBuilder"
+);
 const port = Number(readArg("--port", "9223"));
 const urlPattern = readArg("--url-pattern", "hybrid/html/index.html");
 const outputPath = readArg("--out");
@@ -139,6 +146,10 @@ const roleMeta = {
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) {
   throw new Error(`Invalid --port value: ${port}`);
+}
+
+if (!/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/.test(packageName)) {
+  throw new Error(`Invalid --package value: ${packageName}`);
 }
 
 if (
@@ -512,9 +523,9 @@ const auditExpression = `(() => {
 
 let socket;
 try {
-  const pid = runAdb(["shell", "pidof", "io.dcloud.HBuilder"]);
+  const pid = runAdb(["shell", "pidof", packageName]);
   if (!pid) {
-    throw new Error("HBuilder Android runtime is not running");
+    throw new Error(`${packageName} Android runtime is not running`);
   }
 
   runAdb([
@@ -716,6 +727,7 @@ try {
     }
   }
   report.action = actionResult;
+  report.androidPackage = packageName;
   report.networkRequests = networkRequests.slice(-160);
   report.networkResponses = networkResponses
     .slice(-160)

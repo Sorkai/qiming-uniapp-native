@@ -14,6 +14,9 @@ function printUsage() {
   process.stdout.write(
     `Usage: node scripts/android-real-device-audit.mjs [options]\n\nOptions:\n  --role <student|teacher|admin>  Audit one role from the shared matrix\n  --route, --only <name>          Audit one named route\n  --serial <adb-serial>            Target one Android device\n  --api-origin <url>              API origin used for real login/fixtures\n  --wait-ms <ms>                  Per-route navigation wait\n  --min-content-ratio <ratio>     Minimum main-content/viewport width ratio\n  --max-routes <count>            Limit the selected route count\n  --out-dir <path>                Artifact output directory\n  --list                          List selected routes and exit\n  --list-json                     Print selected route definitions as JSON\n  --self-test                     Validate the shared matrix without a device\n  -h, --help                      Show this help and exit\n`
   );
+  process.stdout.write(
+    "  --package <application-id>       Android package owning the WebView\n"
+  );
 }
 
 if (argv.includes("-h") || argv.includes("--help")) {
@@ -29,6 +32,10 @@ function readArg(name, fallback = "") {
 const roleFilter = readArg("--role");
 const routeFilter = readArg("--route") || readArg("--only");
 const serial = readArg("--serial");
+const packageName = readArg(
+  "--package",
+  process.env.QIMING_ANDROID_PACKAGE || "io.dcloud.HBuilder"
+);
 const apiOrigin = readArg(
   "--api-origin",
   process.env.VITE_API_URL || "https://aiedu-api.intelledu.cn"
@@ -62,6 +69,9 @@ if (!Number.isFinite(waitMs) || waitMs < 0 || waitMs > 120_000) {
 }
 if (!Number.isInteger(maxRoutes) || maxRoutes < 0) {
   throw new Error(`Unsupported --max-routes value: ${maxRoutes}`);
+}
+if (!/^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)+$/.test(packageName)) {
+  throw new Error(`Unsupported --package value: ${packageName}`);
 }
 
 function runNode(script, args, options = {}) {
@@ -267,6 +277,7 @@ for (const route of routes) {
     reportPath
   ];
   if (serial) commandArgs.push("--serial", serial);
+  commandArgs.push("--package", packageName);
   if (expected) commandArgs.push("--expect-text", expected);
   if (route.accountMenuText) {
     commandArgs.push("--account-menu-text", route.accountMenuText);
@@ -342,6 +353,7 @@ for (const route of routes) {
 const summary = {
   generatedAt: new Date().toISOString(),
   deviceSerial: serial || "default",
+  androidPackage: packageName,
   apiOrigin: new URL(apiOrigin).origin,
   waitMs,
   minContentRatio: Number(minContentRatio),
