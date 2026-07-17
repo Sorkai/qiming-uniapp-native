@@ -334,6 +334,21 @@ function runCapture(command, args, cwd = root, env = {}) {
   return `${result.stdout || ""}${result.stderr || ""}`;
 }
 
+function closeDevToolsProject(cliPath, options) {
+  try {
+    runCapture(
+      cliPath,
+      withDevToolsPort(["close", "--project", buildDir], options)
+    );
+  } catch (error) {
+    console.warn(
+      `[WARN] existing DevTools project close skipped: ${
+        error instanceof Error ? error.message : error
+      }`
+    );
+  }
+}
+
 function pnpmCommand() {
   return process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 }
@@ -1535,6 +1550,8 @@ async function runDevToolsSmoke(options) {
 
   let miniProgram;
   try {
+    closeDevToolsProject(cliPath, options);
+    await wait(1500);
     miniProgram = await automator.launch({
       cliPath,
       projectPath: buildDir,

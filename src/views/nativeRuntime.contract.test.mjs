@@ -61,6 +61,17 @@ test("WeChat bootstrap installs the nested uni-app outside the root workspace", 
   );
 });
 
+test("WeChat DevTools smoke closes only its existing build before launch", () => {
+  assert.match(
+    wechatMiniProgram,
+    /withDevToolsPort\(\["close", "--project", buildDir\], options\)/
+  );
+  assert.match(
+    wechatMiniProgram,
+    /closeDevToolsProject\(cliPath, options\);\s*await wait\(1500\);\s*miniProgram = await automator\.launch/
+  );
+});
+
 test("mobile AI assistant stays above the rendered bottom dock", () => {
   assert.match(assistantFloatButton, /getVisibleBottomDock/);
   assert.match(
