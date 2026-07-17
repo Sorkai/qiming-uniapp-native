@@ -166,7 +166,10 @@ test("native profile keeps local activity fallback without calling an absent API
 
 test("account audit ignores SVG style text and expects rendered page content", () => {
   assert.match(androidAudit, /clone\.querySelectorAll\("svg"\)/);
-  assert.match(sharedRouteMatrix, /clone\.querySelectorAll\('svg'\)/);
+  assert.match(
+    sharedRouteMatrix,
+    /clone\.querySelectorAll\('svg(?:, style, script)?'\)/
+  );
   assert.match(
     androidAudit,
     /activeMenuText: textWithoutSvg\(activeAccountMenu\)/
