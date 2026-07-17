@@ -375,7 +375,10 @@ const routes = [
     role: "teacher",
     name: "teacher-course-list",
     entry: "/course/list",
-    expect: ["课程", "课程名称"]
+    readyExpect: ["课程名称"],
+    action: { selector: ".course-card .action-btn", text: "章节课时" },
+    expect: ["课时列表"],
+    postActionWaitMs: 1600
   },
   {
     role: "teacher",
@@ -387,13 +390,19 @@ const routes = [
     role: "teacher",
     name: "teacher-course-assessment",
     entry: "/course/assessment",
-    expect: ["作业", "考试"]
+    readyExpect: ["请从左侧选择一个课程开始管理"],
+    action: { selector: ".assessment-management .course-item" },
+    expect: ["作业列表"],
+    postActionWaitMs: 1200
   },
   {
     role: "teacher",
     name: "teacher-course-plan",
     entry: "/course/teacherplan",
-    expect: ["教案"]
+    readyExpect: ["开启智能教案设计"],
+    action: { selector: ".teacher-plan-container .course-item" },
+    expect: ["AI 智能生成工作台"],
+    postActionWaitMs: 1200
   },
   {
     role: "teacher",
@@ -605,7 +614,10 @@ const routes = [
     role: "admin",
     name: "admin-course-list",
     entry: "/course/list",
-    expect: ["课程"]
+    readyExpect: ["课程名称"],
+    action: { selector: ".course-card .action-btn", text: "章节课时" },
+    expect: ["课时列表"],
+    postActionWaitMs: 1600
   },
   {
     role: "admin",
@@ -617,7 +629,10 @@ const routes = [
     role: "admin",
     name: "admin-course-assessment",
     entry: "/course/assessment",
-    expect: ["作业", "考试"]
+    readyExpect: ["请从左侧选择一个课程开始管理"],
+    action: { selector: ".assessment-management .course-item" },
+    expect: ["作业列表"],
+    postActionWaitMs: 1200
   },
   {
     role: "admin",
@@ -792,7 +807,10 @@ const routes = [
     role: "admin",
     name: "admin-course-plan",
     entry: "/course/teacherplan",
-    expect: ["开启智能教案设计", "已生成教案库"]
+    readyExpect: ["开启智能教案设计"],
+    action: { selector: ".teacher-plan-container .course-item" },
+    expect: ["AI 智能生成工作台"],
+    postActionWaitMs: 1200
   },
   {
     role: "admin",
@@ -1604,7 +1622,7 @@ async function performRouteAction(client, action) {
     expression: `(() => {
       ${isVisibleElementSource}
       const selector = ${JSON.stringify(action.selector)};
-      const expectedText = ${JSON.stringify(action.text)};
+      const expectedText = ${JSON.stringify(action.text || "")};
       const target = Array.from(document.querySelectorAll(selector)).find(el =>
         isVisibleElement(el) && String(el.textContent || '').replace(/\\s+/g, ' ').trim().includes(expectedText)
       );
@@ -1678,6 +1696,17 @@ function runSelfTest() {
       failures.push(`invalid account menu route: ${route.name}`);
     }
   }
+  const interactionRoutes = routes.filter(route => route.action);
+  if (interactionRoutes.length !== 7) {
+    failures.push(
+      `expected 7 interaction routes, got ${interactionRoutes.length}`
+    );
+  }
+  for (const route of interactionRoutes) {
+    if (!route.action.selector || !Array.isArray(route.readyExpect)) {
+      failures.push(`invalid interaction contract: ${route.name}`);
+    }
+  }
   for (const name of [
     "student-account-cloud-disk",
     "teacher-cloud-disk",
@@ -1718,6 +1747,7 @@ function runSelfTest() {
         courseFixtures: routes.filter(route => route.requiresCourse).length,
         requiredResponses: routes.filter(route => route.requiredRequestPath)
           .length,
+        interactionRoutes: interactionRoutes.length,
         envelopeCases: envelopeCases.length
       },
       null,
