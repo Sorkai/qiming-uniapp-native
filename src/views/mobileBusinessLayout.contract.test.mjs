@@ -29,6 +29,10 @@ const examManagement = readView(
   "course/assessment/components/ExamManagement.vue"
 );
 const virtualLab = readView("account/components/VirtualLab.vue");
+const studentResources = readView("course/student-resource/index.vue");
+const structuredResourcePreview = readView(
+  "../components/PlatformResourcePreview/PlatformStructuredJsonPreview.vue"
+);
 
 test("student detail flows remove layered mobile gutters", () => {
   assert.match(studentPaperDetail, /@media \(width <= 768px\)/);
@@ -42,6 +46,25 @@ test("student detail controls preserve phone touch targets", () => {
   assert.match(studentPaperDetail, /min-height: 44px/);
   assert.match(homeworkDetail, /min-height: 44px/);
   assert.match(examDetail, /min-height: 44px/);
+});
+
+test("student resource previews do not stack mobile side gutters", () => {
+  assert.match(
+    studentResources,
+    /@media \(max-width: 560px\)[\s\S]*\.resource-workbench__body \{[\s\S]*padding: 0/
+  );
+  assert.match(
+    studentResources,
+    /\.resource-preview__canvas \{[\s\S]*padding: 146px 0 8px/
+  );
+  assert.match(
+    structuredResourcePreview,
+    /@container \(max-width: 560px\)[\s\S]*\.structured-preview \{[\s\S]*padding: 18px 12px 32px/
+  );
+  assert.match(
+    structuredResourcePreview,
+    /\.exercise-nav button \{[\s\S]*width: 44px;[\s\S]*height: 44px/
+  );
 });
 
 test("paper editor uses a scrollable toolbar and a single-column outline", () => {
