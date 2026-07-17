@@ -119,6 +119,7 @@ function rewriteVirtualPeopleNativeEntry(input) {
       /\s*<script\s+type=["']importmap-shim["'][^>]*>[\s\S]*?<\/script>/i,
       ""
     )
+    .replace(/\s*<script\s+type=["']importmap["'][^>]*>[\s\S]*?<\/script>/i, "")
     .replace(
       /\s*<script\s+type=["']application\/json["']\s+id=["']qiming-motion-manifest-json["'][^>]*>[\s\S]*?<\/script>/i,
       ""
@@ -139,6 +140,10 @@ function rewriteVirtualPeopleNativeEntry(input) {
     .replace(
       /from\s+(['"])pinyin-pro\1/g,
       'from "./vendor/pinyin-pro/index.mjs"'
+    )
+    .replace(
+      /setDecoderPath\(\s*['"]\/node_modules\/three\/examples\/jsm\/libs\/draco\/gltf\/['"]\s*\)/g,
+      'setDecoderPath("./vendor/three/examples/jsm/libs/draco/gltf/")'
     );
 
   if (inlineMotionTag) {
@@ -163,6 +168,32 @@ if (existsSync(virtualPeopleTargetDir)) {
     }
     if (nextSource !== source) {
       writeFileSync(filePath, nextSource, "utf8");
+    }
+  }
+
+  const nativeVirtualPeopleEntry = join(virtualPeopleTargetDir, "index.html");
+  const nativeVirtualPeopleSource = readFileSync(
+    nativeVirtualPeopleEntry,
+    "utf8"
+  );
+  if (/\/node_modules\//.test(nativeVirtualPeopleSource)) {
+    throw new Error(
+      "virtual-people native entry still references /node_modules; bundle-local assets are required"
+    );
+  }
+  if (/<script\s+type=["']importmap["']/i.test(nativeVirtualPeopleSource)) {
+    throw new Error(
+      "virtual-people native entry still contains an importmap; native imports must be bundle-local"
+    );
+  }
+  for (const requiredAsset of [
+    "vendor/three/build/three.module.js",
+    "vendor/three/examples/jsm/libs/draco/gltf/draco_decoder.js",
+    "vendor/three/examples/jsm/libs/draco/gltf/draco_decoder.wasm",
+    "vendor/pinyin-pro/index.mjs"
+  ]) {
+    if (!existsSync(join(virtualPeopleTargetDir, requiredAsset))) {
+      throw new Error(`virtual-people native asset missing: ${requiredAsset}`);
     }
   }
 }
