@@ -159,6 +159,11 @@ Android App-Plus H5/容器资源和微信小程序产物。发生冲突、工作
 无法快进时会停止，不会强制覆盖。共享业务同步应在 `main` 分支执行并推送到两个
 远端：
 
+同步边界由 `scripts/sync-web-policy.mjs` 强制执行：已经审计过的 Web 专属提交不会
+进入 Android、iOS 或微信分支；以后只属于 Web 的提交必须在提交说明中写
+`[web-only]` 或 `mobile-sync: no`。如果同一批更新同时包含 Web 专属和共享提交，
+脚本会停止并要求先拆分审计，禁止用一次 merge 把两类代码混在一起。
+
 ```bash
 git switch main
 pnpm sync:web:check
