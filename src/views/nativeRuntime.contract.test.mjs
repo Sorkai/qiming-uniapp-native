@@ -154,6 +154,36 @@ test("standalone account, AI platform and course shells consume native insets", 
   );
 });
 
+test("WeChat top bars stay opaque and the student profile clears its header", () => {
+  assert.match(
+    globalStyles,
+    /qiming-mini-program-webview \{[^}]*--qiming-native-navbar-bg: #f8faff;/
+  );
+  assert.match(
+    globalStyles,
+    /qiming-mini-program-webview \.navbar \{[^}]*background: var\(--qiming-native-navbar-bg\) !important;[^}]*border-bottom: 1px solid var\(--qiming-native-border-color\) !important;/
+  );
+  assert.match(
+    globalStyles,
+    /qiming-mini-program-webview \.nx-nav,[\s\S]*?qiming-mini-program-webview \.nx-nav\.is-scrolled \{[^}]*background: var\(--qiming-native-navbar-bg\) !important;/
+  );
+  assert.match(
+    globalStyles,
+    /qiming-mini-program-webview \.account-container \.account-content \{[^}]*padding-top: calc\(76px \+ var\(--pure-safe-area-top, 0px\)\) !important;/
+  );
+  assert.doesNotMatch(
+    globalStyles,
+    /qiming-mini-program-webview \.account-container \.account-content \{[^}]*padding-top: 8px !important;/
+  );
+  assert.match(
+    wechatMiniProgram,
+    /name: "public-home"[\s\S]*?entry: "\/home"[\s\S]*?expectText: "为每一门课"/
+  );
+  assert.match(wechatMiniProgram, /landing-topbar-transparent/);
+  assert.match(wechatMiniProgram, /student-profile-header-overlap/);
+  assert.match(wechatMiniProgram, /QIMING_MINIPROGRAM_H5_WAIT_MS \|\| 20000/);
+});
+
 test("native profile keeps local activity fallback without calling an absent API", () => {
   assert.doesNotMatch(userProfile, /完成了《Python 基础入门》/);
   assert.match(userProfile, /const learningActivities = ref\(\[\]\)/);

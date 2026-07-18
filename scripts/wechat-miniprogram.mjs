@@ -40,6 +40,12 @@ const roleLabels = {
 
 const routeMatrix = [
   {
+    name: "public-home",
+    role: "",
+    entry: "/home",
+    expectText: "为每一门课"
+  },
+  {
     name: "student-home",
     role: "student",
     entry: "/account?menu=home",
@@ -182,7 +188,7 @@ function parseArgs(argv) {
     browser: process.env.QIMING_MINIPROGRAM_BROWSER || "",
     outDir: "",
     route: process.env.QIMING_MINIPROGRAM_SMOKE_ROUTE || "",
-    waitMs: Number(process.env.QIMING_MINIPROGRAM_H5_WAIT_MS || 8000),
+    waitMs: Number(process.env.QIMING_MINIPROGRAM_H5_WAIT_MS || 20000),
     devtoolsWaitMs: Number(
       process.env.QIMING_MINIPROGRAM_DEVTOOLS_WAIT_MS || 16000
     ),
@@ -832,6 +838,30 @@ function getH5RouteSmokeFailures(info, route) {
       }
     }
   }
+  if (route.name === "public-home") {
+    const landingTopbar = info?.layout?.landingTopbar;
+    if (!landingTopbar?.rect?.visible) {
+      failures.push("landing-topbar-missing");
+    } else if (!landingTopbar?.surface?.opaque) {
+      failures.push("landing-topbar-transparent");
+    }
+  }
+  if (route.name === "student-home") {
+    const accountHeader = info?.layout?.account?.header;
+    const profileCard = info?.layout?.account?.profileCard;
+    if (!accountHeader?.visible || !profileCard?.visible) {
+      failures.push("student-profile-layout-missing");
+    } else {
+      const headerBottom =
+        Number(accountHeader.y) + Number(accountHeader.height);
+      const profileTop = Number(profileCard.y);
+      if (profileTop < headerBottom + 4) {
+        failures.push(
+          `student-profile-header-overlap:${Math.round(headerBottom - profileTop)}px`
+        );
+      }
+    }
+  }
   const bottom = info?.layout?.bottom;
   const bottomContentGap = Number(bottom?.contentGap);
   if (
@@ -1112,6 +1142,20 @@ async function runH5Smoke(options) {
             Number(style.opacity || 1) > 0.01
         };
       };
+      const surfaceInfo = el => {
+        if (!el) return null;
+        const style = getComputedStyle(el);
+        const backgroundColor = style.backgroundColor;
+        const backgroundImage = style.backgroundImage;
+        return {
+          backgroundColor,
+          backgroundImage,
+          opaque:
+            (backgroundColor !== "transparent" &&
+              backgroundColor !== "rgba(0, 0, 0, 0)") ||
+            backgroundImage !== "none"
+        };
+      };
       const getMainScrollElement = () => {
         const selectors = [
           ".main-container > .el-scrollbar > .el-scrollbar__wrap",
@@ -1148,6 +1192,11 @@ async function runH5Smoke(options) {
       const text = (document.body?.innerText || "").replace(/\\s+/g, " ").trim();
       const app = document.querySelector("#app");
       const topbar = document.querySelector(".navbar");
+      const landingTopbar = document.querySelector(".nx-nav");
+      const accountHeader = document.querySelector(".account-container > .header");
+      const accountProfileCard = document.querySelector(
+        ".account-container .user-info-card"
+      );
       const hamburger = document.querySelector(".hamburger-container");
       const brand = document.querySelector(".mobile-brand-wordmark");
       const themeToggle = document.querySelector("#header-overall, .theme-toggle-container");
@@ -1221,6 +1270,14 @@ async function runH5Smoke(options) {
         ).length,
         activeLoadingMasks,
         layout: {
+          landingTopbar: {
+            rect: rectInfo(landingTopbar),
+            surface: surfaceInfo(landingTopbar)
+          },
+          account: {
+            header: rectInfo(accountHeader),
+            profileCard: rectInfo(accountProfileCard)
+          },
           topbar: {
             exists: Boolean(topbar),
             rect: rectInfo(topbar),
