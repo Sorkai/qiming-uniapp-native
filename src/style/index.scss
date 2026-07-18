@@ -711,17 +711,11 @@ html.qiming-mini-program-webview .navbar .mobile-brand {
   overflow: visible;
 }
 
-html.qiming-mini-program-webview
-  .navbar
-  .mobile-brand
-  .mobile-brand-logo {
+html.qiming-mini-program-webview .navbar .mobile-brand .mobile-brand-logo {
   display: none !important;
 }
 
-html.qiming-mini-program-webview
-  .navbar
-  .mobile-brand
-  .mobile-brand-wordmark {
+html.qiming-mini-program-webview .navbar .mobile-brand .mobile-brand-wordmark {
   max-width: none;
   overflow: visible;
   font-size: 20px;
