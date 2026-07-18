@@ -35,6 +35,7 @@
 import { computed, defineComponent, h, ref, watch } from "vue";
 import { Link, Loading } from "@element-plus/icons-vue";
 import { formatToken, getToken } from "@/utils/auth";
+import { normalizeMindmapResourceUrl } from "@/utils/mindmap-resource.mjs";
 
 interface MindMapNode {
   id: string;
@@ -53,6 +54,9 @@ const tree = ref<MindMapNode | null>(null);
 const apiBaseUrl = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 const fileBaseUrl = String(
   import.meta.env.VITE_MINDMAP_FILE_PROXY_TARGET || ""
+).replace(/\/$/, "");
+const fileProxyOrigin = String(
+  import.meta.env.VITE_PLATFORM_FILE_PROXY_ORIGIN || ""
 ).replace(/\/$/, "");
 const fileProxyPrefix = "/mindmap-file";
 
@@ -80,7 +84,13 @@ const isUrlLike = (value: unknown) => {
 const buildResourceUrl = (value: unknown) => {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw || !isUrlLike(raw)) return "";
-  if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^https?:\/\//i.test(raw)) {
+    return normalizeMindmapResourceUrl(raw, {
+      target: fileBaseUrl,
+      proxyOrigin: fileProxyOrigin,
+      dev: import.meta.env.DEV
+    });
+  }
   if (raw.startsWith("//")) return `${window.location.protocol}${raw}`;
   if (raw.startsWith("/api/")) return raw;
 
