@@ -38,77 +38,118 @@
     </div>
 
     <!-- 作业列表 -->
-    <el-table
-      v-loading="loading"
-      :data="homeworkList"
-      style="width: 100%"
-      border
-      stripe
-      header-cell-class-name="bg-[var(--el-fill-color-light)] text-[var(--el-text-color-primary)] !font-semibold"
-    >
-      <el-table-column prop="homeworkId" label="ID" width="80" align="center" />
-      <el-table-column prop="title" label="作业标题" min-width="180">
-        <template #default="{ row }">
-          <span
-            class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
-            @click="showQuestionDialog(row)"
-            >{{ row.title }}</span
-          >
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="chapterName"
-        label="所属章节"
-        min-width="150"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="hourName"
-        label="所属课时"
-        min-width="150"
-        show-overflow-tooltip
-      />
-      <el-table-column
-        prop="questionNum"
-        label="题量"
-        width="80"
-        align="center"
+    <div class="business-table-scroll homework-table-scroll">
+      <el-table
+        v-loading="loading"
+        :data="homeworkList"
+        :class="{ 'mobile-wide-table': isMobile }"
+        style="width: 100%"
+        border
+        stripe
+        header-cell-class-name="bg-[var(--el-fill-color-light)] text-[var(--el-text-color-primary)] !font-semibold"
       >
-        <template #default="{ row }">
-          <el-badge
-            :value="row.questionNum"
-            :type="row.questionNum > 0 ? 'primary' : 'info'"
-          />
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="totalPoints"
-        label="总分"
-        width="80"
-        align="center"
-      />
-      <el-table-column
-        prop="dueDate"
-        label="截止日期"
-        width="170"
-        align="center"
-      />
-      <el-table-column label="操作" width="220" fixed="right" align="center">
-        <template #default="scope">
-          <el-button link type="primary" @click="showQuestionDialog(scope.row)"
-            >试题管理</el-button
-          >
-          <el-divider direction="vertical" />
-          <el-button link type="primary" @click="showEditDialog(scope.row)"
-            >编辑</el-button
-          >
-          <el-divider direction="vertical" />
-          <el-button link type="danger" @click="confirmDelete(scope.row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
+        <el-table-column
+          prop="homeworkId"
+          label="ID"
+          width="80"
+          align="center"
+        />
+        <el-table-column prop="title" label="作业标题" min-width="180">
+          <template #default="{ row }">
+            <span
+              class="font-medium text-[var(--el-color-primary)] cursor-pointer hover:underline"
+              @click="showQuestionDialog(row)"
+              >{{ row.title }}</span
+            >
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="chapterName"
+          label="所属章节"
+          min-width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="hourName"
+          label="所属课时"
+          min-width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="questionNum"
+          label="题量"
+          width="80"
+          align="center"
+        >
+          <template #default="{ row }">
+            <el-badge
+              :value="row.questionNum"
+              :type="row.questionNum > 0 ? 'primary' : 'info'"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="totalPoints"
+          label="总分"
+          width="80"
+          align="center"
+        />
+        <el-table-column
+          prop="dueDate"
+          label="截止日期"
+          width="170"
+          align="center"
+        />
+        <el-table-column
+          label="操作"
+          :width="isMobile ? 96 : 220"
+          :fixed="isMobile ? false : 'right'"
+          align="center"
+        >
+          <template #default="scope">
+            <div v-if="isMobile" class="mobile-action-wrap">
+              <el-dropdown
+                trigger="click"
+                popper-class="assessment-action-dropdown"
+                @command="command => handleHomeworkAction(command, scope.row)"
+              >
+                <el-button text type="primary" class="more-action-btn">
+                  更多
+                  <el-icon class="ml-1"><ArrowDown /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="questions">
+                      试题管理
+                    </el-dropdown-item>
+                    <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>
+                      <span class="danger-action">删除</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+            <template v-else>
+              <el-button
+                link
+                type="primary"
+                @click="showQuestionDialog(scope.row)"
+                >试题管理</el-button
+              >
+              <el-divider direction="vertical" />
+              <el-button link type="primary" @click="showEditDialog(scope.row)"
+                >编辑</el-button
+              >
+              <el-divider direction="vertical" />
+              <el-button link type="danger" @click="confirmDelete(scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <!-- 分页 -->
     <div class="pagination-container">
@@ -116,7 +157,13 @@
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
         :page-sizes="[10, 20, 30, 50]"
-        layout="total, sizes, prev, pager, next, jumper"
+        :layout="
+          isMobile
+            ? 'prev, pager, next'
+            : 'total, sizes, prev, pager, next, jumper'
+        "
+        :pager-count="isMobile ? 5 : 7"
+        :small="isMobile"
         :total="total"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -127,7 +174,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑作业' : '创建作业'"
-      width="600px"
+      :width="isMobile ? 'calc(100vw - 24px)' : '600px'"
       align-center
     >
       <el-form
@@ -135,7 +182,8 @@
         v-loading="formLoading"
         :model="form"
         :rules="rules"
-        label-width="100px"
+        :label-width="isMobile ? 'auto' : '100px'"
+        :label-position="isMobile ? 'top' : 'right'"
       >
         <el-form-item label="作业标题" prop="title">
           <el-input v-model="form.title" placeholder="请输入作业标题" />
@@ -206,8 +254,8 @@
     <el-dialog
       v-model="questionDialogVisible"
       title="作业管理"
-      width="90%"
-      top="5vh"
+      :width="isMobile ? 'calc(100vw - 16px)' : '90%'"
+      :top="isMobile ? '8px' : '5vh'"
       @closed="handleQuestionDialogClosed"
     >
       <div v-if="currentHomework" class="question-dialog-header">
@@ -220,60 +268,73 @@
         </el-button>
       </div>
 
-      <el-table
-        v-loading="questionLoading"
-        :data="questionList"
-        style="width: 100%"
-        border
-        stripe
-      >
-        <el-table-column prop="questionType" label="题型" width="100">
-          <template #default="scope">
-            {{ getQuestionTypeName(scope.row.questionType) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="title" label="标题" width="150" />
-        <el-table-column
-          prop="stem"
-          label="题干"
-          min-width="250"
-          show-overflow-tooltip
-        />
-        <el-table-column prop="points" label="分值" width="80" />
-        <el-table-column prop="difficulty" label="难度" width="150">
-          <template #default="scope">
-            <el-rate
-              v-model="scope.row.difficulty"
-              disabled
-              text-color="#ff9900"
-            />
-          </template>
-        </el-table-column>
-        <el-table-column prop="sortOrder" label="排序" width="80" />
-        <el-table-column label="操作" width="150" fixed="right">
-          <template #default="scope">
-            <el-button
-              size="small"
-              type="primary"
-              @click="viewQuestionDetail(scope.row)"
-              >查看</el-button
-            >
-            <el-button
-              size="small"
-              type="danger"
-              @click="deleteQuestion(scope.row)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="business-table-scroll question-table-scroll">
+        <el-table
+          v-loading="questionLoading"
+          :data="questionList"
+          :class="{ 'mobile-question-table': isMobile }"
+          style="width: 100%"
+          border
+          stripe
+        >
+          <el-table-column prop="questionType" label="题型" width="100">
+            <template #default="scope">
+              {{ getQuestionTypeName(scope.row.questionType) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="title" label="标题" width="150" />
+          <el-table-column
+            prop="stem"
+            label="题干"
+            min-width="250"
+            show-overflow-tooltip
+          />
+          <el-table-column prop="points" label="分值" width="80" />
+          <el-table-column prop="difficulty" label="难度" width="150">
+            <template #default="scope">
+              <el-rate
+                v-model="scope.row.difficulty"
+                disabled
+                text-color="#ff9900"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="sortOrder" label="排序" width="80" />
+          <el-table-column
+            label="操作"
+            width="150"
+            :fixed="isMobile ? false : 'right'"
+          >
+            <template #default="scope">
+              <el-button
+                size="small"
+                type="primary"
+                @click="viewQuestionDetail(scope.row)"
+                >查看</el-button
+              >
+              <el-button
+                size="small"
+                type="danger"
+                @click="deleteQuestion(scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
 
       <div class="pagination-container">
         <el-pagination
           v-model:current-page="questionCurrentPage"
           v-model:page-size="questionPageSize"
           :page-sizes="[10, 20, 30, 50]"
-          layout="total, sizes, prev, pager, next, jumper"
+          :layout="
+            isMobile
+              ? 'prev, pager, next'
+              : 'total, sizes, prev, pager, next, jumper'
+          "
+          :pager-count="isMobile ? 5 : 7"
+          :small="isMobile"
           :total="questionTotal"
           @size-change="handleQuestionSizeChange"
           @current-change="handleQuestionCurrentChange"
@@ -282,7 +343,12 @@
     </el-dialog>
 
     <!-- 查看试题详情弹窗 -->
-    <el-dialog v-model="detailDialogVisible" title="试题详情" width="70%">
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="试题详情"
+      :width="isMobile ? 'calc(100vw - 24px)' : '70%'"
+      :top="isMobile ? '12px' : '15vh'"
+    >
       <div v-if="currentQuestion" class="question-detail">
         <el-descriptions border :column="1" size="default">
           <el-descriptions-item label="题型">
@@ -337,9 +403,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { MagicStick, Plus } from "@element-plus/icons-vue";
+import { ArrowDown, MagicStick, Plus } from "@element-plus/icons-vue";
 import dayjs from "dayjs";
 import {
   getHomeworkList,
@@ -375,6 +441,11 @@ const props = defineProps({
     default: ""
   }
 });
+
+const isMobile = ref(window.innerWidth < 768);
+const updateIsMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+};
 
 // 作业列表相关
 const loading = ref(false);
@@ -686,6 +757,23 @@ const handleCurrentChange = (val: number) => {
   fetchHomeworkList();
 };
 
+const handleHomeworkAction = (
+  command: "questions" | "edit" | "delete",
+  row
+) => {
+  if (command === "questions") {
+    showQuestionDialog(row);
+    return;
+  }
+  if (command === "edit") {
+    showEditDialog(row);
+    return;
+  }
+  if (command === "delete") {
+    confirmDelete(row);
+  }
+};
+
 // 显示创建对话框
 const showCreateDialog = () => {
   isEdit.value = false;
@@ -945,10 +1033,15 @@ const handleQuestionDialogClosed = () => {
 
 // 页面加载时获取数据
 onMounted(() => {
+  window.addEventListener("resize", updateIsMobile);
   if (props.courseId) {
     fetchHomeworkList();
     fetchChapters(Number(props.courseId));
   }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateIsMobile);
 });
 </script>
 
@@ -969,6 +1062,39 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+.business-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 6px;
+  -webkit-overflow-scrolling: touch;
+
+  :deep(.el-table) {
+    border: 0;
+  }
+}
+
+.mobile-action-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.more-action-btn {
+  min-width: 64px;
+  min-height: 44px;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.danger-action {
+  color: var(--el-color-danger);
+}
+
+:global(.assessment-action-dropdown .el-dropdown-menu__item) {
+  min-height: 44px;
 }
 
 .question-dialog-header {
@@ -998,6 +1124,94 @@ onMounted(() => {
   .analysis-content {
     line-height: 1.5;
     white-space: pre-wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  .homework-management {
+    min-width: 0;
+
+    > :first-child {
+      align-items: stretch;
+      padding: 12px;
+    }
+
+    > :first-child > :last-child {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    > :first-child :deep(.el-button) {
+      flex: 1 1 140px;
+      min-height: 44px;
+      margin-left: 0;
+    }
+
+    :deep(.el-dialog) {
+      max-width: calc(100vw - 16px);
+      max-height: calc(100dvh - 16px);
+      margin-bottom: 8px;
+    }
+
+    :deep(.el-dialog__header) {
+      padding: 16px 16px 12px;
+      margin-right: 0;
+    }
+
+    :deep(.el-dialog__headerbtn) {
+      width: 44px;
+      height: 44px;
+    }
+
+    :deep(.el-dialog__body) {
+      max-height: calc(100dvh - 132px);
+      padding: 12px 16px;
+      overflow-y: auto;
+    }
+
+    :deep(.el-dialog__footer) {
+      padding: 12px 16px 16px;
+    }
+
+    :deep(.el-form-item__label) {
+      min-height: 32px;
+      padding: 0 0 4px;
+      line-height: 32px;
+    }
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper),
+    :deep(.el-date-editor) {
+      min-height: 44px;
+    }
+
+    :deep(.dialog-footer .el-button),
+    .question-operation-bar :deep(.el-button),
+    .question-table-scroll :deep(.el-button) {
+      min-height: 44px;
+    }
+  }
+
+  .homework-table-scroll .mobile-wide-table {
+    min-width: 1080px;
+  }
+
+  .question-table-scroll .mobile-question-table {
+    min-width: 900px;
+  }
+
+  .pagination-container {
+    justify-content: center;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .question-dialog-header {
+    margin-bottom: 12px;
+
+    h3 {
+      overflow-wrap: anywhere;
+    }
   }
 }
 </style>

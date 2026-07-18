@@ -1961,8 +1961,8 @@ $shadow-xl:
       align-self: flex-end;
 
       .action-btn {
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
         border-radius: 14px;
       }
     }
@@ -2095,6 +2095,11 @@ $shadow-xl:
     padding: 16px;
   }
 
+  .dialog-header .header-actions .header-btn {
+    width: 44px;
+    height: 44px;
+  }
+
   .dialog-body {
     .chat-container {
       padding: 16px;
@@ -2155,8 +2160,8 @@ $shadow-xl:
 
     .video-actions {
       .action-btn {
-        width: 34px;
-        height: 34px;
+        width: 44px;
+        height: 44px;
       }
     }
   }

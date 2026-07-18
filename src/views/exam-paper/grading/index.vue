@@ -7,7 +7,8 @@ import { ElMessage } from "element-plus";
 import {
   getGradingStatistics,
   getGradingPaperList,
-  autoGradeObjective
+  autoGradeObjective,
+  getCourseList
 } from "@/api/examPaper";
 
 // 导入 SVG 图标组件
@@ -33,11 +34,18 @@ const searchForm = reactive({
 });
 
 // 课程列表
-const courseList = ref([
-  { id: 1, name: "高等数学" },
-  { id: 2, name: "线性代数" },
-  { id: 3, name: "概率论" }
-]);
+const courseList = ref<Array<{ id: number; name: string }>>([]);
+
+const loadCourses = async () => {
+  try {
+    const res = await getCourseList();
+    if (res.code === 0 && Array.isArray(res.data)) {
+      courseList.value = res.data;
+    }
+  } catch (error) {
+    console.error("获取课程列表失败", error);
+  }
+};
 
 // 状态选项
 const statusOptions = [
@@ -180,6 +188,7 @@ const handlePageChange = (page: number) => {
 onMounted(() => {
   loadStatistics();
   handleSearch();
+  loadCourses();
 });
 </script>
 

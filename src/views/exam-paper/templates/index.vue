@@ -482,7 +482,7 @@ onMounted(() => {
     <el-dialog
       v-model="previewDialogVisible"
       :title="previewData?.name || '模板预览'"
-      width="680px"
+      width="min(680px, calc(100vw - 24px))"
       :close-on-click-modal="true"
     >
       <div v-loading="previewLoading">
@@ -548,7 +548,7 @@ onMounted(() => {
     <el-dialog
       v-model="createDialogVisible"
       title="新建私有模板"
-      width="500px"
+      width="min(500px, calc(100vw - 24px))"
       :close-on-click-modal="false"
     >
       <el-form :model="newTemplateForm" label-width="80px">

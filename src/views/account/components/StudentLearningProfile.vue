@@ -257,7 +257,7 @@
 
     <el-dialog
       v-model="dimensionVisible"
-      width="520px"
+      width="min(520px, calc(100vw - 24px))"
       :title="selectedDimension?.label || '维度详情'"
       class="account-assistant-dialog"
     >

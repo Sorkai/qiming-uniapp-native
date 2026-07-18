@@ -28,6 +28,8 @@ wechat-miniprogram:
         - name: Build WeChat H5
           script: |
             set -eu
+            pnpm test:contracts
+            pnpm typecheck
             pnpm --ignore-workspace edgeone:build
 
         - name: Verify build output

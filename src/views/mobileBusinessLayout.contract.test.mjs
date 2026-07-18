@@ -15,6 +15,20 @@ const paperEditor = readView("exam-paper/editor/index.vue");
 const paperTemplates = readView("exam-paper/templates/index.vue");
 const paperStatistics = readView("exam-paper/statistics/index.vue");
 const classroom = readView("course/classroom/index.vue");
+const aiApp = readView("account/ai-app/index.vue");
+const courseStudy = readView("account/course-detail/CourseStudy.vue");
+const courseQa = readView("account/course-detail/CourseQA.vue");
+const accountSettings = readView("account-settings/index.vue");
+const videoAnalysis = readView("course/video-analysis/index.vue");
+const examResult = readView("exam-paper/result/index.vue");
+const accountHome = readView("account/index.vue");
+const homeworkManagement = readView(
+  "course/assessment/components/HomeworkManagement.vue"
+);
+const examManagement = readView(
+  "course/assessment/components/ExamManagement.vue"
+);
+const virtualLab = readView("account/components/VirtualLab.vue");
 
 test("student detail flows remove layered mobile gutters", () => {
   assert.match(studentPaperDetail, /@media \(width <= 768px\)/);
@@ -60,4 +74,185 @@ test("mobile campus exposes reachable alternatives to scaled SVG hotspots", () =
     /\.campus-container \.hot-zone[\s\S]*pointer-events: none/
   );
   assert.match(classroom, /\.mobile-campus-action[\s\S]*min-height: 48px/);
+});
+
+test("mobile AI attachments keep an explicit 44px delete control", () => {
+  assert.match(aiApp, /aria-label="删除附件"/);
+  assert.match(
+    aiApp,
+    /@media \(max-width: 768px\)[\s\S]*\.quick-attachment-remove[\s\S]*width: 44px[\s\S]*height: 44px/
+  );
+  assert.match(aiApp, /pointer-events: auto/);
+  assert.match(aiApp, /opacity: 1/);
+  assert.match(aiApp, /@media \(hover: none\), \(pointer: coarse\)/);
+  assert.match(
+    aiApp,
+    /\.quick-attachment-card:focus-within \.quick-attachment-remove/
+  );
+});
+
+test("mobile AI workspaces release desktop fixed widths", () => {
+  assert.match(
+    aiApp,
+    /title: "班级共性错题汇总"[\s\S]*?role: "teacher"[\s\S]*?icon: DataBoard/
+  );
+  assert.match(aiApp, /class="ai-course-context-bar/);
+  assert.match(
+    aiApp,
+    /@media \(max-width: 768px\)[\s\S]*\.ai-course-context-bar \{[\s\S]*flex-direction: column[\s\S]*\.ai-course-context-bar :deep\(\.el-select\) \{[\s\S]*width: 100% !important/
+  );
+  assert.match(aiApp, /class="ai-profile-workspace/);
+  assert.match(
+    aiApp,
+    /\.ai-profile-workspace \{[\s\S]*flex-direction: column[\s\S]*overflow-y: auto/
+  );
+  assert.match(
+    aiApp,
+    /\.ai-profile-main \{[\s\S]*height: clamp\(420px, 68dvh, 680px\) !important/
+  );
+  assert.match(aiApp, /\.ai-profile-inspector \{[\s\S]*width: 100% !important/);
+  assert.match(
+    aiApp,
+    /\.ai-automation-workspace \{[\s\S]*flex-direction: column[\s\S]*\.ai-automation-list \{[\s\S]*width: 100% !important[\s\S]*\.ai-automation-history \{[\s\S]*width: 100%/
+  );
+  assert.match(aiApp, /width="min\(640px, calc\(100vw - 24px\)\)"/);
+  assert.match(
+    aiApp,
+    /\.stack-preview-content \{[\s\S]*flex-direction: column/
+  );
+});
+
+test("course learning and discussion mobile controls stay touch sized", () => {
+  assert.match(
+    courseStudy,
+    /@media \(width <= 767px\)[\s\S]*\.action-btn[\s\S]*width: 44px[\s\S]*height: 44px/
+  );
+  assert.match(
+    courseStudy,
+    /\.header-btn[\s\S]*width: 44px[\s\S]*height: 44px/
+  );
+  assert.match(courseQa, /\.filter-tab[\s\S]*min-height: 44px/);
+  assert.match(courseQa, /\.toolbar-btn[\s\S]*width: 44px[\s\S]*height: 44px/);
+  assert.match(courseQa, /\.reply-action-btn[\s\S]*min-height: 44px/);
+  assert.match(
+    courseQa,
+    /\.content-editor :deep\(\.el-textarea__inner\)[\s\S]*padding: 12px 14px 62px/
+  );
+});
+
+test("account settings mobile navigation overlays instead of shrinking content", () => {
+  assert.match(accountSettings, /useMediaQuery\("\(max-width: 768px\)"\)/);
+  assert.doesNotMatch(accountSettings, /deviceDetection\(\)/);
+  assert.match(accountSettings, /class="account-settings-backdrop"/);
+  assert.match(accountSettings, /&\.is-mobile[\s\S]*position: fixed/);
+  assert.match(accountSettings, /width: min\(84vw, 300px\) !important/);
+  assert.match(
+    accountSettings,
+    /background: var\(--pure-theme-menu-bg\) !important/
+  );
+  assert.match(accountSettings, /aria-modal="isMobile \? 'true' : undefined"/);
+  assert.match(accountSettings, /event\.key === "Escape"/);
+  assert.match(accountSettings, /event\.key !== "Tab"/);
+  assert.match(accountSettings, /getMobileMenuFocusable/);
+  assert.match(accountSettings, /\[role="menuitem"\]/);
+  assert.match(accountSettings, /focusableElements\[nextIndex\]\?\.focus\(\)/);
+  assert.match(accountSettings, /const restoreBodyScroll/);
+  assert.match(accountSettings, /if \(!mobile\) restoreBodyScroll\(\)/);
+  assert.match(
+    accountSettings,
+    /onBeforeUnmount\(\(\) => \{[\s\S]*restoreBodyScroll\(\)/
+  );
+  assert.match(accountSettings, /\.account-settings-main[\s\S]*padding: 8px/);
+});
+
+test("student account mobile page scrolls without a fixed footer overlay", () => {
+  assert.match(accountHome, /<el-dropdown trigger="click"/);
+  assert.match(
+    accountHome,
+    /@media \(width <= 767px\)[\s\S]*height: auto;[\s\S]*overflow: visible/
+  );
+  assert.match(
+    accountHome,
+    /:deep\(\.layout-footer\)[\s\S]*position: static[\s\S]*pointer-events: auto/
+  );
+});
+
+test("wide business tables scroll inside bounded regions", () => {
+  assert.match(videoAnalysis, /class="task-table-scroll/);
+  assert.match(videoAnalysis, /\.task-table-scroll[\s\S]*overflow-x: auto/);
+  assert.match(videoAnalysis, /:fixed="isMobileLayout \? false : 'right'"/);
+  assert.match(
+    videoAnalysis,
+    /\.task-table \.el-button[\s\S]*min-height: 44px/
+  );
+  assert.match(examResult, /class="answer-table-scroll"/);
+  assert.match(examResult, /\.answer-table-scroll[\s\S]*overflow-x: auto/);
+  assert.match(examResult, /min-width: 760px/);
+});
+
+test("assessment management tables and actions remain usable on phones", () => {
+  for (const view of [homeworkManagement, examManagement]) {
+    assert.match(view, /class="business-table-scroll/);
+    assert.match(view, /:fixed="isMobile \? false : 'right'"/);
+    assert.match(view, /\? 'prev, pager, next'/);
+    assert.match(view, /: 'total, sizes, prev, pager, next, jumper'/);
+    assert.match(view, /:pager-count="isMobile \? 5 : 7"/);
+    assert.match(view, /\.more-action-btn \{[\s\S]*min-height: 44px/);
+    assert.match(
+      view,
+      /assessment-action-dropdown \.el-dropdown-menu__item\)[\s\S]*min-height: 44px/
+    );
+    assert.match(
+      view,
+      /\.business-table-scroll \{[\s\S]*max-width: 100%;[\s\S]*overflow-x: auto/
+    );
+  }
+
+  assert.match(homeworkManagement, /handleHomeworkAction/);
+  assert.match(examManagement, /handleExamAction/);
+});
+
+test("assessment dialogs fit the mobile viewport", () => {
+  for (const view of [homeworkManagement, examManagement]) {
+    assert.match(view, /'calc\(100vw - 24px\)'/);
+    assert.match(view, /'calc\(100vw - 16px\)'/);
+    assert.match(view, /:label-position="isMobile \? 'top' : 'right'"/);
+    assert.match(
+      view,
+      /@media \(max-width: 767px\)[\s\S]*max-height: calc\(100dvh - 16px\)/
+    );
+    assert.match(view, /\.el-dialog__headerbtn\)[\s\S]*width: 44px/);
+  }
+});
+
+test("virtual lab reflows header, categories and dialog at 360px", () => {
+  assert.match(virtualLab, /:title="`\$\{currentLab\.title\}实验内容`"/);
+  assert.match(
+    virtualLab,
+    /@media \(max-width: 767px\)[\s\S]*\.header-content \{[\s\S]*flex-direction: column/
+  );
+  assert.match(
+    virtualLab,
+    /\.header-stats \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/
+  );
+  assert.match(
+    virtualLab,
+    /\.category-tabs[\s\S]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/
+  );
+  assert.match(
+    virtualLab,
+    /\.el-radio-button__inner \{[\s\S]*min-height: 44px/
+  );
+  assert.match(virtualLab, /width="min\(1100px, calc\(100vw - 24px\)\)"/);
+  assert.match(
+    virtualLab,
+    /\.lab-iframe-container \{[\s\S]*height: calc\(100dvh - 108px\)/
+  );
+});
+
+test("routine task cards expose visible keyboard actions", () => {
+  assert.match(aiApp, /<button[\s\S]*class="ai-automation-task-main/);
+  assert.match(aiApp, /:aria-label="`查看任务记录：\$\{task\.title\}`"/);
+  assert.match(aiApp, /focus-visible:ring-2/);
+  assert.match(aiApp, /focus-visible:opacity-100/);
 });

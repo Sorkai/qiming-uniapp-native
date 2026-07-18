@@ -2923,4 +2923,94 @@ $radius-lg: 16px;
     }
   }
 }
+
+@media (width <= 767px) {
+  .video-analysis-panel {
+    min-width: 0;
+  }
+
+  .retry-button,
+  .module-tabs .tab-btn,
+  .mindmap-block .mindmap-action {
+    min-height: 44px;
+  }
+
+  .result-header {
+    min-width: 0;
+  }
+
+  .result-meta,
+  .result-times {
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .file-name-tag {
+    max-width: 100%;
+  }
+
+  .module-tabs {
+    margin-inline: -4px;
+    padding-inline: 4px;
+    scroll-padding-inline: 4px;
+  }
+
+  .chapter-item {
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 4px;
+    margin: 0;
+
+    .chapter-time {
+      flex: none;
+      width: 100%;
+      padding-top: 0;
+    }
+
+    .time-badge {
+      min-width: 0;
+      min-height: 32px;
+    }
+
+    .chapter-info {
+      min-width: 0;
+    }
+  }
+
+  .mindmap-block {
+    .mindmap-toolbar,
+    .mindmap-tools-group {
+      align-items: stretch;
+    }
+
+    .mindmap-tools-group {
+      display: flex;
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+    }
+
+    .mindmap-action {
+      flex: 1 1 auto;
+      padding-inline: 12px;
+
+      &.icon-only {
+        width: 44px;
+      }
+
+      &.mindmap-source {
+        flex-basis: 100%;
+        margin-left: 0;
+      }
+    }
+
+    .mindmap-canvas {
+      height: min(64vh, 480px);
+      min-height: 360px;
+    }
+
+    .mindmap-resource-stage {
+      padding: 8px;
+    }
+  }
+}
 </style>
