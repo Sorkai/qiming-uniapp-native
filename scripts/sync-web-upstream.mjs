@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { chdir, cwd, exit } from "node:process";
+import { classifyWebCommit } from "./sync-web-policy.mjs";
 
 const defaults = {
   sourceRemote: "web-upstream",
@@ -37,6 +38,30 @@ function git(args, options = {}) {
 
 function output(args) {
   return String(git(args, { capture: true }).stdout || "").trim();
+}
+
+function listPendingCommits(sourceRef) {
+  const hashes = output(["rev-list", "--reverse", `HEAD..${sourceRef}`])
+    .split("\n")
+    .map(hash => hash.trim())
+    .filter(Boolean);
+
+  return hashes.map(hash => ({
+    hash,
+    shortHash: output(["rev-parse", "--short=12", hash]),
+    subject: output(["show", "-s", "--format=%s", hash]),
+    body: output(["show", "-s", "--format=%b", hash])
+  }));
+}
+
+function printWebOnlyCommits(commits) {
+  for (const commit of commits) {
+    const classification = classifyWebCommit(commit);
+    console.log(
+      `[sync-web] skip Web-only ${commit.shortHash} ${commit.subject}`
+    );
+    console.log(`           reason: ${classification.reason}`);
+  }
 }
 
 function parseList(value) {
@@ -86,8 +111,10 @@ Options:
   --publish-branches <a,b>  Push HEAD to these branch names on every remote.
 
 The script refuses dirty worktrees, unrelated histories, merge conflicts, and
-non-fast-forward pushes. Business code comes from vue-pure-admin-max/agent;
-native-app, platform adapters, and release tooling stay in this repository.`);
+non-fast-forward pushes. Web-only commits are skipped by policy; mark future
+Web-only commits with [web-only] or mobile-sync: no. Business code comes from
+vue-pure-admin-max/agent; native-app, platform adapters, and release tooling
+stay in this repository.`);
       exit(0);
     } else {
       fail(`Unknown option: ${arg}`);
@@ -197,8 +224,27 @@ try {
     );
   }
 
-  const pending = Number(output(["rev-list", "--count", `HEAD..${sourceRef}`]));
+  const pendingCommits = listPendingCommits(sourceRef);
+  const pending = pendingCommits.length;
   console.log(`[sync-web] pending source commits: ${pending}`);
+
+  const webOnlyPending = pendingCommits.filter(
+    commit => classifyWebCommit(commit).webOnly
+  );
+  if (webOnlyPending.length > 0) {
+    printWebOnlyCommits(webOnlyPending);
+    if (webOnlyPending.length !== pendingCommits.length) {
+      fail(
+        "Mixed Web-only and shared commits are pending. Review the commit boundary and sync shared changes explicitly before retrying.",
+        2
+      );
+    }
+
+    console.log(
+      "[sync-web] all pending source commits are intentionally Web-only; platform branch remains unchanged"
+    );
+    exit(0);
+  }
 
   if (options.dryRun) {
     if (pending > 0) {
