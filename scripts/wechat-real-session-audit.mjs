@@ -2067,7 +2067,7 @@ async function main() {
     });
     await client.send("Emulation.setUserAgentOverride", {
       userAgent:
-        "Mozilla/5.0 (Linux; Android 14; QimingAudit) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36",
+        "Mozilla/5.0 (Linux; Android 14; QimingTest) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Mobile Safari/537.36",
       acceptLanguage: "zh-CN,zh;q=0.9",
       platform: "Android",
       mobile: true

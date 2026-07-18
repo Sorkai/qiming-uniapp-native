@@ -220,7 +220,7 @@ test("real route audit enforces usable width on teacher mobile workflows", () =>
   assert.match(sharedRouteMatrix, /activeDialogBody/);
   assert.match(sharedRouteMatrix, /primaryRouteChild/);
   assert.match(sharedRouteMatrix, /Emulation\.setUserAgentOverride/);
-  assert.match(sharedRouteMatrix, /QimingAudit/);
+  assert.match(sharedRouteMatrix, /QimingTest/);
 });
 
 test("Android route runner enforces compact digital-human checks", () => {
