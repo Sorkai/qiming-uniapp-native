@@ -447,6 +447,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, h, nextTick, onBeforeUnmount } from "vue";
 import { getToken, formatToken, hasManageAccess } from "@/utils/auth";
+import { normalizeMindmapResourceUrl } from "@/utils/mindmap-resource.mjs";
 import "@vue-flow/core/dist/style.css";
 import "@vue-flow/core/dist/theme-default.css";
 import {
@@ -524,13 +525,21 @@ const apiBaseURL = () =>
 const mindmapFileProxyPrefix = "/mindmap-file";
 const mindmapFileProxyTarget =
   import.meta.env.VITE_MINDMAP_FILE_PROXY_TARGET || "";
+const mindmapFileProxyOrigin =
+  import.meta.env.VITE_PLATFORM_FILE_PROXY_ORIGIN || "";
 
 const isAbsoluteUrl = (url: string) => /^https?:\/\//i.test(url);
 
 const buildMindmapResourceUrl = (url: string) => {
   const value = String(url || "").trim();
   if (!value) return "";
-  if (isAbsoluteUrl(value)) return value;
+  if (isAbsoluteUrl(value)) {
+    return normalizeMindmapResourceUrl(value, {
+      target: mindmapFileProxyTarget,
+      proxyOrigin: mindmapFileProxyOrigin,
+      dev: import.meta.env.DEV
+    });
+  }
   if (value.startsWith("//")) return `${window.location.protocol}${value}`;
   if (value.startsWith("/api/")) return value;
 
